@@ -11,10 +11,7 @@ from glob import glob
 from collections import defaultdict
 import toml
 from time import time
-
-sys.path.append('..')
-from myconfig_pipeline import pipeline_prefix, pipeline_videos_raw, pipeline_calibration
-
+import re
 
 def get_video_params(fname):
     cap = cv2.VideoCapture(fname)
@@ -76,7 +73,7 @@ def trim_corners(allCorners, allIds, maxBoards=85):
     allCorners = [allCorners[ix] for ix in subs]
     allIds = [allIds[ix] for ix in subs]
     return allCorners, allIds
-    
+
 
 def reformat_corners(allCorners, allIds, numsq=2):
     markerCounter = np.array([len(cs) for cs in allCorners])
@@ -92,7 +89,7 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
 
     print("calibrating...")
     tstart = time()
-    
+
     cameraMat = np.eye(3)
     distCoeffs = np.zeros(5)
     dim = (video_params['width'], video_params['height'])
@@ -102,7 +99,7 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
     tdiff = tend - tstart
     print("calibration took {} minutes and {:.1f} seconds".format(
         int(tdiff/60), tdiff-int(tdiff/60)*60))
-    
+
     out = dict()
     out['error'] = error
     out['camera_mat'] = cameraMat.tolist()
@@ -139,48 +136,63 @@ def calibrate_camera(fnames, numsq=2):
 
     return calib_params
 
-    
+
 def get_folders(path):
     folders = next(os.walk(path))[1]
     return sorted(folders)
 
-def get_cam_name(fname):
+def get_cam_name(config, fname):
     basename = os.path.basename(fname)
     basename = os.path.splitext(basename)[0]
-    return basename.split('_')[-1]    
 
-        
-experiments = get_folders(pipeline_prefix)
+    cam_regex = config['cam_regex']
+    match = re.search(cam_regex, basename)
+    if not match:
+        return None
+    else:
+        return match.groups()[0]
 
-for exp in experiments:
-    exp_path = os.path.join(pipeline_prefix, exp)
-    sessions = get_folders(exp_path)
-    
+def process_session(config, session_path):
+    pipeline_videos_raw = config['pipeline_videos_raw']
+    pipeline_calibration = config['pipeline_calibration']
+
+    videos = glob(os.path.join(session_path,
+                               pipeline_videos_raw,
+                               config['calibration_prefix'] + '*.avi'))
+    videos = sorted(videos)
+
+    cam_names = [get_cam_name(config, vid) for vid in videos]
+    cam_names = sorted(set(cam_names))
+
+    cam_videos = defaultdict(list)
+
+    for vid in videos:
+        cname = get_cam_name(config, vid)
+        cam_videos[cname].append(vid)
+
+    for cname in cam_names:
+        fnames = cam_videos[cname]
+        outname_base = 'intrinsics_{}.toml'.format(cname)
+        outdir = os.path.join(session_path, pipeline_calibration)
+        os.makedirs(outdir, exist_ok=True)
+        outname = os.path.join(outdir, outname_base)
+        print(outname)
+        if os.path.exists(outname):
+            continue
+        else:
+            calib = calibrate_camera(fnames)
+            with open(outname, 'w') as f:
+                toml.dump(calib, f)
+
+
+
+def calibrate_intrinsics_all(config):
+    pipeline_prefix = config['path']
+
+    sessions = get_folders(pipeline_prefix)
+
     for session in sessions:
         print(session)
 
-        videos = glob(os.path.join(pipeline_prefix, exp, session, pipeline_videos_raw, 'calib' + '*.avi'))
-        videos = sorted(videos)
-
-        cam_names = [get_cam_name(vid) for vid in videos]
-        cam_names = sorted(set(cam_names))
-
-        cam_videos = defaultdict(list)
-        
-        for vid in videos:
-            cname = get_cam_name(vid)
-            cam_videos[cname].append(vid)
-
-        for cname in cam_names:
-            fnames = cam_videos[cname]
-            outname_base = 'intrinsics_{}.toml'.format(cname)
-            outdir = os.path.join(pipeline_prefix, exp, session, pipeline_calibration)
-            os.makedirs(outdir, exist_ok=True)
-            outname = os.path.join(outdir, outname_base)
-            print(outname)
-            if os.path.exists(outname):
-                continue
-            else:
-                calib = calibrate_camera(fnames)
-                with open(outname, 'w') as f:
-                    toml.dump(calib, f)
+        session_path = os.path.join(pipeline_prefix, session)
+        process_session(config, session_path)

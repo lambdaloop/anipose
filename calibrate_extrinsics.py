@@ -12,9 +12,7 @@ from collections import defaultdict
 import toml
 from time import time
 from pprint import pprint
-sys.path.append('..')
-
-from myconfig_pipeline import pipeline_prefix, pipeline_videos_raw, pipeline_calibration
+import re
 
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 board = aruco.GridBoard_create(2, 2, 4, 1, dictionary)
@@ -106,15 +104,24 @@ def get_folders(path):
     folders = next(os.walk(path))[1]
     return sorted(folders)
 
-def get_cam_name(fname):
+def get_cam_name(config, fname):
     basename = os.path.basename(fname)
     basename = os.path.splitext(basename)[0]
-    return basename.split('_')[-1]
 
-def get_video_name(fname):
+    cam_regex = config['cam_regex']
+    match = re.search(cam_regex, basename)
+
+    if not match:
+        return None
+    else:
+        return match.groups()[0]
+
+def get_video_name(config, fname):
     basename = os.path.basename(fname)
     basename = os.path.splitext(basename)[0]
-    return '_'.join(basename.split('_')[0:-1])
+
+    cam_regex = config['cam_regex']
+    return re.sub(cam_regex, '', basename)
 
 def get_matrices(fname_dict, cam_intrinsics, skip=20):
     minlen = np.inf
@@ -208,53 +215,61 @@ def load_intrinsics(folder, cam_names):
     return intrinsics
     
 
-experiments = get_folders(pipeline_prefix)
+def process_session(config, session_path):
+    pipeline_videos_raw = config['pipeline_videos_raw']
+    pipeline_calibration = config['pipeline_calibration']
 
-for exp in experiments:
-    exp_path = os.path.join(pipeline_prefix, exp)
-    sessions = get_folders(exp_path)
+    videos = glob(os.path.join(session_path, pipeline_videos_raw, 'calib' + '*.avi'))
+    videos = sorted(videos)
+
+    cam_videos = defaultdict(list)
+
+    cam_names = set()
+
+    for vid in videos:
+        name = get_video_name(config, vid)
+        cam_videos[name].append(vid)
+        cam_names.add(get_cam_name(config, vid))
+
+    vid_names = cam_videos.keys()
+    cam_names = sorted(cam_names)
+
+    outname_base = 'extrinsics.toml'
+    outdir = os.path.join(session_path, pipeline_calibration)
+    os.makedirs(outdir, exist_ok=True)
+    outname = os.path.join(outdir, outname_base)
+
+    print(outname)
+    if os.path.exists(outname):
+        return
+    else:
+        intrinsics = load_intrinsics(outdir, cam_names)
+
+        fname_dicts = []
+        for name in vid_names:
+            fnames = cam_videos[name]
+            cam_names = [get_cam_name(config, f) for f in fnames]
+            fname_dict = dict(zip(cam_names, fnames))
+            fname_dicts.append(fname_dict)
+
+        extrinsics = get_extrinsics(fname_dicts, intrinsics)
+        extrinsics_out = {}
+        for k, v in extrinsics.items():
+            new_key = k[0] + '_' + k[1]
+            extrinsics_out[new_key] = v.tolist()
+
+        with open(outname, 'w') as f:
+            toml.dump(extrinsics_out, f)
+
+
+
+def calibrate_extrinsics_all(config):
+    pipeline_prefix = config['path']
+
+    sessions = get_folders(pipeline_prefix)
 
     for session in sessions:
         print(session)
 
-        videos = glob(os.path.join(pipeline_prefix, exp, session, pipeline_videos_raw, 'calib' + '*.avi'))
-        videos = sorted(videos)
-
-        cam_videos = defaultdict(list)
-
-        cam_names = set()
-        
-        for vid in videos:
-            name = get_video_name(vid)
-            cam_videos[name].append(vid)
-            cam_names.add(get_cam_name(vid))
-
-        vid_names = cam_videos.keys()
-        cam_names = sorted(cam_names)
-
-        outname_base = 'extrinsics.toml'
-        outdir = os.path.join(pipeline_prefix, exp, session, pipeline_calibration)
-        os.makedirs(outdir, exist_ok=True)
-        outname = os.path.join(outdir, outname_base)
-
-        print(outname)
-        if os.path.exists(outname):
-            continue
-        else:
-            intrinsics = load_intrinsics(outdir, cam_names)
-            
-            fname_dicts = []
-            for name in vid_names:
-                fnames = cam_videos[name]
-                cam_names = [get_cam_name(f) for f in fnames]
-                fname_dict = dict(zip(cam_names, fnames))
-                fname_dicts.append(fname_dict)
-            
-            extrinsics = get_extrinsics(fname_dicts, intrinsics)
-            extrinsics_out = {}
-            for k, v in extrinsics.items():
-                new_key = k[0] + '_' + k[1]
-                extrinsics_out[new_key] = v.tolist()
-
-            with open(outname, 'w') as f:
-                toml.dump(extrinsics_out, f)
+        session_path = os.path.join(pipeline_prefix, session)
+        process_session(config, session_path)
