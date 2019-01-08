@@ -9,7 +9,7 @@ import click
 
 ## possible commands
 # anipose calibrate # run calibration of intrinsics and extrinsics
-# anipose track # track the poses for each video
+# anipose analyze # analyze the poses for each video
 # anipose label # create videos for each pose 
 # anipose run-data # run only the data portion (no viz)
 # anipose run-viz # run only the visualization pipeline
@@ -77,8 +77,10 @@ def calibrate_extrinsics(config):
     
 @cli.command()
 @pass_config
-def label(config):
-    click.echo('Labeling videos...')
+def analyze(config):
+    from pose_videos import pose_videos_all
+    click.echo('Analyzing videos...')
+    pose_videos_all(config)
  
 @cli.command()
 @pass_config
