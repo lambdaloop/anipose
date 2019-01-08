@@ -19,6 +19,7 @@ def get_folders(path):
     folders = next(os.walk(path))[1]
     return sorted(folders)
 
+
 def get_cam_name(config, fname):
     basename = os.path.basename(fname)
     basename = os.path.splitext(basename)[0]

@@ -187,7 +187,7 @@ def process_session(config, session_path):
 
     os.makedirs(output_folder, exist_ok=True)
 
-    pose_files = glob(os.path.join(pose_folder, 'vid' + '*.h5'))
+    pose_files = glob(os.path.join(pose_folder, '*.h5'))
 
     cam_videos = defaultdict(list)
 

@@ -128,11 +128,12 @@ def calibrate_camera(fnames, numsq=2):
 
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_calibration = config['pipeline_calibration']
+    pipeline_calibration_videos = config['pipeline_calibration_videos']
+    pipeline_calibration_results = config['pipeline_calibration_results']
 
     videos = glob(os.path.join(session_path,
-                               pipeline_videos_raw,
-                               config['calibration_prefix'] + '*.avi'))
+                               pipeline_calibration_videos,
+                               '*.avi'))
     videos = sorted(videos)
 
     cam_names = [get_cam_name(config, vid) for vid in videos]
@@ -147,7 +148,7 @@ def process_session(config, session_path):
     for cname in cam_names:
         fnames = cam_videos[cname]
         outname_base = 'intrinsics_{}.toml'.format(cname)
-        outdir = os.path.join(session_path, pipeline_calibration)
+        outdir = os.path.join(session_path, pipeline_calibration_results)
         os.makedirs(outdir, exist_ok=True)
         outname = os.path.join(outdir, outname_base)
         print(outname)

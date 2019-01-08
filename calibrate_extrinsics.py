@@ -13,6 +13,7 @@ import toml
 from time import time
 from pprint import pprint
 import re
+
 from common import *
 
 # TODO: make this board configurable
@@ -183,9 +184,10 @@ def load_intrinsics(folder, cam_names):
 
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_calibration = config['pipeline_calibration']
+    pipeline_calibration_videos = config['pipeline_calibration_videos']
+    pipeline_calibration_results = config['pipeline_calibration_results']
 
-    videos = glob(os.path.join(session_path, pipeline_videos_raw, 'calib' + '*.avi'))
+    videos = glob(os.path.join(session_path, pipeline_calibration_videos, '*.avi'))
     videos = sorted(videos)
 
     cam_videos = defaultdict(list)
@@ -201,7 +203,7 @@ def process_session(config, session_path):
     cam_names = sorted(cam_names)
 
     outname_base = 'extrinsics.toml'
-    outdir = os.path.join(session_path, pipeline_calibration)
+    outdir = os.path.join(session_path, pipeline_calibration_results)
     os.makedirs(outdir, exist_ok=True)
     outname = os.path.join(outdir, outname_base)
 

@@ -2,8 +2,6 @@
 
 import os, os.path
 import toml
-from calibrate_intrinsics import calibrate_intrinsics_all
-from calibrate_extrinsics import calibrate_extrinsics_all
 
 import click
 
@@ -22,7 +20,8 @@ DEFAULT_CONFIG = {
     'pipeline_pose_2d': 'pose-2d',
     'pipeline_pose_3d': 'pose-3d',
     'pipeline_videos_labeled_2d': 'videos-labeled',
-    'pipeline_calibration': 'calibration',
+    'pipeline_calibration_videos': 'calibration',
+    'pipeline_calibration_results': 'calibration',
     'pipeline_videos_labeled_3d': 'videos-3d'
 }
 
@@ -56,6 +55,8 @@ def cli(ctx, config):
 @cli.command()
 @pass_config
 def calibrate(config):
+    from calibrate_intrinsics import calibrate_intrinsics_all
+    from calibrate_extrinsics import calibrate_extrinsics_all
     click.echo('Calibrating...')
     calibrate_intrinsics_all(config)
     calibrate_extrinsics_all(config)
@@ -63,12 +64,14 @@ def calibrate(config):
 @cli.command()
 @pass_config
 def calibrate_intrinsics(config):
+    from calibrate_intrinsics import calibrate_intrinsics_all
     click.echo('Calibrating intrinsics...')
     calibrate_intrinsics_all(config)
 
 @cli.command()
 @pass_config
 def calibrate_extrinsics(config):
+    from calibrate_extrinsics import calibrate_extrinsics_all
     click.echo('Calibrating extrinsics...')
     calibrate_extrinsics_all(config)
 
