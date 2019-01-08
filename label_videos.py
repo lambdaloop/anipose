@@ -1,27 +1,16 @@
 #!/usr/bin/env python3
 
 import os.path
-import sys
-subfolder = os.getcwd().split('pipeline')[0]
-sys.path.append(subfolder)
-
-from myconfig_pipeline import pipeline_videos_raw, pipeline_pose, pipeline_videos_labeled, pipeline_prefix
-
-from myconfig_analysis import videofolder, cropping, scorer, Task, date, \
-    resnet, shuffle, trainingsiterations, pcutoff, deleteindividualframes,x1, x2, y1, y2
-
 
 import numpy as np
 from glob import glob
 import pandas as pd
 import os.path
 import cv2
-import sys
 import skvideo.io
 from tqdm import tqdm, trange
-import sys
 
-import matplotlib.pyplot as plt
+from matplotlib.pyplot import get_cmap
 
 def get_duration(vidname):
     metadata = skvideo.io.ffprobe(vidname)
@@ -38,7 +27,7 @@ def connect(img, points, bps, bodyparts, col=(0,255,0,255)):
         ixs = [bodyparts.index(bp) for bp in bps]
     except ValueError:
         return
-    
+
     for a, b in zip(ixs, ixs[1:]):
         if np.any(np.isnan(points[[a,b]])):
             continue
@@ -47,7 +36,7 @@ def connect(img, points, bps, bodyparts, col=(0,255,0,255)):
         cv2.line(img, tuple(pa), tuple(pb), col, 4)
 
 def connect_all(img, points, scheme, bodyparts):
-    cmap = plt.get_cmap('tab10')
+    cmap = get_cmap('tab10')
     for cnum, bps in enumerate(scheme):
         col = cmap(cnum % 10, bytes=True)
         col = [int(c) for c in col]
@@ -61,12 +50,12 @@ def connect_all(img, points, scheme, bodyparts):
 #      'tibia-tarsus-left', 'tarsus-end-left']
 # ]
 
+# TODO: read label scheme from config file
 scheme = [
     ['L1A', 'L1B', 'L1C', 'L1D', 'L1E'],
     ['L2A', 'L2B', 'L2C', 'L2D', 'L2E'],
     ['L3A', 'L3B', 'L3C', 'L3D', 'L3E']
 ]
-
 
 
 def visualize_labels(labels_fname, vid_fname, outname):
@@ -76,7 +65,7 @@ def visualize_labels(labels_fname, vid_fname, outname):
         scorer = dlabs.columns.levels[0][0]
         dlabs = dlabs.loc[:, scorer]
     bodyparts = list(dlabs.columns.levels[0])
-    
+
     cap = cv2.VideoCapture(vid_fname)
     # cap.set(1,0)
 
@@ -94,9 +83,9 @@ def visualize_labels(labels_fname, vid_fname, outname):
 
     last = len(dlabs)
 
-    cmap = plt.get_cmap('tab10')
+    cmap = get_cmap('tab10')
 
-    
+
     for ix in trange(last, ncols=70):
         ret, frame = cap.read()
         if not ret:
@@ -117,7 +106,7 @@ def visualize_labels(labels_fname, vid_fname, outname):
             good = np.array(scores) > 0.1
 
             points[~good] = np.nan
-            
+
             connect_all(img, points, scheme, bodyparts)
 
             for lnum, (x, y) in enumerate(points):
@@ -139,35 +128,40 @@ def get_folders(path):
     folders = next(os.walk(path))[1]
     return sorted(folders)
 
-        
-experiments = get_folders(pipeline_prefix)
 
-for exp in experiments:
-    exp_path = os.path.join(pipeline_prefix, exp)
-    sessions = get_folders(exp_path)
+def process_session(config, session_path):
+    pipeline_videos_raw = config['pipeline_videos_raw']
+    pipeline_videos_labeled = config['pipeline_videos_labeled_2d']
+    pipeline_pose = config['pipeline_pose_2d']
+
+    labels_fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
+    labels_fnames = sorted(labels_fnames)
+
+    outdir = os.path.join(session_path, pipeline_videos_labeled)
+    os.makedirs(outdir, exist_ok=True)
+
+    for fname in labels_fnames:
+        basename = os.path.basename(fname)
+        basename = os.path.splitext(basename)[0]
+
+        out_fname = os.path.join(outdir, basename+'.avi')
+        vidname = os.path.join(session_path, pipeline_videos_raw, basename+'.avi')
+
+        if os.path.exists(vidname):
+            if os.path.exists(out_fname) and \
+               abs(get_nframes(out_fname) - get_nframes(vidname)) < 100:
+                continue
+            print(out_fname)
+
+            visualize_labels(fname, vidname, out_fname)
+
+
+def label_videos_all(config):
+    pipeline_prefix = config['path']
+
+    sessions = get_folders(pipeline_prefix)
 
     for session in sessions:
         print(session)
-
-        labels_fnames = glob(os.path.join(pipeline_prefix, exp, session, pipeline_pose, '*.h5'))
-        labels_fnames = sorted(labels_fnames)
-
-        outdir = os.path.join(pipeline_prefix, exp, session, pipeline_videos_labeled)
-        os.makedirs(outdir, exist_ok=True)
-
-        for fname in labels_fnames:
-            basename = os.path.basename(fname)
-            basename = os.path.splitext(basename)[0]
-
-            out_fname = os.path.join(outdir, basename+'.avi')
-            vidname = os.path.join(pipeline_prefix, exp, session, pipeline_videos_raw, basename+'.avi')
-
-            if os.path.exists(vidname):
-                if os.path.exists(out_fname) and \
-                   abs(get_nframes(out_fname) - get_nframes(vidname)) < 100:
-                    continue
-                print(out_fname)
-
-                visualize_labels(fname, vidname, out_fname)
-
-
+        session_path = os.path.join(pipeline_prefix, session)
+        process_session(config, session_path)
