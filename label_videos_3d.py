@@ -14,17 +14,9 @@ from tqdm import tqdm, trange
 import sys
 from subprocess import check_output
 
-import matplotlib.pyplot as plt
+from matplotlib.pyplot import get_cmap
 
-def get_duration(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    duration = float(metadata['video']['@duration'])
-    return duration
-
-def get_nframes(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    length = int(metadata['video']['@nb_frames'])
-    return length
+from common import make_process_fun, get_nframes
 
 
 def wc(filename):
@@ -113,7 +105,7 @@ def visualize_labels(labels_fname, outname):
         '-vcodec': 'h264', '-qp': '30'
     })
 
-    cmap = plt.get_cmap('tab10')
+    cmap = get_cmap('tab10')
 
     
     dx = data.iloc[20]
@@ -188,13 +180,4 @@ def process_session(config, session_path):
 
         visualize_labels(fname, out_fname)
 
-
-def label_videos_3d_all(config):
-    pipeline_prefix = config['path']
-
-    sessions = get_folders(pipeline_prefix)
-
-    for session in sessions:
-        print(session)
-        session_path = os.path.join(pipeline_prefix, session)
-        process_session(config, session_path)
+label_videos_3d_all = make_process_fun(process_session)

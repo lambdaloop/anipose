@@ -12,6 +12,8 @@ from tqdm import tqdm, trange
 
 from matplotlib.pyplot import get_cmap
 
+from common import make_process_fun
+
 def get_duration(vidname):
     metadata = skvideo.io.ffprobe(vidname)
     duration = float(metadata['video']['@duration'])
@@ -124,16 +126,14 @@ def visualize_labels(labels_fname, vid_fname, outname):
     writer.close()
 
 
-def get_folders(path):
-    folders = next(os.walk(path))[1]
-    return sorted(folders)
-
 
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
     pipeline_videos_labeled = config['pipeline_videos_labeled_2d']
     pipeline_pose = config['pipeline_pose_2d']
 
+    print(session_path)
+    
     labels_fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
     labels_fnames = sorted(labels_fnames)
 
@@ -156,12 +156,4 @@ def process_session(config, session_path):
             visualize_labels(fname, vidname, out_fname)
 
 
-def label_videos_all(config):
-    pipeline_prefix = config['path']
-
-    sessions = get_folders(pipeline_prefix)
-
-    for session in sessions:
-        print(session)
-        session_path = os.path.join(pipeline_prefix, session)
-        process_session(config, session_path)
+label_videos_all = make_process_fun(process_session)

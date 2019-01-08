@@ -20,20 +20,10 @@ import os.path
 import sys
 
 ## TODO: use deeplabcut v2 instead of this
-# pose_path = '/home/pierre/research/tuthill/DeepLabCut_pierre/pose-tensorflow'
-pose_path = '/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow'
+pose_path = '/home/pierre/research/tuthill/DeepLabCut_pierre/pose-tensorflow'
+# pose_path = '/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow'
 
 sys.path.append(pose_path)
-
-# subfolder = os.getcwd().split('pipeline')[0]
-# sys.path.append(subfolder)
-# add parent directory: (where nnet & config are!)
-# sys.path.append(subfolder + "pose-tensorflow/")
-# sys.path.append(subfolder + "Generating_a_Training_Set")
-
-# from myconfig_pipeline import cropping, Task, date, \
-#     trainingsFraction, resnet, trainingsiterations, snapshotindex, shuffle,x1, x2, y1, y2
-# from myconfig_pipeline import pipeline_prefix, pipeline_videos_raw, pipeline_pose
 
 # Deeper-cut dependencies
 from config import load_config
@@ -42,9 +32,6 @@ from dataset.pose_dataset import data_to_input
 
 # Dependencies for video:
 import pickle
-# import matplotlib.pyplot as plt
-# import imageio
-# imageio.plugins.ffmpeg.download()
 import skimage.color
 import time
 import pandas as pd
@@ -54,6 +41,7 @@ from tqdm import tqdm
 from glob import glob
 import warnings
 import cv2
+from common import process_all
 
 def getpose(image, net_cfg, outputs, outall=False):
     ''' Adapted from DeeperCut, see pose-tensorflow folder'''
@@ -73,14 +61,14 @@ def getpose(image, net_cfg, outputs, outall=False):
 
 def process_video(vidname, dataname, net_stuff):
     sess, inputs, outputs, net_cfg = net_stuff
-    
+
     # clip = VideoFileClip(vidname)
     cap = cv2.VideoCapture(vidname)
     nframes = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    
+
     start = time.time()
     PredicteData = np.zeros((nframes, 3 * len(net_cfg['all_joints_names'])))
 
@@ -126,9 +114,6 @@ def process_video(vidname, dataname, net_stuff):
               'wb') as f:
         pickle.dump(metadata, f, pickle.HIGHEST_PROTOCOL)
 
-def get_folders(path):
-    folders = next(os.walk(path))[1]
-    return sorted(folders)
 
 def process_session(config, session_path, net_stuff):
     pipeline_videos_raw = config['pipeline_videos_raw']
@@ -156,14 +141,14 @@ def process_session(config, session_path, net_stuff):
                 warnings.simplefilter("ignore")
                 # print('reprocess', video)
                 process_video(video, dataname, net_stuff)
-    
+
 
 
 def pose_videos_all(config):
     pipeline_prefix = config['path']
 
     model_path = os.path.join(config['model_folder'], config['model_name'])
-    
+
     net_cfg = load_config(os.path.join(model_path, 'test', "pose_cfg.yaml"))
 
     net_cfg['init_weights'] = os.path.join(model_path, 'train',
@@ -174,12 +159,5 @@ def pose_videos_all(config):
     sess, inputs, outputs = predict.setup_pose_prediction(net_cfg)
 
     net_stuff = sess, inputs, outputs, net_cfg
-    
-    sessions = get_folders(pipeline_prefix)
-    
-    for session in sessions:
-        print(session)
-        session_path = os.path.join(pipeline_prefix, session)
 
-        process_session(config, session_path, net_stuff)
-        
+    process_all(config, process_session, net_stuff)

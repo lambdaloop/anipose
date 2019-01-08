@@ -12,18 +12,7 @@ from collections import defaultdict
 import toml
 from time import time
 import re
-
-def get_video_params(fname):
-    cap = cv2.VideoCapture(fname)
-
-    params = dict()
-    params['width'] = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    params['height'] = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    params['fps'] = cap.get(cv2.CAP_PROP_FPS)
-
-    cap.release()
-
-    return params
+from common import make_process_fun, get_cam_name
 
 def get_corners(fname, board):
     cap = cv2.VideoCapture(fname)
@@ -137,21 +126,6 @@ def calibrate_camera(fnames, numsq=2):
     return calib_params
 
 
-def get_folders(path):
-    folders = next(os.walk(path))[1]
-    return sorted(folders)
-
-def get_cam_name(config, fname):
-    basename = os.path.basename(fname)
-    basename = os.path.splitext(basename)[0]
-
-    cam_regex = config['cam_regex']
-    match = re.search(cam_regex, basename)
-    if not match:
-        return None
-    else:
-        return match.groups()[0]
-
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
     pipeline_calibration = config['pipeline_calibration']
@@ -185,14 +159,4 @@ def process_session(config, session_path):
                 toml.dump(calib, f)
 
 
-
-def calibrate_intrinsics_all(config):
-    pipeline_prefix = config['path']
-
-    sessions = get_folders(pipeline_prefix)
-
-    for session in sessions:
-        print(session)
-
-        session_path = os.path.join(pipeline_prefix, session)
-        process_session(config, session_path)
+calibrate_intrinsics_all = make_process_fun(process_session)

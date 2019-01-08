@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
 
-import cv2
-from cv2 import aruco
-import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
-from scipy import signal, stats
 import numpy as np
-from collections import defaultdict, Counter
+from collections import defaultdict
 import os.path, os
 import numpy as np
 import pickle
 import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D
-import warnings
 import toml
 from numpy import array as arr
-import skvideo.io
-from pprint import pprint
 from glob import glob
-import sys
 
 
 ## hack for hdf5 for testing
@@ -224,13 +215,4 @@ def process_session(config, session_path):
                     fname_dict, output_fname)
 
 
-def triangulate_all(config):
-    pipeline_prefix = config['path']
-
-    sessions = get_folders(pipeline_prefix)
-
-    for session in sessions:
-        print(session)
-
-        session_path = os.path.join(pipeline_prefix, session)
-        process_session(config, session_path)
+triangulate_all = make_process_fun(process_session)

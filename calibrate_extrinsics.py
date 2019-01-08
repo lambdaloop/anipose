@@ -13,10 +13,11 @@ import toml
 from time import time
 from pprint import pprint
 import re
+from common import *
 
+# TODO: make this board configurable
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 board = aruco.GridBoard_create(2, 2, 4, 1, dictionary)
-
 
 def detect_aruco(gray, intrinsics):
     # grayb = gray
@@ -87,41 +88,6 @@ def mean_transform(M_list):
     tvec = np.median(tvecs, axis=0)
 
     return make_M(rvec, tvec)
-
-def get_video_params(fname):
-    cap = cv2.VideoCapture(fname)
-
-    params = dict()
-    params['width'] = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    params['height'] = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    params['fps'] = cap.get(cv2.CAP_PROP_FPS)
-
-    cap.release()
-
-    return params
-
-def get_folders(path):
-    folders = next(os.walk(path))[1]
-    return sorted(folders)
-
-def get_cam_name(config, fname):
-    basename = os.path.basename(fname)
-    basename = os.path.splitext(basename)[0]
-
-    cam_regex = config['cam_regex']
-    match = re.search(cam_regex, basename)
-
-    if not match:
-        return None
-    else:
-        return match.groups()[0]
-
-def get_video_name(config, fname):
-    basename = os.path.basename(fname)
-    basename = os.path.splitext(basename)[0]
-
-    cam_regex = config['cam_regex']
-    return re.sub(cam_regex, '', basename)
 
 def get_matrices(fname_dict, cam_intrinsics, skip=20):
     minlen = np.inf
@@ -262,14 +228,6 @@ def process_session(config, session_path):
             toml.dump(extrinsics_out, f)
 
 
+calibrate_extrinsics_all = make_process_fun(process_session)
 
-def calibrate_extrinsics_all(config):
-    pipeline_prefix = config['path']
 
-    sessions = get_folders(pipeline_prefix)
-
-    for session in sessions:
-        print(session)
-
-        session_path = os.path.join(pipeline_prefix, session)
-        process_session(config, session_path)
