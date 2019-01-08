@@ -1,20 +1,4 @@
-"""
-DeepLabCut Toolbox
-https://github.com/AlexEMG/DeepLabCut
-
-A Mathis, alexander.mathis@bethgelab.org
-M Mathis, mackenzie@post.harvard.edu
-P Karashchuk, pierrek@uw.edu
-
-This script analyzes videos based on a trained network.
-You need tensorflow for evaluation. Run by:
-CUDA_VISIBLE_DEVICES=0 python3 AnalyzeVideos.py
-
-"""
-
-####################################################
-# Dependencies
-####################################################
+#!/usr/bin/env python3
 
 import os.path
 import sys
@@ -55,14 +39,9 @@ def getpose(image, net_cfg, outputs, outall=False):
         return pose
 
 
-##################################################
-# Datafolder
-##################################################
-
 def process_video(vidname, dataname, net_stuff):
     sess, inputs, outputs, net_cfg = net_stuff
 
-    # clip = VideoFileClip(vidname)
     cap = cv2.VideoCapture(vidname)
     nframes = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
