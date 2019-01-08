@@ -11,9 +11,9 @@ import click
 # anipose calibrate # run calibration of intrinsics and extrinsics
 # anipose analyze # analyze the poses for each video
 # anipose label # create videos for each pose
-# anipose run-data # run only the data portion (no viz)
-# anipose run-viz # run only the visualization pipeline
-# anipose run-all # run everything (run-data then run-viz)
+# anipose run_data # run only the data portion (no viz)
+# anipose run_viz # run only the visualization pipeline
+# anipose run_all # run everything (run_data then run_viz)
 
 pass_config = click.make_pass_decorator(dict)
 
