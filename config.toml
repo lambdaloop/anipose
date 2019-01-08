@@ -1,0 +1,16 @@
+path = "/home/pierre/research/tuthill/flywalk-pipeline-new/test2"
+
+model_folder = "/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow/models"
+model_name = "flypose-noseq-midpointsDec18-trainset95shuffle1"
+model_train_iter = 1030000
+
+compute_angles = true
+
+nesting = 1
+
+# 3d options
+triangulate = true
+calibration_prefix = "calib"
+recording_prefix = "vid"
+
+cam_regex = "_([A-Z])$"
