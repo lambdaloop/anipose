@@ -106,6 +106,8 @@ def label_3d(config):
 @cli.command()
 @pass_config
 def run_data(config):
+    from calibrate_intrinsics import calibrate_intrinsics_all
+    from calibrate_extrinsics import calibrate_extrinsics_all
     from pose_videos import pose_videos_all
     from triangulate import triangulate_all
 
@@ -137,6 +139,8 @@ def run_viz(config):
 @cli.command()
 @pass_config
 def run_all(config):
+    from calibrate_intrinsics import calibrate_intrinsics_all
+    from calibrate_extrinsics import calibrate_extrinsics_all
     from pose_videos import pose_videos_all
     from triangulate import triangulate_all
 

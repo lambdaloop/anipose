@@ -4,8 +4,8 @@ import os.path
 import sys
 
 ## TODO: use deeplabcut v2 instead of this
-pose_path = '/home/pierre/research/tuthill/DeepLabCut_pierre/pose-tensorflow'
-# pose_path = '/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow'
+# pose_path = '/home/pierre/research/tuthill/DeepLabCut_pierre/pose-tensorflow'
+pose_path = '/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow'
 
 sys.path.append(pose_path)
 

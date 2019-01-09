@@ -2,6 +2,7 @@ import cv2
 import re
 import os, os.path
 from collections import deque
+from glob import glob
 
 def get_video_params(fname):
     cap = cv2.VideoCapture(fname)

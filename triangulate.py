@@ -11,6 +11,7 @@ import toml
 from numpy import array as arr
 from glob import glob
 
+from common import make_process_fun
 
 ## hack for hdf5 for testing
 os.environ['HDF5_DISABLE_VERSION_CHECK'] = '2'

@@ -12,7 +12,7 @@ from collections import defaultdict
 import toml
 from time import time
 import re
-from common import make_process_fun, get_cam_name, find_calibration_folder
+from common import make_process_fun, get_cam_name, find_calibration_folder, get_video_params
 
 def get_corners(fname, board):
     cap = cv2.VideoCapture(fname)
