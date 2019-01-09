@@ -12,7 +12,7 @@ from collections import defaultdict
 import toml
 from time import time
 import re
-from common import make_process_fun, get_cam_name
+from common import make_process_fun, get_cam_name, find_calibration_folder
 
 def get_corners(fname, board):
     cap = cv2.VideoCapture(fname)
@@ -131,7 +131,12 @@ def process_session(config, session_path):
     pipeline_calibration_videos = config['pipeline_calibration_videos']
     pipeline_calibration_results = config['pipeline_calibration_results']
 
-    videos = glob(os.path.join(session_path,
+
+    calibration_path = find_calibration_folder(config, session_path)
+    if calibration_path is None:
+        return
+    
+    videos = glob(os.path.join(calibration_path,
                                pipeline_calibration_videos,
                                '*.avi'))
     videos = sorted(videos)
@@ -148,7 +153,7 @@ def process_session(config, session_path):
     for cname in cam_names:
         fnames = cam_videos[cname]
         outname_base = 'intrinsics_{}.toml'.format(cname)
-        outdir = os.path.join(session_path, pipeline_calibration_results)
+        outdir = os.path.join(calibration_path, pipeline_calibration_results)
         os.makedirs(outdir, exist_ok=True)
         outname = os.path.join(outdir, outname_base)
         print(outname)

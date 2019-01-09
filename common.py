@@ -56,12 +56,12 @@ def process_all(config, process_session, *args):
     if nesting == 0:
         process_session(config, pipeline_prefix, *args)
         return
-    
+
     folders = get_folders(pipeline_prefix)
     level = 1
 
     q = deque()
-    
+
     next_folders = [ (os.path.join(pipeline_prefix, folder), level)
                      for folder in folders ]
     q.extend(next_folders)
@@ -77,8 +77,25 @@ def process_all(config, process_session, *args):
             next_folders = [ (os.path.join(path, folder), level+1)
                              for folder in folders ]
             q.extend(next_folders)
-    
+
 def make_process_fun(process_session):
     def fun(config):
         return process_all(config, process_session)
     return fun
+
+def find_calibration_folder(config, session_path):
+    pipeline_calibration_videos = config['pipeline_calibration_videos']
+    nesting = config['nesting']
+
+    level = nesting
+    curpath = session_path
+
+    while level >= 0:
+        checkpath = os.path.join(curpath, pipeline_calibration_videos)
+        print(checkpath)
+        videos = glob(os.path.join(checkpath, '*.avi'))
+        if len(videos) > 0:
+            return curpath
+
+        curpath = os.path.dirname(curpath)
+        level -= 1

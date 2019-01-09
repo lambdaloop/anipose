@@ -96,10 +96,8 @@ def process_video(vidname, dataname, net_stuff):
 
 def process_session(config, session_path, net_stuff):
     pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_calibration = config['pipeline_calibration']
     pipeline_pose = config['pipeline_pose_2d']
 
-    ## TODO: process all videos here, except those with calibration prefix
     videos = glob(os.path.join(session_path, pipeline_videos_raw, '*.avi'))
     videos = sorted(videos)
 

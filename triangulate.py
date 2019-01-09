@@ -175,12 +175,16 @@ def triangulate(calib_folder, video_folder, pose_folder,
 
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_calibration = config['pipeline_calibration']
+    pipeline_calibration_results = config['pipeline_calibration_results']
     pipeline_pose = config['pipeline_pose_2d']
     pipeline_3d = config['pipeline_pose_3d']
 
     
-    calib_folder = os.path.join(session_path, pipeline_calibration)
+    calibration_path = find_calibration_folder(config, session_path)
+    if calibration_path is None:
+        return
+    
+    calib_folder = os.path.join(calibration_path, pipeline_calibration)
     video_folder = os.path.join(session_path, pipeline_videos_raw)
     pose_folder = os.path.join(session_path, pipeline_pose)
     output_folder = os.path.join(session_path, pipeline_3d)

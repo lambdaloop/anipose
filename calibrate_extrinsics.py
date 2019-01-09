@@ -187,7 +187,14 @@ def process_session(config, session_path):
     pipeline_calibration_videos = config['pipeline_calibration_videos']
     pipeline_calibration_results = config['pipeline_calibration_results']
 
-    videos = glob(os.path.join(session_path, pipeline_calibration_videos, '*.avi'))
+    calibration_path = find_calibration_folder(config, session_path)
+
+    if calibration_path is None:
+        return
+    
+    videos = glob(os.path.join(calibration_path,
+                               pipeline_calibration_videos,
+                               '*.avi'))
     videos = sorted(videos)
 
     cam_videos = defaultdict(list)
@@ -203,7 +210,7 @@ def process_session(config, session_path):
     cam_names = sorted(cam_names)
 
     outname_base = 'extrinsics.toml'
-    outdir = os.path.join(session_path, pipeline_calibration_results)
+    outdir = os.path.join(calibration_path, pipeline_calibration_results)
     os.makedirs(outdir, exist_ok=True)
     outname = os.path.join(outdir, outname_base)
 
