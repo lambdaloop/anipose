@@ -55,7 +55,9 @@ def get_points(dx, bodyparts):
     # scores = [dx[bp+'_score'] for bp in bodyparts]
     errors = [dx[bp+'_error'] for bp in bodyparts]
     # good = (np.array(scores) > 0.1) & (np.array(errors) < 35)
-    good = np.array(errors) < 115
+    ## TODO: add checking on scores here
+    ## TODO: make error threshold configurable
+    good = np.array(errors) < 250
 
     points = np.array(points)
     points[~good] = np.nan
@@ -96,6 +98,7 @@ def visualize_labels(labels_fname, outname):
     framenums = np.array(data['fnum'])
     framedict = dict(zip(data['fnum'], data.index))
 
+    ## TODO: read this from the video
     FPS = 300.0
 
     writer = skvideo.io.FFmpegWriter(outname, inputdict={

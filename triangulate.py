@@ -11,7 +11,7 @@ import toml
 from numpy import array as arr
 from glob import glob
 
-from common import make_process_fun
+from common import make_process_fun, find_calibration_folder, get_video_name, get_cam_name
 
 ## hack for hdf5 for testing
 os.environ['HDF5_DISABLE_VERSION_CHECK'] = '2'
@@ -31,20 +31,6 @@ def load_extrinsics(folder):
         new_k = tuple(k.split('_'))
         extrinsics_out[new_k] = v
     return extrinsics_out
-
-def get_folders(path):
-    folders = next(os.walk(path))[1]
-    return sorted(folders)
-
-def get_cam_name(fname):
-    basename = os.path.basename(fname)
-    basename = os.path.splitext(basename)[0]
-    return basename.split('_')[-1]
-
-def get_video_name(fname):
-    basename = os.path.basename(fname)
-    basename = os.path.splitext(basename)[0]
-    return '_'.join(basename.split('_')[0:-1])
 
 def expand_matrix(mtx):
     z = np.zeros((4,4))
@@ -89,25 +75,39 @@ def rerange(px, highrange):
 
 
 
-def triangulate(calib_folder, video_folder, pose_folder,
+def triangulate(config,
+                calib_folder, video_folder, pose_folder,
                 fname_dict, output_fname, cam_align='C'):
 
-    # video_format = os.path.join(video_folder, vidname + '_{}.avi')
-    # pose_format = os.path.join(pose_folder, vidname + '_{}.h5')
-
+    ## TODO: make the recorder.toml file configurable
     record_fname = os.path.join(video_folder, 'recorder.toml')
 
-    if not os.path.exists(record_fname):
-        return
-
-    record_dict = toml.load(record_fname)
-
-    
+    if os.path.exists(record_fname):
+        record_dict = toml.load(record_fname)
+    else:
+        record_dict = None
+        if 'cameras' not in config:
+        ## TODO: more detailed error?
+            print("-- no crop windows found")
+            return
+        
     cam_names, pose_names = list(zip(*sorted(fname_dict.items())))
 
     intrinsics = load_intrinsics(calib_folder, cam_names)
     extrinsics = load_extrinsics(calib_folder)
 
+    
+    offsets_dict = dict()
+    for cname in cam_names:
+        if record_dict is None:
+            if cname not in config['cameras']:
+                print("-- no crop windows found for camera {}".format(cname))
+                return
+            offsets_dict[cname] = config['cameras'][cname]['offset']
+        else:
+            offsets_dict[cname] = record_dict['cameras'][cname]['video']['ROIPosition']
+
+    
     offsets = []
     cam_mats = []
     for cname in cam_names:
@@ -118,8 +118,7 @@ def triangulate(calib_folder, video_folder, pose_folder,
             right = arr(extrinsics[(cname, cam_align)])
         mat = np.matmul(left, right)
         cam_mats.append(mat)
-        offset = record_dict['cameras'][cname]['video']['ROIPosition']
-        offsets.append(offset)
+        offsets.append(offsets_dict[cname])
 
 
     maxlen = 0
@@ -185,7 +184,7 @@ def process_session(config, session_path):
     if calibration_path is None:
         return
     
-    calib_folder = os.path.join(calibration_path, pipeline_calibration)
+    calib_folder = os.path.join(calibration_path, pipeline_calibration_results)
     video_folder = os.path.join(session_path, pipeline_videos_raw)
     pose_folder = os.path.join(session_path, pipeline_pose)
     output_folder = os.path.join(session_path, pipeline_3d)
@@ -197,7 +196,7 @@ def process_session(config, session_path):
     cam_videos = defaultdict(list)
 
     for pf in pose_files:
-        name = get_video_name(pf)
+        name = get_video_name(config, pf)
         cam_videos[name].append(pf)
 
     vid_names = cam_videos.keys()
@@ -207,7 +206,7 @@ def process_session(config, session_path):
     for name in vid_names:
         print(name)
         fnames = cam_videos[name]
-        cam_names = [get_cam_name(f) for f in fnames]
+        cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
         fname_dicts.append(fname_dict)
 
@@ -216,7 +215,8 @@ def process_session(config, session_path):
         if os.path.exists(output_fname):
             continue
 
-        triangulate(calib_folder, video_folder, pose_folder,
+        triangulate(config,
+                    calib_folder, video_folder, pose_folder,
                     fname_dict, output_fname)
 
 

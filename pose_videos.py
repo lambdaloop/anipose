@@ -27,7 +27,7 @@ import warnings
 import cv2
 from common import process_all
 
-def getpose(image, net_cfg, outputs, outall=False):
+def getpose(image, sess, inputs, outputs, net_cfg, outall=False):
     ''' Adapted from DeeperCut, see pose-tensorflow folder'''
     image_batch = data_to_input(skimage.color.gray2rgb(image))
     outputs_np = sess.run(outputs, feed_dict={inputs: image_batch})
@@ -39,7 +39,7 @@ def getpose(image, net_cfg, outputs, outall=False):
         return pose
 
 
-def process_video(vidname, dataname, net_stuff):
+def process_video(vidname, dataname, net_stuff, config):
     sess, inputs, outputs, net_cfg = net_stuff
 
     cap = cv2.VideoCapture(vidname)
@@ -61,12 +61,14 @@ def process_video(vidname, dataname, net_stuff):
         except:
             break
         # image = img_as_ubyte(clip.get_frame(index * 1. / fps))
-        pose = getpose(image, net_cfg, outputs)
+        pose = getpose(image, sess, inputs, outputs, net_cfg)
         PredicteData[index, :] = pose.flatten()
         # NOTE: thereby net_cfg['all_joints_names'] should be same order as bodyparts!
 
     cap.release()
     stop = time.time()
+
+    scorer = 'DeepCut_{}_{}'.format(config['model_name'], config['model_train_iter'])
 
     dictionary = {
         "start": start,
@@ -117,7 +119,7 @@ def process_session(config, session_path, net_stuff):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # print('reprocess', video)
-                process_video(video, dataname, net_stuff)
+                process_video(video, dataname, net_stuff, config)
 
 
 
@@ -132,9 +134,10 @@ def pose_videos_all(config):
                                            'snapshot-{}'.format(
                                                config['model_train_iter']))
 
-    scorer = 'DeepCut_{}_{}'.format(config['model_name'], config['model_train_iter'])
     sess, inputs, outputs = predict.setup_pose_prediction(net_cfg)
 
     net_stuff = sess, inputs, outputs, net_cfg
 
     process_all(config, process_session, net_stuff)
+
+    ## TODO: release the session here, free the neural net memory

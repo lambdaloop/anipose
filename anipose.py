@@ -37,7 +37,10 @@ def load_config(fname):
 
     # put in the defaults
     if 'path' not in config:
-        config['path'] = os.getcwd()
+        if os.path.exists(fname) and os.path.dirname(fname) != '':
+            config['path'] = os.path.dirname(fname)
+        else:
+            config['path'] = os.getcwd()
 
     for k,v in DEFAULT_CONFIG.items():
         if k not in config:

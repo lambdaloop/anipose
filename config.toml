@@ -1,8 +1,8 @@
 
-# path = "/home/pierre/research/tuthill/flywalk-pipeline-new/test2"
+# path = "/home/pierre/research/tuthill/flywalk-pipeline-go/test2"
 # model_folder = "/jellyfish/research/tuthill/DeepLabCut_pierre/pose-tensorflow/models"
 
-path = "/media/beast/pierre/flywalk-pipeline-more/test2"
+path = "/media/beast/pierre/flywalk-pipeline-go/test2"
 model_folder = "/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow/models"
 
 model_name = "flypose-subset-midpointsDec18-trainset95shuffle1"
@@ -18,3 +18,16 @@ calibration_prefix = "calib"
 recording_prefix = "vid"
 
 cam_regex = "_([A-Z])$"
+
+[cameras.A]
+offset = [224, 120, 832, 704] 
+
+[cameras.B]
+offset = [224, 230, 800, 700] 
+
+[cameras.C]
+offset = [160, 250, 864, 700] 
+
+A_vid.ROIPosition = [80, 175, 700, 450]
+B_vid.ROIPosition = [55, 160, 550, 360]
+C_vid.ROIPosition = [180, 250, 500, 350]

@@ -3,6 +3,7 @@ import re
 import os, os.path
 from collections import deque
 from glob import glob
+import skvideo.io
 
 def get_video_params(fname):
     cap = cv2.VideoCapture(fname)
@@ -51,6 +52,8 @@ def get_nframes(vidname):
     return length
 
 def process_all(config, process_session, *args):
+    print(config)
+    
     pipeline_prefix = config['path']
     nesting = config['nesting']
 
