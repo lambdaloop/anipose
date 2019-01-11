@@ -121,6 +121,9 @@ def triangulate(config,
         offsets.append(offsets_dict[cname])
 
 
+    offsets = arr(offsets)
+    cam_mats = arr(offsets)
+
     maxlen = 0
     caps = dict()
     for pose_name in pose_names:
@@ -153,13 +156,25 @@ def triangulate(config,
     errors = np.zeros((shape[0], shape[2]))
     errors.fill(np.nan)
 
+    scores_3d = np.zeros((shape[0], shape[2]))
+    scores_3d.fill(np.nan)
+
+    num_cams = np.zeros((shape[0], shape[2]))
+    num_cams.fill(np.nan)
+
+    # TODO: configure this threshold
+    all_points_raw[all_scores < 0.75] = np.nan
+
     for i in trange(all_points_raw.shape[0], ncols=70):
         for j in range(all_points_raw.shape[2]):
             pts = all_points_raw[i, :, j, :]
-            if ~np.any(np.isnan(pts)):
-                p3d = triangulate_simple(pts, cam_mats)
+            good = ~np.isnan(pts[:, 0])
+            if np.sum(good) >= 2:
+                p3d = triangulate_simple(pts[good], cam_mats[good])
                 all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error(p3d, pts, cam_mats)
+                errors[i,j] = reprojection_error(p3d, pts[good], cam_mats[good])
+                num_cams[i,j] = np.sum(good)
+                scores_3d[i,j] = np.min(all_scores[i, :, j][good])
 
 
     dout = pd.DataFrame()
@@ -167,6 +182,8 @@ def triangulate(config,
         for ax_num, axis in enumerate(['x','y','z']):
             dout[bp + '_' + axis] = all_points_3d[:, bp_num, ax_num]
         dout[bp + '_error'] = errors[:, bp_num]
+        dout[bp + '_ncams'] = num_cams[:, bp_num]
+        dout[bp + '_score'] = scores_3d[:, bp_num]
 
     dout['fnum'] = np.arange(length)
         
