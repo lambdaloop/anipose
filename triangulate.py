@@ -122,7 +122,7 @@ def triangulate(config,
 
 
     offsets = arr(offsets)
-    cam_mats = arr(offsets)
+    cam_mats = arr(cam_mats)
 
     maxlen = 0
     caps = dict()
