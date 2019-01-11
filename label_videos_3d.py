@@ -65,13 +65,8 @@ def get_points(dx, bodyparts):
     return points
         
 
-# scheme = [
-#     ['body-coxa-right', 'coxa-femur-right', 'femur-tibia-right',
-#      'tibia-tarsus-right', 'tarsus-end-right'],
-#     ['body-coxa-left', 'coxa-femur-left', 'femur-tibia-left',
-#      'tibia-tarsus-left', 'tarsus-end-left']
-# ]
 
+## TODO: specify this scheme in config.toml
 scheme = [
     ['L1A', 'L1B', 'L1C', 'L1D', 'L1E'],
     ['L2A', 'L2B', 'L2C', 'L2D', 'L2E'],
@@ -149,7 +144,7 @@ def visualize_labels(labels_fname, outname):
 
         writer.writeFrame(img)
 
-
+    mlab.close(all=True)
     writer.close()
 
 
@@ -183,4 +178,5 @@ def process_session(config, session_path):
 
         visualize_labels(fname, out_fname)
 
+        
 label_videos_3d_all = make_process_fun(process_session)
