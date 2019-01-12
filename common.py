@@ -4,6 +4,15 @@ import os, os.path
 from collections import deque
 from glob import glob
 import skvideo.io
+from subprocess import check_output
+
+def wc(filename):
+    out = check_output(["wc", "-l", filename])
+    num = out.decode('utf8').split(' ')[0]
+    return int(num)
+
+def get_data_length(fname):
+    return wc(fname) - 1
 
 def get_video_params(fname):
     cap = cv2.VideoCapture(fname)

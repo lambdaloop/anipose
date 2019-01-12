@@ -12,20 +12,10 @@ import sys
 import skvideo.io
 from tqdm import tqdm, trange
 import sys
-from subprocess import check_output
 from collections import defaultdict
 from matplotlib.pyplot import get_cmap
 
-from common import make_process_fun, get_nframes, get_video_name, get_video_params
-
-
-def wc(filename):
-    out = check_output(["wc", "-l", filename])
-    num = out.decode('utf8').split(' ')[0]
-    return int(num)
-
-def get_data_length(fname):
-    return wc(fname) - 1
+from common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length
 
 def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]
@@ -77,10 +67,6 @@ scheme = [
 ]
 
 
-
-labels_fname = '/home/pierre/research/tuthill/flywalk-pipeline-new/test2/2018-11-04-f1/pose-3d/vid_2018-11-04--18-04-26.csv'
-
-outname = 'test-video-3d.avi'
 
 def visualize_labels(labels_fname, outname, fps=300):
 
@@ -147,10 +133,6 @@ def visualize_labels(labels_fname, outname, fps=300):
     mlab.close(all=True)
     writer.close()
 
-
-def get_folders(path):
-    folders = next(os.walk(path))[1]
-    return sorted(folders)
 
 
 def process_session(config, session_path):
