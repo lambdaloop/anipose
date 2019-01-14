@@ -2,6 +2,8 @@
 # path = "/home/pierre/research/tuthill/flywalk-pipeline-go/test2"
 # model_folder = "/jellyfish/research/tuthill/DeepLabCut_pierre/pose-tensorflow/models"
 
+project = "flypose"
+
 path = "/media/beast/pierre/flywalk-pipeline-go/test2"
 model_folder = "/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow/models"
 
