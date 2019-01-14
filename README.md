@@ -111,12 +111,12 @@ process everything, and separate pipeline scripts for each step.
 Perhaps something like:
 
 ```
-anipose calibrate \# run calibration of intrinsics and extrinsics
-anipose label \# label the poses for each video
-anipose label-videos \# create videos for each pose
-anipose run-data \# run only the data portion (no viz)
-anipose run-viz \# run only the visualization pipeline
-anipose run-all \# run everything (run-data then run-viz)
+anipose calibrate # run calibration of intrinsics and extrinsics
+anipose label # label the poses for each video
+anipose label-videos # create videos for each pose
+anipose run-data # run only the data portion (no viz)
+anipose run-viz # run only the visualization pipeline
+anipose run-all # run everything (run-data then run-viz)
 ```
 
 The program anipose should parse out the config within the folder, and
@@ -135,15 +135,14 @@ which angles she cares about.
 
 This may be specified in the config.toml file as follows:
 
-\[angles\]
+```
+[angles]
+L1_CF = ["L1A", "L1B", "L1C"]
+L1_FTi = ["L1B", "L1C", "L1D"]
+L1_TiTa = ["L1C", "L1D", "L1E"]
+```
 
-L1\_CF = \["L1A", "L1B", "L1C"\]
-
-L1\_FTi = \["L1B", "L1C", "L1D"\]
-
-L1\_TiTa = \["L1C", "L1D", "L1E"\]
-
-The key above is the \[angles\] header, which specifies that whatever
+The key above is the `[angles]` header, which specifies that whatever
 follows is an angle.
 
 Next, each angle is specified by a name on the left, and by a list of 3
