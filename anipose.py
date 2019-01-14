@@ -110,9 +110,12 @@ def angles(config):
 @cli.command()
 @pass_config
 def summarize(config):
-    from summarize import summarize_angles
+    from summarize import summarize_angles, summarize_pose3d
     click.echo('Summarizing angles...')
     summarize_angles(config)
+
+    click.echo('Summarizing 3D pose...')
+    summarize_pose3d(config)
 
     
 @cli.command()
