@@ -16,6 +16,8 @@ CUDA_VISIBLE_DEVICES=0 python3 check_probs.py vidname outfolder log
 # Dependencies
 ####################################################
 
+## TODO: refactor this file so we can easily check probs as part of the pipeline
+
 import os.path
 import sys
 
