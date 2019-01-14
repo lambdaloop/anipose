@@ -22,7 +22,8 @@ DEFAULT_CONFIG = {
     'pipeline_videos_labeled_2d': 'videos-labeled',
     'pipeline_calibration_videos': 'calibration',
     'pipeline_calibration_results': 'calibration',
-    'pipeline_videos_labeled_3d': 'videos-3d'
+    'pipeline_videos_labeled_3d': 'videos-3d',
+    'pipeline_angles': 'angles'
 }
 
 
@@ -92,6 +93,14 @@ def triangulate(config):
     click.echo('Triangulating points...')
     triangulate_all(config)
 
+
+@cli.command()
+@pass_config
+def angles(config):
+    from compute_angles import compute_angles_all
+    click.echo('Computing angles...')
+    compute_angles_all(config)
+
 @cli.command()
 @pass_config
 def label_2d(config):
@@ -146,6 +155,7 @@ def run_all(config):
     from calibrate_extrinsics import calibrate_extrinsics_all
     from pose_videos import pose_videos_all
     from triangulate import triangulate_all
+    from compute_angles import compute_angles_all
 
     click.echo('Calibrating...')
     calibrate_intrinsics_all(config)
@@ -156,6 +166,9 @@ def run_all(config):
 
     click.echo('Triangulating points...')
     triangulate_all(config)
+
+    click.echo('Computing angles...')
+    compute_angles_all(config)
 
     from label_videos import label_videos_all
     from label_videos_3d import label_videos_3d_all
