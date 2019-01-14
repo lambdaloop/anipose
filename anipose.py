@@ -2,7 +2,7 @@
 
 import os, os.path
 import toml
-
+from common import full_path
 import click
 
 ## possible commands
@@ -23,7 +23,8 @@ DEFAULT_CONFIG = {
     'pipeline_calibration_videos': 'calibration',
     'pipeline_calibration_results': 'calibration',
     'pipeline_videos_labeled_3d': 'videos-3d',
-    'pipeline_angles': 'angles'
+    'pipeline_angles': 'angles',
+    'pipeline_summaries': 'summaries'
 }
 
 
@@ -43,6 +44,11 @@ def load_config(fname):
         else:
             config['path'] = os.getcwd()
 
+    config['path'] = full_path(config['path'])
+            
+    if 'project' not in config:
+        config['project'] = os.path.basename(config['path'])
+            
     for k,v in DEFAULT_CONFIG.items():
         if k not in config:
             config[k] = v
@@ -101,6 +107,14 @@ def angles(config):
     click.echo('Computing angles...')
     compute_angles_all(config)
 
+@cli.command()
+@pass_config
+def summarize(config):
+    from summarize import summarize_angles
+    click.echo('Summarizing angles...')
+    summarize_angles(config)
+
+    
 @cli.command()
 @pass_config
 def label_2d(config):
