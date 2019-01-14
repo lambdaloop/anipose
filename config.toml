@@ -1,4 +1,3 @@
-
 # path = "/home/pierre/research/tuthill/flywalk-pipeline-go/test2"
 # model_folder = "/jellyfish/research/tuthill/DeepLabCut_pierre/pose-tensorflow/models"
 
@@ -36,12 +35,10 @@ L3_TiTa = ["L3C", "L3D", "L3E"]
 
 
 [cameras.A]
-offset = [224, 120, 832, 704] 
+offset = [224, 120, 832, 704]
 
 [cameras.B]
-offset = [224, 230, 800, 700] 
+offset = [224, 230, 800, 700]
 
 [cameras.C]
-offset = [160, 250, 864, 700] 
-
-
+offset = [160, 250, 864, 700]

@@ -151,7 +151,7 @@ def get_transform(matrix_list, left, right):
 
 def get_all_matrix_pairs(matrix_list, cam_names):
     out = dict()
-    
+
     for left in cam_names:
         for right in cam_names:
             if left == right:
@@ -169,7 +169,7 @@ def get_extrinsics(fname_dicts, cam_intrinsics, skip=20):
         ml = get_matrices(fd, cam_intrinsics, skip=skip)
         matrix_list.extend(ml)
         cam_names.update(fd.keys())
-    
+
     pairs = get_all_matrix_pairs(matrix_list, sorted(cam_names))
 
     return pairs
@@ -180,7 +180,7 @@ def load_intrinsics(folder, cam_names):
         fname = os.path.join(folder, 'intrinsics_{}.toml'.format(cname))
         intrinsics[cname] = toml.load(fname)
     return intrinsics
-    
+
 
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
@@ -191,7 +191,7 @@ def process_session(config, session_path):
 
     if calibration_path is None:
         return
-    
+
     videos = glob(os.path.join(calibration_path,
                                pipeline_calibration_videos,
                                '*.avi'))
@@ -238,5 +238,3 @@ def process_session(config, session_path):
 
 
 calibrate_extrinsics_all = make_process_fun(process_session)
-
-

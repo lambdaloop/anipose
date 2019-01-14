@@ -45,10 +45,10 @@ def load_config(fname):
             config['path'] = os.getcwd()
 
     config['path'] = full_path(config['path'])
-            
+
     if 'project' not in config:
         config['project'] = os.path.basename(config['path'])
-            
+
     for k,v in DEFAULT_CONFIG.items():
         if k not in config:
             config[k] = v
@@ -117,7 +117,7 @@ def summarize(config):
     click.echo('Summarizing 3D pose...')
     summarize_pose3d(config)
 
-    
+
 @cli.command()
 @pass_config
 def label_2d(config):
