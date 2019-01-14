@@ -1,4 +1,8 @@
-# Input specification
+# Anipose
+
+Anipose is a framework for scalable DeepLabCut based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders. 
+
+## Input specification
 
 Ideally someone who is collecting data should just be able to put all
 the videos into a single folder during a data collection run.
@@ -40,7 +44,7 @@ layout of folder for videos for 3d tracking
 /experiment/session1/calibration/calib\_v1\_cam3.avi
 ```
 
-# Configuration
+## Configuration
 
 Example config file for 2d/3d tracking:
 
@@ -55,7 +59,7 @@ model_train_iter = 750000
 triangulate = true
 ```
 
-# Output specification
+## Output specification
 
 The output structure should match the input structure, with additional
 files resulting from the tracking.
@@ -78,7 +82,7 @@ It can be one of the following values:
   - **videos-3d** = 3d videos generated from 3d tracking
   - **config** = computed configuration for each session
 
-# Outline of processing plan
+## Outline of processing plan
 
 For each experiment, for each session
 
@@ -101,7 +105,7 @@ For each experiment, for each session
     
     4.  Generate 3d videos
 
-# Using the pipeline in the field
+## Using the pipeline in the field
 
 Ideally, there should be one repository with all the code, and the data
 is held separate. Each data folder should come with a configuration file
@@ -123,9 +127,7 @@ The program anipose should parse out the config within the folder, and
 figure out all the appropriate parameters to pass to the functions
 underneath.
 
-#   
-
-# Computing angle estimates
+## Computing angle estimates
 
 Although it’s very useful to get 3D tracking estimates, we also need
 angle estimates.
@@ -148,7 +150,7 @@ follows is an angle.
 Next, each angle is specified by a name on the left, and by a list of 3
 joints on the right.
 
-# Summarizing the data
+## Summarizing the data
 
 After computing the whole pipeline for all videos, the final outputs of
 interest (the 3d pose coordinates and angles, possibly the 2d
