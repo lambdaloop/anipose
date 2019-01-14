@@ -52,7 +52,7 @@ model_train_iter = 750000
 
 # 3d options
 
-**triangulate** = true
+triangulate = true
 ```
 
 # Output specification
@@ -69,44 +69,37 @@ step.
 
 It can be one of the following values:
 
-  - > **videos-raw** = input videos, compressed
-
-  - > **pose-2d** = 2d tracking for each of the input videos
-
-  - > **calibration** = camera parameters obtained from 3d calibration
-
-  - > **pose-3d** = 3d tracking for each group of input videos
-
-  - > **angles** = computed angles from 3d tracking
-
-  - > **videos-labeled** = videos labeled with the 2d tracking
-
-  - > **videos-3d** = 3d videos generated from 3d tracking
-
-  - > **config** = computed configuration for each session
+  - **videos-raw** = input videos, compressed
+  - **pose-2d** = 2d tracking for each of the input videos
+  - **calibration** = camera parameters obtained from 3d calibration
+  - **pose-3d** = 3d tracking for each group of input videos
+  - **angles** = computed angles from 3d tracking
+  - **videos-labeled** = videos labeled with the 2d tracking
+  - **videos-3d** = 3d videos generated from 3d tracking
+  - **config** = computed configuration for each session
 
 # Outline of processing plan
 
 For each experiment, for each session
 
-1.  > Compress the videos into videos-raw
+1.  Compress the videos into videos-raw
 
-2.  > Place the configuration files into config (based on defaults and
-    > session config)
+2.  Place the configuration files into config (based on defaults and
+    session config)
 
-3.  > Perform the 2d tracking based on the configuration
+3.  Perform the 2d tracking based on the configuration
 
-4.  > Label the individual videos with 2d tracking
+4.  Label the individual videos with 2d tracking
 
-5.  > If 3d tracking is enabled
+5.  If 3d tracking is enabled
     
-    1.  > Perform camera calibration
+    1.  Perform camera calibration
     
-    2.  > Perform triangulation of 2d tracking
+    2.  Perform triangulation of 2d tracking
     
-    3.  > Compute angles, if needed
+    3.  Compute angles, if needed
     
-    4.  > Generate 3d videos
+    4.  Generate 3d videos
 
 # Using the pipeline in the field
 
@@ -117,17 +110,14 @@ process everything, and separate pipeline scripts for each step.
 
 Perhaps something like:
 
-  - > anipose calibrate \# run calibration of intrinsics and extrinsics
-
-  - > anipose label \# label the poses for each video
-
-  - > anipose label-videos \# create videos for each pose
-
-  - > anipose run-data \# run only the data portion (no viz)
-
-  - > anipose run-viz \# run only the visualization pipeline
-
-  - > anipose run-all \# run everything (run-data then run-viz)
+```
+anipose calibrate \# run calibration of intrinsics and extrinsics
+anipose label \# label the poses for each video
+anipose label-videos \# create videos for each pose
+anipose run-data \# run only the data portion (no viz)
+anipose run-viz \# run only the visualization pipeline
+anipose run-all \# run everything (run-data then run-viz)
+```
 
 The program anipose should parse out the config within the folder, and
 figure out all the appropriate parameters to pass to the functions
