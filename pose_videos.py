@@ -25,7 +25,7 @@ from tqdm import tqdm
 from glob import glob
 import warnings
 import cv2
-from common import process_all
+from common import process_all, natural_keys
 
 def getpose(image, sess, inputs, outputs, net_cfg, outall=False):
     ''' Adapted from DeeperCut, see pose-tensorflow folder'''
@@ -101,7 +101,7 @@ def process_session(config, session_path, net_stuff):
     pipeline_pose = config['pipeline_pose_2d']
 
     videos = glob(os.path.join(session_path, pipeline_videos_raw, '*.avi'))
-    videos = sorted(videos)
+    videos = sorted(videos, key=natural_keys)
 
     for video in videos:
         basename = os.path.basename(video)
