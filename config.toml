@@ -19,6 +19,20 @@ recording_prefix = "vid"
 
 cam_regex = "_([A-Z])$"
 
+[angles]
+L1_CF = ["L1A", "L1B", "L1C"]
+L1_FTi = ["L1B", "L1C", "L1D"]
+L1_TiTa = ["L1C", "L1D", "L1E"]
+
+L2_CF = ["L2A", "L2B", "L2C"]
+L2_FTi = ["L2B", "L2C", "L2D"]
+L2_TiTa = ["L2C", "L2D", "L2E"]
+
+L3_CF = ["L3A", "L3B", "L3C"]
+L3_FTi = ["L3B", "L3C", "L3D"]
+L3_TiTa = ["L3C", "L3D", "L3E"]
+
+
 [cameras.A]
 offset = [224, 120, 832, 704] 
 
@@ -28,6 +42,4 @@ offset = [224, 230, 800, 700]
 [cameras.C]
 offset = [160, 250, 864, 700] 
 
-A_vid.ROIPosition = [80, 175, 700, 450]
-B_vid.ROIPosition = [55, 160, 550, 360]
-C_vid.ROIPosition = [180, 250, 500, 350]
+
