@@ -131,7 +131,7 @@ which angles she cares about.
 
 This may be specified in the config.toml file as follows:
 
-```
+```toml
 [angles]
 L1_CF = ["L1A", "L1B", "L1C"]
 L1_FTi = ["L1B", "L1C", "L1D"]
