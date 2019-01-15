@@ -44,13 +44,13 @@ def get_points(dx, bodyparts):
     points = [(dx[bp+'_x'], dx[bp+'_y'], dx[bp+'_z']) for bp in bodyparts]
     # scores = [dx[bp+'_score'] for bp in bodyparts]
     errors = np.array([dx[bp+'_error'] for bp in bodyparts])
+    ncams = np.array([dx[bp+'_ncams'] for bp in bodyparts])
     # good = (np.array(scores) > 0.1) & (np.array(errors) < 35)
+
     ## TODO: add checking on scores here
-    ## TODO: make error threshold configurable
-
+    ## TODO: make error thresholds configurable
     errors[np.isnan(errors)] = 10000
-
-    good = errors < 250
+    good = (errors < 250) &  (ncams >= 3)
 
     points = np.array(points)
     points[~good] = np.nan

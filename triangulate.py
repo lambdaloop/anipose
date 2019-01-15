@@ -11,7 +11,7 @@ import toml
 from numpy import array as arr
 from glob import glob
 
-from common import make_process_fun, find_calibration_folder, get_video_name, get_cam_name
+from common import make_process_fun, find_calibration_folder, get_video_name, get_cam_name, natural_keys
 
 ## TODO: remove this, this is for me not for a library
 ## hack for hdf5 for testing
@@ -215,7 +215,7 @@ def process_session(config, session_path):
     os.makedirs(output_folder, exist_ok=True)
 
     pose_files = glob(os.path.join(pose_folder, '*.h5'))
-
+    
     cam_videos = defaultdict(list)
 
     for pf in pose_files:
@@ -223,7 +223,7 @@ def process_session(config, session_path):
         cam_videos[name].append(pf)
 
     vid_names = cam_videos.keys()
-    vid_names = sorted(vid_names)
+    vid_names = sorted(vid_names, key=natural_keys)
 
     fname_dicts = []
     for name in vid_names:
