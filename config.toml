@@ -13,6 +13,12 @@ compute_angles = true
 
 nesting = 1
 
+filter_enabled = true
+filter_medfilt = 13
+filter_offset_threshold = 25
+filter_score_threshold = 0.8
+filter_spline = true
+
 # 3d options
 triangulate = true
 calibration_prefix = "calib"

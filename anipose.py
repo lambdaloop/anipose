@@ -18,13 +18,20 @@ pass_config = click.make_pass_decorator(dict)
 DEFAULT_CONFIG = {
     'pipeline_videos_raw': 'videos-raw',
     'pipeline_pose_2d': 'pose-2d',
+    'pipeline_pose_2d_filter': 'pose-2d-filtered',
     'pipeline_pose_3d': 'pose-3d',
     'pipeline_videos_labeled_2d': 'videos-labeled',
     'pipeline_calibration_videos': 'calibration',
     'pipeline_calibration_results': 'calibration',
     'pipeline_videos_labeled_3d': 'videos-3d',
     'pipeline_angles': 'angles',
-    'pipeline_summaries': 'summaries'
+    'pipeline_summaries': 'summaries',
+
+    'filter_enabled': True,
+    'filter_medfilt': 13,
+    'filter_offset_threshold': 25,
+    'filter_score_threshold': 0.8,
+    'filter_spline': True
 }
 
 
@@ -92,6 +99,13 @@ def analyze(config):
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
+@cli.command()
+@pass_config
+def filter(config):
+    from filter_pose import filter_pose_all
+    click.echo('Filtering tracked points...')
+    filter_pose_all(config)
+    
 @cli.command()
 @pass_config
 def triangulate(config):

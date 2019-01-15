@@ -13,6 +13,7 @@ from glob import glob
 
 from common import make_process_fun, find_calibration_folder, get_video_name, get_cam_name
 
+## TODO: remove this, this is for me not for a library
 ## hack for hdf5 for testing
 os.environ['HDF5_DISABLE_VERSION_CHECK'] = '2'
 
@@ -96,7 +97,7 @@ def triangulate(config,
     intrinsics = load_intrinsics(calib_folder, cam_names)
     extrinsics = load_extrinsics(calib_folder)
 
-    
+
     offsets_dict = dict()
     for cname in cam_names:
         if record_dict is None:
@@ -194,6 +195,7 @@ def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline_videos_raw']
     pipeline_calibration_results = config['pipeline_calibration_results']
     pipeline_pose = config['pipeline_pose_2d']
+    pipeline_pose_filter = config['pipeline_pose_2d_filter']
     pipeline_3d = config['pipeline_pose_3d']
 
     
@@ -201,9 +203,13 @@ def process_session(config, session_path):
     if calibration_path is None:
         return
     
+    if config['filter_enabled']:
+        pose_folder = os.path.join(session_path, pipeline_pose_filter)
+    else:
+        pose_folder = os.path.join(session_path, pipeline_pose)
+
     calib_folder = os.path.join(calibration_path, pipeline_calibration_results)
     video_folder = os.path.join(session_path, pipeline_videos_raw)
-    pose_folder = os.path.join(session_path, pipeline_pose)
     output_folder = os.path.join(session_path, pipeline_3d)
 
     os.makedirs(output_folder, exist_ok=True)
