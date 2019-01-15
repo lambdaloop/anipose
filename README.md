@@ -2,6 +2,8 @@
 
 Anipose is a framework for scalable DeepLabCut-based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders. 
 
+The name Anipose comes from *Ani*mal *Pose*, but it also sounds like "any pose".
+
 (NOTE: This is not yet ready for production, still some issues to fix to make the experience smooth )
 
 ## Input specification
