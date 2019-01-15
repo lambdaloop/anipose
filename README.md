@@ -1,6 +1,8 @@
 # Anipose
 
-Anipose is a framework for scalable DeepLabCut based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders. 
+Anipose is a framework for scalable DeepLabCut-based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders. 
+
+(NOTE: This is not yet ready for production, still some issues to fix to make the experience smooth )
 
 ## Input specification
 
@@ -36,12 +38,12 @@ layout of folder for videos for 3d tracking
 
 ```
 /experiment/config.toml
-/experiment/session1/vid\_abc\_cam1.avi
-/experiment/session1/vid\_abc\_cam2.avi
-/experiment/session1/vid\_abc\_cam3.avi
-/experiment/session1/calibration/calib\_v1\_cam1.avi
-/experiment/session1/calibration/calib\_v1\_cam2.avi
-/experiment/session1/calibration/calib\_v1\_cam3.avi
+/experiment/session1/vid_abc_cam1.avi
+/experiment/session1/vid_abc_cam2.avi
+/experiment/session1/vid_abc_cam3.avi
+/experiment/session1/calibration/calib_v1_cam1.avi
+/experiment/session1/calibration/calib_v1_cam2.avi
+/experiment/session1/calibration/calib_v1_cam3.avi
 ```
 
 ## Configuration
