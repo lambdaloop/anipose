@@ -89,22 +89,14 @@ It can be one of the following values:
 For each experiment, for each session
 
 1.  Compress the videos into videos-raw
-
 2.  Place the configuration files into config (based on defaults and
     session config)
-
 3.  Perform the 2d tracking based on the configuration
-
 4.  Label the individual videos with 2d tracking
-
 5.  If 3d tracking is enabled
-    
     1.  Perform camera calibration
-    
     2.  Perform triangulation of 2d tracking
-    
     3.  Compute angles, if needed
-    
     4.  Generate 3d videos
 
 ## Using the pipeline in the field
