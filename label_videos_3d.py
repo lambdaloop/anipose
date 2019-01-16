@@ -150,7 +150,7 @@ def process_session(config, session_path):
 
     labels_fnames = glob(os.path.join(session_path,
                                       pipeline_3d, '*.csv'))
-    labels_fnames = sorted(labels_fnames)
+    labels_fnames = sorted(labels_fnames, key=natural_keys)
 
 
     outdir = os.path.join(session_path, pipeline_videos_labeled_3d)

@@ -12,7 +12,7 @@ from tqdm import tqdm, trange
 
 from matplotlib.pyplot import get_cmap
 
-from common import make_process_fun
+from common import make_process_fun, natural_keys
 
 def get_duration(vidname):
     metadata = skvideo.io.ffprobe(vidname)
@@ -135,7 +135,7 @@ def process_session(config, session_path):
     print(session_path)
     
     labels_fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
-    labels_fnames = sorted(labels_fnames)
+    labels_fnames = sorted(labels_fnames, key=natural_keys)
 
     outdir = os.path.join(session_path, pipeline_videos_labeled)
     os.makedirs(outdir, exist_ok=True)
