@@ -9,7 +9,7 @@ import sys
 from collections import defaultdict
 from pprint import pprint
 
-from common import process_all, true_basename, natural_keys
+from common import process_all, true_basename, natural_keys, get_cam_name
 
 def get_angle_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,
@@ -94,6 +94,7 @@ def summarize_errors(config):
                 rates_row[k] = foldername
 
             rates_row['filename'] = true_basename(fname)
+            rates_row['cam_name'] = get_cam_name(config, fname)
             rows.append(rates_row)
 
     dout = pd.DataFrame(rows)
