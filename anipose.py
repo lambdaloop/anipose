@@ -21,6 +21,7 @@ DEFAULT_CONFIG = {
     'pipeline_pose_2d_filter': 'pose-2d-filtered',
     'pipeline_pose_3d': 'pose-3d',
     'pipeline_videos_labeled_2d': 'videos-labeled',
+    'pipeline_videos_labeled_2d_filter': 'videos-labeled-filtered',
     'pipeline_calibration_videos': 'calibration',
     'pipeline_calibration_results': 'calibration',
     'pipeline_videos_labeled_3d': 'videos-3d',
@@ -146,6 +147,13 @@ def label_2d(config):
     from label_videos import label_videos_all
     click.echo('Labeling videos in 2D...')
     label_videos_all(config)
+
+@cli.command()
+@pass_config
+def label_2d_filter(config):
+    from label_videos import label_videos_filtered_all
+    click.echo('Labeling videos in 2D...')
+    label_videos_filtered_all(config)
 
 @cli.command()
 @pass_config

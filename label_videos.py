@@ -127,13 +127,17 @@ def visualize_labels(labels_fname, vid_fname, outname):
 
 
 
-def process_session(config, session_path):
+def process_session(config, session_path, filtered=False):
     pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_videos_labeled = config['pipeline_videos_labeled_2d']
-    pipeline_pose = config['pipeline_pose_2d']
+    if filtered:
+        pipeline_videos_labeled = config['pipeline_videos_labeled_2d_filter']
+        pipeline_pose = config['pipeline_pose_2d_filter']
+    else:
+        pipeline_videos_labeled = config['pipeline_videos_labeled_2d']
+        pipeline_pose = config['pipeline_pose_2d']
 
     print(session_path)
-    
+
     labels_fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
     labels_fnames = sorted(labels_fnames, key=natural_keys)
 
@@ -156,4 +160,5 @@ def process_session(config, session_path):
             visualize_labels(fname, vidname, out_fname)
 
 
-label_videos_all = make_process_fun(process_session)
+label_videos_all = make_process_fun(process_session, filtered=False)
+label_videos_filtered_all = make_process_fun(process_session, filtered=True)

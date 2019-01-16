@@ -82,7 +82,7 @@ def full_path(path):
     return path_norm
 
 
-def process_all(config, process_session, *args):
+def process_all(config, process_session, **args):
 
     pipeline_prefix = config['path']
     nesting = config['nesting']
@@ -90,7 +90,7 @@ def process_all(config, process_session, *args):
     output = dict()
     
     if nesting == 0:
-        output[()] = process_session(config, pipeline_prefix, *args)
+        output[()] = process_session(config, pipeline_prefix, **args)
         return output
 
     folders = get_folders(pipeline_prefix)
@@ -107,7 +107,7 @@ def process_all(config, process_session, *args):
     while len(q) != 0:
         path, past_folders, level = q.pop()
         if level == nesting:
-            output[past_folders] = process_session(config, path, *args)
+            output[past_folders] = process_session(config, path, **args)
         elif level > nesting:
             continue
         elif level < nesting:
@@ -120,9 +120,9 @@ def process_all(config, process_session, *args):
 
     return output
 
-def make_process_fun(process_session):
+def make_process_fun(process_session, **args):
     def fun(config):
-        return process_all(config, process_session)
+        return process_all(config, process_session, **args)
     return fun
 
 def find_calibration_folder(config, session_path):

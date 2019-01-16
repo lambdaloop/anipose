@@ -96,7 +96,7 @@ def process_video(vidname, dataname, net_stuff, config):
         pickle.dump(metadata, f, pickle.HIGHEST_PROTOCOL)
 
 
-def process_session(config, session_path, net_stuff):
+def process_session(config, session_path, net):
     pipeline_videos_raw = config['pipeline_videos_raw']
     pipeline_pose = config['pipeline_pose_2d']
 
@@ -119,13 +119,13 @@ def process_session(config, session_path, net_stuff):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # print('reprocess', video)
-                process_video(video, dataname, net_stuff, config)
+                process_video(video, dataname, net, config)
 
 
 
 def pose_videos_all(config):
     pipeline_prefix = config['path']
-
+ 
     model_path = os.path.join(config['model_folder'], config['model_name'])
 
     net_cfg = load_config(os.path.join(model_path, 'test', "pose_cfg.yaml"))
@@ -138,6 +138,6 @@ def pose_videos_all(config):
 
     net_stuff = sess, inputs, outputs, net_cfg
 
-    process_all(config, process_session, net_stuff)
+    process_all(config, process_session, net=net_stuff)
 
     ## TODO: release the session here, free the neural net memory
