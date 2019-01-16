@@ -15,11 +15,11 @@ import sys
 from collections import defaultdict
 from matplotlib.pyplot import get_cmap
 
-from common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length
+from common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length, natural_keys
 
 def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]
-    return mlab.plot3d(points[ixs, 0], points[ixs, 2], -points[ixs, 1],
+    return mlab.plot3d(-points[ixs, 0], points[ixs, 2], -points[ixs, 1],
                        np.ones(len(ixs)), reset_zoom=False,
                        color=color, tube_radius=None, line_width=8)
 
@@ -33,7 +33,7 @@ def connect_all(points, scheme, bp_dict, cmap):
 def update_line(line, points, bps, bp_dict):
     ixs = [bp_dict[bp] for bp in bps]
     # ixs = [bodyparts.index(bp) for bp in bps]
-    new = np.vstack([points[ixs, 0], points[ixs, 2], -points[ixs, 1]]).T
+    new = np.vstack([-points[ixs, 0], points[ixs, 2], -points[ixs, 1]]).T
     line.mlab_source.points = new
 
 def update_all_lines(lines, points, scheme, bp_dict):
@@ -50,6 +50,7 @@ def get_points(dx, bodyparts):
     ## TODO: add checking on scores here
     ## TODO: make error thresholds configurable
     errors[np.isnan(errors)] = 10000
+    ncams[np.isnan(ncams)] = 0
     good = (errors < 250) &  (ncams >= 3)
 
     points = np.array(points)
@@ -102,11 +103,13 @@ def visualize_labels(labels_fname, outname, fps=300):
     fig.scene.anti_aliasing_frames = 2
 
     mlab.clf()
-    pts = mlab.points3d(points[:, 0], points[:, 2], -points[:, 1], s,
+    pts = mlab.points3d(-points[:, 0], points[:, 2], -points[:, 1], s,
                         scale_mode='none', scale_factor=0.25)
     lines = connect_all(points, scheme, bp_dict, cmap)
     mlab.orientation_axes()
 
+    view = list(mlab.view())
+    
     for framenum in trange(data.shape[0],ncols=70):
         fig.scene.disable_render = True
 
@@ -120,7 +123,7 @@ def visualize_labels(labels_fname, outname, fps=300):
         s = np.arange(points.shape[0])
         good = ~np.isnan(points[:, 0])
 
-        new = np.vstack([points[:, 0], points[:, 2], -points[:, 1]]).T
+        new = np.vstack([-points[:, 0], points[:, 2], -points[:, 1]]).T
         pts.mlab_source.points = new
         update_all_lines(lines, points, scheme, bp_dict)
 
@@ -128,6 +131,9 @@ def visualize_labels(labels_fname, outname, fps=300):
 
         img = mlab.screenshot()
 
+        view[0] += -0.4
+        mlab.view(*view, reset_roll=False)
+        
         writer.writeFrame(img)
 
     mlab.close(all=True)
