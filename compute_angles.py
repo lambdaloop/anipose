@@ -8,7 +8,7 @@ from tqdm import tqdm, trange
 import sys
 from collections import defaultdict
 
-from common import make_process_fun, get_data_length
+from common import make_process_fun, get_data_length, natural_keys
 
 
 def compute_angles(config, labels_fname, outname):
@@ -51,7 +51,7 @@ def process_session(config, session_path):
 
     labels_fnames = glob(os.path.join(session_path,
                                       pipeline_3d, '*.csv'))
-    labels_fnames = sorted(labels_fnames)
+    labels_fnames = sorted(labels_fnames, key=natural_keys)
 
     outdir = os.path.join(session_path, pipeline_angles)
     os.makedirs(outdir, exist_ok=True)
