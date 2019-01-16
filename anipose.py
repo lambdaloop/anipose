@@ -105,7 +105,7 @@ def filter(config):
     from filter_pose import filter_pose_all
     click.echo('Filtering tracked points...')
     filter_pose_all(config)
-    
+
 @cli.command()
 @pass_config
 def triangulate(config):
@@ -130,6 +130,14 @@ def summarize(config):
 
     click.echo('Summarizing 3D pose...')
     summarize_pose3d(config)
+
+
+@cli.command()
+@pass_config
+def summarize_errors(config):
+    from summarize import summarize_errors
+    click.echo('Summarizing errors...')
+    summarize_errors(config)
 
 
 @cli.command()

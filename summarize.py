@@ -29,17 +29,23 @@ def get_pose2d_fnames(config, session_path):
                                '*.h5'))
     return fnames
 
+def get_pose2d_filtered_fnames(config, session_path):
+    fnames = glob(os.path.join(session_path,
+                               config['pipeline_pose_2d_filter'],
+                               '*.h5'))
+    return fnames
+
 def make_summarize_fun(get_fnames_session, output_fname):
-    
+
     def summarize_fun(config):
         output = process_all(config, get_fnames_session)
 
         datas = []
         items = sorted(output.items())
 
-        for key,fnames in tqdm(items, ncols=70):
+        for key,fnames in tqdm(items, ncols=70, desc='sessions'):
             fnames = sorted(fnames, key=natural_keys)
-            for fname in fnames:
+            for fname in tqdm(fnames, ncols=70, desc='files'):
                 d = pd.read_csv(fname)
                 for num,foldername in enumerate(key, start=1):
                     k = 'folder_{}'.format(num)
@@ -59,9 +65,46 @@ def make_summarize_fun(get_fnames_session, output_fname):
         outname = os.path.join(outdir, output_fname)
 
         print('Saving output...')
-        dout.to_csv(outname)
+        dout.to_csv(outname, index=False)
 
     return summarize_fun
 
 summarize_angles = make_summarize_fun(get_angle_fnames, 'angles.csv')
 summarize_pose3d = make_summarize_fun(get_pose3d_fnames, 'pose_3d.csv')
+
+def summarize_errors(config):
+    output = process_all(config, get_pose2d_filtered_fnames)
+
+    rows = []
+    items = sorted(output.items())
+
+    for key,fnames in tqdm(items, ncols=70, desc='sessions'):
+        fnames = sorted(fnames, key=natural_keys)
+        for fname in tqdm(fnames, ncols=70, desc='files'):
+            data = pd.read_hdf(fname)
+            bp_index = data.columns.names.index('bodyparts')
+            bodyparts = list(data.columns.levels[bp_index])
+
+            rates_row = dict()
+            for bp in bodyparts:
+                rates_row[bp] = np.mean(data[bp]['interpolated'])
+
+            for num,foldername in enumerate(key, start=1):
+                k = 'folder_{}'.format(num)
+                rates_row[k] = foldername
+
+            rates_row['filename'] = true_basename(fname)
+            rows.append(rates_row)
+
+    dout = pd.DataFrame(rows)
+    dout['project'] = config['project']
+
+    outdir = os.path.join(config['path'],
+                          config['pipeline_summaries'])
+
+    os.makedirs(outdir, exist_ok=True)
+
+    outname = os.path.join(outdir, 'errors.csv')
+
+    print('Saving output...')
+    dout.to_csv(outname, index=False)
