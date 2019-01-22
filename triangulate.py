@@ -10,6 +10,7 @@ import pandas as pd
 import toml
 from numpy import array as arr
 from glob import glob
+from scipy import optimize
 
 from common import make_process_fun, find_calibration_folder, get_video_name, get_cam_name, natural_keys
 
@@ -64,6 +65,22 @@ def triangulate_simple(points, camera_mats):
     p3d = p3d / p3d[3]
     return p3d
 
+def optim_error_fun(points, camera_mats):
+    def fun(x):
+        p3d = np.array([x[0], x[1], x[2], 1])
+        proj = np.dot(camera_mats, p3d)
+        resid = points - proj[:, :2] / proj[:, 2, None]
+        return resid.flatten()
+    return fun
+
+def triangulate_simple_optim(points, camera_mats):
+    fun = optim_error_fun(points, camera_mats)
+    res = optimize.least_squares(fun, p3d[:3])
+    x = res.x
+    p3d = np.array([x[0], x[1], x[2], 1])
+    return p3d
+
+
 def minmax(pts, p=0):
     good = ~np.isnan(pts)
     xs = pts[good]
@@ -73,7 +90,6 @@ def rerange(px, highrange):
     low, high = px
     mid = (low+high)/2
     return [mid - highrange/2, mid + highrange/2]
-
 
 
 def triangulate(config,
