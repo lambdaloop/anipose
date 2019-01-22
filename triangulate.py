@@ -73,24 +73,74 @@ def optim_error_fun(points, camera_mats):
         return resid.flatten()
     return fun
 
-def triangulate_simple_optim(points, camera_mats):
+def triangulate_optim(points, camera_mats, max_error=20):
+    num_cams = len(camera_mats)
+    try:
+        p3d = triangulate_simple(points, camera_mats)
+        error = reprojection_error(p3d, points, camera_mats)
+    except np.linalg.linalg.LinAlgError:
+        return np.array([0,0,0,0])
+
     fun = optim_error_fun(points, camera_mats)
     res = optimize.least_squares(fun, p3d[:3])
     x = res.x
     p3d = np.array([x[0], x[1], x[2], 1])
+
     return p3d
 
 
-def minmax(pts, p=0):
-    good = ~np.isnan(pts)
-    xs = pts[good]
-    return np.percentile(xs, [p, 100-p])
+def proj(u, v):
+    """Project u onto v"""
+    return u * np.dot(v,u) / np.dot(u,u)
 
-def rerange(px, highrange):
-    low, high = px
-    mid = (low+high)/2
-    return [mid - highrange/2, mid + highrange/2]
+def ortho(u, v):
+    """Orthagonalize u with respect to v"""
+    return u - proj(v, u)
 
+def get_median(all_points_3d, ix):
+    pts = all_points_3d[:, ix]
+    pts = pts[~np.isnan(pts[:, 0])]
+    return np.median(pts, axis=0)
+
+def correct_coordinate_frame(config, all_points_3d, bodyparts):
+    """Given a config and a set of points and bodypart names, this function will rotate the coordinate frame to match the one in config"""
+    bp_index = dict(zip(bodyparts, range(len(bodyparts))))
+
+    ref_point = config['triangulation']['reference_point']
+
+    axes_spec = config['triangulation']['axes']
+    a_dirx, (a_l, a_r) = axes_spec[0]
+    b_dirx, (b_l, b_r) = axes_spec[1]
+
+    a_dir = axes_mapping[a_dirx]
+    b_dir = axes_mapping[b_dirx]
+
+    ## find the missing direction
+    done = np.zeros(3, dtype='bool')
+    done[a_dir] = True
+    done[b_dir] = True
+    c_dir = np.where(~done)[0][0]
+
+    a_lv = get_median(all_points_3d, bp_index[a_l])
+    a_rv = get_median(all_points_3d, bp_index[a_r])
+    b_lv = get_median(all_points_3d, bp_index[b_l])
+    b_rv = get_median(all_points_3d, bp_index[b_r])
+
+    a_diff = a_rv - a_lv
+    b_diff = ortho(b_rv - b_lv, a_diff)
+
+    M = np.zeros((3,3))
+    M[a_dir] = a_diff
+    M[b_dir] = b_diff
+    M[c_dir] = np.cross(a_diff, b_diff)
+
+    M /= np.linalg.norm(M, axis=1)[:,None]
+
+    center = get_median(all_points_3d, bp_index[ref_point])
+
+    all_points_3d_adj = (all_points_3d - center).dot(M.T)
+    
+    return all_points_3d_adj
 
 def triangulate(config,
                 calib_folder, video_folder, pose_folder,
@@ -193,11 +243,12 @@ def triangulate(config,
                 num_cams[i,j] = np.sum(good)
                 scores_3d[i,j] = np.min(all_scores[i, :, j][good])
 
+    all_points_3d_adj = correct_coordinate_frame(config, all_points_3d, bodyparts)
 
     dout = pd.DataFrame()
     for bp_num, bp in enumerate(bodyparts):
         for ax_num, axis in enumerate(['x','y','z']):
-            dout[bp + '_' + axis] = all_points_3d[:, bp_num, ax_num]
+            dout[bp + '_' + axis] = all_points_3d_adj[:, bp_num, ax_num]
         dout[bp + '_error'] = errors[:, bp_num]
         dout[bp + '_ncams'] = num_cams[:, bp_num]
         dout[bp + '_score'] = scores_3d[:, bp_num]

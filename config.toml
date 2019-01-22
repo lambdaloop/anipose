@@ -9,7 +9,6 @@ model_folder = "/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow/models"
 model_name = "flypose-subset-midpointsDec18-trainset95shuffle1"
 model_train_iter = 1030000
 
-compute_angles = true
 
 nesting = 1
 
@@ -19,12 +18,15 @@ filter_offset_threshold = 25
 filter_score_threshold = 0.8
 filter_spline = true
 
-# 3d options
+[triangulation]
 triangulate = true
-calibration_prefix = "calib"
-recording_prefix = "vid"
+cam_regex = '_([A-Z])$'
+axes = [
+    ["x", ["L1A", "L3A"]],
+    ["z", ["L1B", "L1A"]]
+]
+reference_point = "L1A"
 
-cam_regex = "_([A-Z])$"
 
 [angles]
 L1_CF = ["L1A", "L1B", "L1C"]
