@@ -1,6 +1,6 @@
 # Anipose
 
-Anipose is a framework for scalable DeepLabCut-based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders. 
+Anipose is a framework for scalable DeepLabCut-based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders.
 
 The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any pose".
 
@@ -158,3 +158,27 @@ central file with all the data. Hence, Anipose provides the command
 The output csv for each of angles, 3d, and 2d tracking coordinates has
 all the data from all sessions, and a few extra columns to show where
 the data comes from.
+
+## Configuring the standardized 3D pose
+
+In order to properly compare across different trials, different animals, and different setups, the 3D coordinates must be standardized relative to a common reference frame.
+
+Anipose should allow configuration of this by specifying 2 sets of points to use as axes, and which axes these should be.
+
+The algorithm to determine the axes is as follows:
+- the first axis is taken as given
+- the second axis is orthogonalized with respect to the first
+- the third axis is the cross product of the first two axes
+
+An axis is specified as a pair of points, with the axis going from the first to the second point.
+
+Furthermore, it is often useful to set the zero to a standard reference point. Anipose allows this too.
+
+An example configuration:
+```toml
+axes = [
+    ["x", ["L1A", "L3A"]],
+    ["z", ["L1B", "L1A"]]
+]
+reference_point = "L1A"
+```
