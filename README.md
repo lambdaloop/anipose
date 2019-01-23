@@ -177,8 +177,8 @@ Furthermore, it is often useful to set the zero to a standard reference point. A
 An example configuration:
 ```toml
 axes = [
-    ["x", ["L1A", "L3A"]],
-    ["z", ["L1B", "L1A"]]
+    ["x", "L1A", "L3A"],
+    ["z", "L1B", "L1A"]
 ]
 reference_point = "L1A"
 ```

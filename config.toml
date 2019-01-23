@@ -22,8 +22,8 @@ filter_spline = true
 triangulate = true
 cam_regex = '_([A-Z])$'
 axes = [
-    ["x", ["L1A", "L3A"]],
-    ["z", ["L1B", "L1A"]]
+    ["x", "L1A", "L3A"],
+    ["z", "L1B", "L1A"]
 ]
 reference_point = "L1A"
 
