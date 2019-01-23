@@ -105,12 +105,12 @@ def get_median(all_points_3d, ix):
 def correct_coordinate_frame(config, all_points_3d, bodyparts):
     """Given a config and a set of points and bodypart names, this function will rotate the coordinate frame to match the one in config"""
     bp_index = dict(zip(bodyparts, range(len(bodyparts))))
+    axes_mapping = dict(zip('xyz', range(3)))
 
     ref_point = config['triangulation']['reference_point']
-
     axes_spec = config['triangulation']['axes']
-    a_dirx, (a_l, a_r) = axes_spec[0]
-    b_dirx, (b_l, b_r) = axes_spec[1]
+    a_dirx, a_l, a_r = axes_spec[0]
+    b_dirx, b_l, b_r = axes_spec[1]
 
     a_dir = axes_mapping[a_dirx]
     b_dir = axes_mapping[b_dirx]
