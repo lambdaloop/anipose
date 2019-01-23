@@ -182,3 +182,8 @@ axes = [
 ]
 reference_point = "L1A"
 ```
+
+## Calibration
+
+TODO: Document how to calibrate cameras
+TODO: Document where to place the calibration folder and how this is processed
