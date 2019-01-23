@@ -14,10 +14,6 @@ from scipy import optimize
 from common import make_process_fun, find_calibration_folder, \
     get_video_name, get_cam_name, natural_keys
 
-# TODO: remove this, this is for me not for a library
-# hack for hdf5 for testing
-os.environ['HDF5_DISABLE_VERSION_CHECK'] = '2'
-
 
 def load_intrinsics(folder, cam_names):
     intrinsics = {}
