@@ -54,6 +54,7 @@ def get_corners(fname, board):
 
     return allCorners, allIds
 
+
 def trim_corners(allCorners, allIds, maxBoards=85):
     counts = np.array([len(cs) for cs in allCorners])
     sort = -counts + np.random.random(size=counts.shape)/2
@@ -72,6 +73,7 @@ def reformat_corners(allCorners, allIds, numsq=2):
     allIdsConcat = np.array(list(allIdsConcat))
 
     return allCornersConcat, allIdsConcat, markerCounter
+
 
 def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_params):
 
@@ -130,11 +132,10 @@ def process_session(config, session_path):
     pipeline_calibration_videos = config['pipeline_calibration_videos']
     pipeline_calibration_results = config['pipeline_calibration_results']
 
-
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:
         return
-    
+
     videos = glob(os.path.join(calibration_path,
                                pipeline_calibration_videos,
                                '*.avi'))
