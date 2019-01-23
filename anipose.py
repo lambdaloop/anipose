@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import os, os.path
+import os
+import os.path
 import toml
-from common import full_path
 import click
+from common import full_path
 
 ## possible commands
 # anipose calibrate # run calibration of intrinsics and extrinsics
@@ -57,7 +58,7 @@ def load_config(fname):
     if 'project' not in config:
         config['project'] = os.path.basename(config['path'])
 
-    for k,v in DEFAULT_CONFIG.items():
+    for k, v in DEFAULT_CONFIG.items():
         if k not in config:
             config[k] = v
 
