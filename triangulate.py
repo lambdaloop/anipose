@@ -135,8 +135,9 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
 
     center = get_median(all_points_3d, bp_index[ref_point])
 
+    ## TODO: figure out why this doesn't properly center the data in some cases (???)
     all_points_3d_adj = (all_points_3d - center).dot(M.T)
-    
+
     return all_points_3d_adj
 
 def triangulate(config,
@@ -154,12 +155,11 @@ def triangulate(config,
         ## TODO: more detailed error?
             print("-- no crop windows found")
             return
-        
+
     cam_names, pose_names = list(zip(*sorted(fname_dict.items())))
 
     intrinsics = load_intrinsics(calib_folder, cam_names)
     extrinsics = load_extrinsics(calib_folder)
-
 
     offsets_dict = dict()
     for cname in cam_names:
@@ -171,7 +171,6 @@ def triangulate(config,
         else:
             offsets_dict[cname] = record_dict['cameras'][cname]['video']['ROIPosition']
 
-    
     offsets = []
     cam_mats = []
     for cname in cam_names:
@@ -184,7 +183,6 @@ def triangulate(config,
         cam_mats.append(mat)
         offsets.append(offsets_dict[cname])
 
-
     offsets = arr(offsets)
     cam_mats = arr(cam_mats)
 
@@ -194,7 +192,7 @@ def triangulate(config,
         dd =  pd.read_hdf(pose_name)
         length = len(dd.index)
         maxlen = max(maxlen, length)
- 
+
     dd =  pd.read_hdf(pose_names[0])
     bodyparts = arr(dd.columns.levels[0])
 
@@ -252,7 +250,7 @@ def triangulate(config,
         dout[bp + '_score'] = scores_3d[:, bp_num]
 
     dout['fnum'] = np.arange(length)
-        
+
     dout.to_csv(output_fname, index=False)
 
 
@@ -263,11 +261,11 @@ def process_session(config, session_path):
     pipeline_pose_filter = config['pipeline_pose_2d_filter']
     pipeline_3d = config['pipeline_pose_3d']
 
-    
+
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:
         return
-    
+
     if config['filter_enabled']:
         pose_folder = os.path.join(session_path, pipeline_pose_filter)
     else:
@@ -280,7 +278,7 @@ def process_session(config, session_path):
     os.makedirs(output_folder, exist_ok=True)
 
     pose_files = glob(os.path.join(pose_folder, '*.h5'))
-    
+
     cam_videos = defaultdict(list)
 
     for pf in pose_files:
