@@ -3,17 +3,6 @@
 import os.path
 import sys
 
-## TODO: use deeplabcut v2 instead of this
-# pose_path = '/home/pierre/research/tuthill/DeepLabCut_pierre/pose-tensorflow'
-pose_path = '/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow'
-
-sys.path.append(pose_path)
-
-# Deeper-cut dependencies
-from config import load_config
-from nnet import predict
-from dataset.pose_dataset import data_to_input
-
 # Dependencies for video:
 import pickle
 import skimage.color
@@ -26,6 +15,17 @@ from glob import glob
 import warnings
 import cv2
 from common import process_all, natural_keys
+
+## TODO: use deeplabcut v2 instead of this
+# pose_path = '/home/pierre/research/tuthill/DeepLabCut_pierre/pose-tensorflow'
+pose_path = '/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow'
+sys.path.append(pose_path)
+
+# Deeper-cut dependencies
+from config import load_config
+from nnet import predict
+from dataset.pose_dataset import data_to_input
+
 
 def getpose(image, sess, inputs, outputs, net_cfg, outall=False):
     ''' Adapted from DeeperCut, see pose-tensorflow folder'''
@@ -70,6 +70,7 @@ def process_video(vidname, dataname, net_stuff, config):
 
     scorer = 'DeepCut_{}_{}'.format(config['model_name'], config['model_train_iter'])
 
+    # TODO: capture this information somewhere else
     dictionary = {
         "start": start,
         "stop": stop,
@@ -124,8 +125,6 @@ def process_session(config, session_path, net):
 
 
 def pose_videos_all(config):
-    pipeline_prefix = config['path']
- 
     model_path = os.path.join(config['model_folder'], config['model_name'])
 
     net_cfg = load_config(os.path.join(model_path, 'test', "pose_cfg.yaml"))
