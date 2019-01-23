@@ -237,7 +237,8 @@ def triangulate(config,
             pts = all_points_raw[i, :, j, :]
             good = ~np.isnan(pts[:, 0])
             if np.sum(good) >= 2:
-                p3d = triangulate_simple(pts[good], cam_mats[good])
+                # TODO: make triangulation type configurable
+                p3d = triangulate_optim(pts[good], cam_mats[good])
                 all_points_3d[i, j] = p3d[:3]
                 errors[i,j] = reprojection_error(p3d, pts[good], cam_mats[good])
                 num_cams[i,j] = np.sum(good)
