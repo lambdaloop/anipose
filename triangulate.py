@@ -3,17 +3,19 @@
 from tqdm import trange
 import numpy as np
 from collections import defaultdict
-import os.path, os
+import os
+import os.path
 import pandas as pd
 import toml
 from numpy import array as arr
 from glob import glob
 from scipy import optimize
 
-from common import make_process_fun, find_calibration_folder, get_video_name, get_cam_name, natural_keys
+from common import make_process_fun, find_calibration_folder, \
+    get_video_name, get_cam_name, natural_keys
 
-## TODO: remove this, this is for me not for a library
-## hack for hdf5 for testing
+# TODO: remove this, this is for me not for a library
+# hack for hdf5 for testing
 os.environ['HDF5_DISABLE_VERSION_CHECK'] = '2'
 
 
@@ -99,6 +101,7 @@ def get_median(all_points_3d, ix):
     pts = all_points_3d[:, ix]
     pts = pts[~np.isnan(pts[:, 0])]
     return np.median(pts, axis=0)
+
 
 def correct_coordinate_frame(config, all_points_3d, bodyparts):
     """Given a config and a set of points and bodypart names, this function will rotate the coordinate frame to match the one in config"""
