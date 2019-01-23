@@ -2,17 +2,12 @@
 
 import cv2
 from cv2 import aruco
-from tqdm import tqdm, trange
+from tqdm import trange
 import numpy as np
-import sys
-import itertools
 import os, os.path
 from glob import glob
 from collections import defaultdict
 import toml
-from time import time
-from pprint import pprint
-import re
 
 from common import *
 
@@ -183,7 +178,7 @@ def load_intrinsics(folder, cam_names):
 
 
 def process_session(config, session_path):
-    pipeline_videos_raw = config['pipeline_videos_raw']
+    # pipeline_videos_raw = config['pipeline_videos_raw']
     pipeline_calibration_videos = config['pipeline_calibration_videos']
     pipeline_calibration_results = config['pipeline_calibration_results']
 

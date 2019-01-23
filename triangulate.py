@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-from tqdm import tqdm, trange
+from tqdm import trange
 import numpy as np
 from collections import defaultdict
 import os.path, os
-import numpy as np
-import pickle
 import pandas as pd
 import toml
 from numpy import array as arr
