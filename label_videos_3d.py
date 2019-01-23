@@ -19,7 +19,7 @@ from common import make_process_fun, get_nframes, get_video_name, get_video_para
 
 def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]
-    return mlab.plot3d(-points[ixs, 0], points[ixs, 2], -points[ixs, 1],
+    return mlab.plot3d(points[ixs, 0], -points[ixs, 1], points[ixs, 2],
                        np.ones(len(ixs)), reset_zoom=False,
                        color=color, tube_radius=None, line_width=8)
 
@@ -33,7 +33,7 @@ def connect_all(points, scheme, bp_dict, cmap):
 def update_line(line, points, bps, bp_dict):
     ixs = [bp_dict[bp] for bp in bps]
     # ixs = [bodyparts.index(bp) for bp in bps]
-    new = np.vstack([-points[ixs, 0], points[ixs, 2], -points[ixs, 1]]).T
+    new = np.vstack([points[ixs, 0], -points[ixs, 1], points[ixs, 2]]).T
     line.mlab_source.points = new
 
 def update_all_lines(lines, points, scheme, bp_dict):
@@ -103,7 +103,7 @@ def visualize_labels(labels_fname, outname, fps=300):
     fig.scene.anti_aliasing_frames = 2
 
     mlab.clf()
-    pts = mlab.points3d(-points[:, 0], points[:, 2], -points[:, 1], s,
+    pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s,
                         scale_mode='none', scale_factor=0.25)
     lines = connect_all(points, scheme, bp_dict, cmap)
     mlab.orientation_axes()
@@ -123,7 +123,7 @@ def visualize_labels(labels_fname, outname, fps=300):
         s = np.arange(points.shape[0])
         good = ~np.isnan(points[:, 0])
 
-        new = np.vstack([-points[:, 0], points[:, 2], -points[:, 1]]).T
+        new = np.vstack([points[:, 0], -points[:, 1], points[:, 2]]).T
         pts.mlab_source.points = new
         update_all_lines(lines, points, scheme, bp_dict)
 
@@ -131,7 +131,7 @@ def visualize_labels(labels_fname, outname, fps=300):
 
         img = mlab.screenshot()
 
-        view[0] += -0.4
+        view[0] += -0.2
         mlab.view(*view, reset_roll=False)
         
         writer.writeFrame(img)
