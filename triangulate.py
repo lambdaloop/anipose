@@ -138,6 +138,9 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
     ## TODO: figure out why this doesn't properly center the data in some cases (???)
     all_points_3d_adj = (all_points_3d - center).dot(M.T)
 
+    center_new = get_median(all_points_3d_adj, bp_index[ref_point])
+    all_points_3d_adj = all_points_3d_adj - center_new
+
     return all_points_3d_adj
 
 def triangulate(config,
