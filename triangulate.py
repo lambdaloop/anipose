@@ -209,6 +209,9 @@ def triangulate(config,
     for ix_cam, (cam_name, pose_name, offset) in \
         enumerate(zip(cam_names, pose_names, offsets)):
         dd = pd.read_hdf(pose_name)
+        scorer = dd.columns.levels[0][0]
+        dd = dd[scorer]
+
         index = arr(dd.index)
         for ix_bp, bp in enumerate(bodyparts):
             X = arr(dd[bp])
