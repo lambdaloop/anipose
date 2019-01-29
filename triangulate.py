@@ -190,13 +190,16 @@ def triangulate(config,
     cam_mats = arr(cam_mats)
 
     maxlen = 0
-    caps = dict()
     for pose_name in pose_names:
-        dd =  pd.read_hdf(pose_name)
+        dd = pd.read_hdf(pose_name)
         length = len(dd.index)
         maxlen = max(maxlen, length)
 
-    dd =  pd.read_hdf(pose_names[0])
+    length = maxlen
+    dd = pd.read_hdf(pose_names[0])
+    scorer = dd.columns.levels[0][0]
+    dd = dd[scorer]
+
     bodyparts = arr(dd.columns.levels[0])
 
     # frame, camera, bodypart, xy

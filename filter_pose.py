@@ -16,12 +16,14 @@ def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 def filter_pose(config, fname, outname):
-    data = pd.read_hdf(fname)
+    data_orig = pd.read_hdf(fname)
+    scorer = data_orig.columns.levels[0][0]
+    data = data_orig[scorer]
 
     bp_index = data.columns.names.index('bodyparts')
     bodyparts = list(data.columns.levels[bp_index])
 
-    dout = data.copy()
+    dout = data_orig.copy()
 
     for bp in bodyparts:
 
@@ -55,9 +57,9 @@ def filter_pose(config, fname, outname):
                     vals[nans] = np.interp(ix(nans), ix(~nans), vals[~nans])
             Xfi[:,i] = vals
 
-        dout[bp, 'x'] = Xfi[:, 0]
-        dout[bp, 'y'] = Xfi[:, 1]
-        dout[bp, 'interpolated'] = np.isnan(Xf[:, 0])
+        dout[scorer, bp, 'x'] = Xfi[:, 0]
+        dout[scorer, bp, 'y'] = Xfi[:, 1]
+        dout[scorer, bp, 'interpolated'] = np.isnan(Xf[:, 0])
 
     dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
 
