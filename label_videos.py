@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import os.path
-
 import numpy as np
 from glob import glob
 import pandas as pd
-import os.path
 import cv2
 import skvideo.io
-from tqdm import tqdm, trange
+from tqdm import trange
 
 from matplotlib.pyplot import get_cmap
 
@@ -44,15 +42,6 @@ def connect_all(img, points, scheme, bodyparts):
         col = [int(c) for c in col]
         connect(img, points, bps, bodyparts, col)
 
-
-# scheme = [
-#     ['body-coxa-right', 'coxa-femur-right', 'femur-tibia-right',
-#      'tibia-tarsus-right', 'tarsus-end-right'],
-#     ['body-coxa-left', 'coxa-femur-left', 'femur-tibia-left',
-#      'tibia-tarsus-left', 'tarsus-end-left']
-# ]
-
-# TODO: read label scheme from config file
 
 def visualize_labels(config, labels_fname, vid_fname, outname):
 
