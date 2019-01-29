@@ -20,6 +20,13 @@ filter_offset_threshold = 25
 filter_score_threshold = 0.8
 filter_spline = true
 
+[labeling]
+scheme = [
+    ['L1A', 'L1B', 'L1C', 'L1D', 'L1E'],
+    ['L2A', 'L2B', 'L2C', 'L2D', 'L2E'],
+    ['L3A', 'L3B', 'L3C', 'L3D', 'L3E']
+]
+
 [triangulation]
 triangulate = true
 cam_regex = '_([A-Z])$'

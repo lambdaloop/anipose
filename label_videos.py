@@ -53,14 +53,10 @@ def connect_all(img, points, scheme, bodyparts):
 # ]
 
 # TODO: read label scheme from config file
-scheme = [
-    ['L1A', 'L1B', 'L1C', 'L1D', 'L1E'],
-    ['L2A', 'L2B', 'L2C', 'L2D', 'L2E'],
-    ['L3A', 'L3B', 'L3C', 'L3D', 'L3E']
-]
 
+def visualize_labels(config, labels_fname, vid_fname, outname):
 
-def visualize_labels(labels_fname, vid_fname, outname):
+    scheme = config['labeling']['scheme']
 
     dlabs = pd.read_hdf(labels_fname)
     if len(dlabs.columns.levels) > 2:
@@ -71,9 +67,6 @@ def visualize_labels(labels_fname, vid_fname, outname):
     cap = cv2.VideoCapture(vid_fname)
     # cap.set(1,0)
 
-    length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
     writer = skvideo.io.FFmpegWriter(outname, inputdict={
@@ -86,7 +79,6 @@ def visualize_labels(labels_fname, vid_fname, outname):
     last = len(dlabs)
 
     cmap = get_cmap('tab10')
-
 
     for ix in trange(last, ncols=70):
         ret, frame = cap.read()
@@ -157,7 +149,7 @@ def process_session(config, session_path, filtered=False):
                 continue
             print(out_fname)
 
-            visualize_labels(fname, vidname, out_fname)
+            visualize_labels(config, fname, vidname, out_fname)
 
 
 label_videos_all = make_process_fun(process_session, filtered=False)
