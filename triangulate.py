@@ -70,7 +70,6 @@ def optim_error_fun(points, camera_mats):
     return fun
 
 def triangulate_optim(points, camera_mats, max_error=20):
-    num_cams = len(camera_mats)
     try:
         p3d = triangulate_simple(points, camera_mats)
         error = reprojection_error(p3d, points, camera_mats)
@@ -216,7 +215,6 @@ def triangulate(config,
             all_points_raw[index, ix_cam, ix_bp, :] = X[:, :2] + [offset[0], offset[1]]
             all_scores[index, ix_cam, ix_bp] = X[:, 2]
 
-
     shape = all_points_raw.shape
 
     all_points_3d = np.zeros((shape[0], shape[2], 3))
@@ -267,7 +265,6 @@ def process_session(config, session_path):
     pipeline_pose = config['pipeline_pose_2d']
     pipeline_pose_filter = config['pipeline_pose_2d_filter']
     pipeline_3d = config['pipeline_pose_3d']
-
 
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:
