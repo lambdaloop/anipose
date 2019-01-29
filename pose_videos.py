@@ -5,10 +5,11 @@ import os.path
 # Dependencies for video:
 import os
 from glob import glob
-from common import natural_keys, make_process_fun
-
+import io
+from contextlib import redirect_stdout
 import deeplabcut
 
+from common import natural_keys, make_process_fun
 
 def rename_dlc_files(folder, base):
     files = glob(os.path.join(folder, base+'*'))
@@ -40,8 +41,10 @@ def process_session(config, session_path):
         if os.path.exists(dataname):
             continue
         else:
-            deeplabcut.analyze_videos(config_name, [video], videotype=ext,
-                                      save_as_csv=True, destfolder=outdir)
+            trap = io.StringIO()
+            with redirect_stdout(trap):
+                deeplabcut.analyze_videos(config_name, [video], videotype=ext,
+                                          save_as_csv=True, destfolder=outdir)
             rename_dlc_files(outdir, basename)
 
 
