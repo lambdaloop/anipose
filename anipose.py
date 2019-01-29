@@ -212,6 +212,11 @@ def run_all(config):
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
+    if config['filter_enabled']:
+        from filter_pose import filter_pose_all
+        click.echo('Filtering tracked points...')
+        filter_pose_all(config)
+
     click.echo('Triangulating points...')
     triangulate_all(config)
 
