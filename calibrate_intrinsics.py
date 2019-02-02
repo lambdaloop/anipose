@@ -103,6 +103,8 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
 def calibrate_camera(fnames, numsq=2):
     allCorners = []
     allIds = []
+
+    ## TODO: configure aruco board
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
     board = aruco.GridBoard_create(numsq, numsq, 4, 1, dictionary)
 

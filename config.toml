@@ -14,6 +14,7 @@ model_train_iter = 1030000
 
 nesting = 1
 
+## TODO: place all the filtering parameters into one section
 filter_enabled = true
 filter_medfilt = 13
 filter_offset_threshold = 25
