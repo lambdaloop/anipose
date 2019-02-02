@@ -53,14 +53,26 @@ layout of folder for videos for 3d tracking
 Example config file for 2d/3d tracking:
 
 ```toml
-model_folder = "/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow/models"
-model_name = "flywalkMay9"
+# Project name...whatever
+project = "flypose"
 
-model_train_iter = 750000
+# Chnage this for deeplabcut (one with trained network)
+model_folder = '/Data/Videos/DLC_Analysis/Running-Brandon-2019-01-29'
 
-# 3d options
+# want nesting of one...how many folders are nested in structure
+nesting = 1
 
-triangulate = true
+# Settings for a threshold filter...remove inconsistent data... also interpolates
+filter_enabled = true
+filter_medfilt = 13
+filter_offset_threshold = 25
+filter_score_threshold = 0.8
+filter_spline = true
+
+# labeling scheme...specify lines that you want to draw
+[labeling]
+scheme = [["head", "thorax", "abdomen"]
+]
 ```
 
 ## Output specification
