@@ -133,6 +133,17 @@ def summarize(config):
     click.echo('Summarizing 3D pose...')
     summarize_pose3d(config)
 
+@cli.command()
+@pass_config
+def summarize_2d(config):
+    from summarize import summarize_pose2d, summarize_pose2d_filtered
+    click.echo('Summarizing pose 2d...')
+    summarize_pose2d(config)
+
+    if config['filter_enabled']:
+        click.echo('Summarizing pose 2d filtered...')
+        summarize_pose2d_filtered(config)
+
 
 @cli.command()
 @pass_config

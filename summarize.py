@@ -35,7 +35,7 @@ def get_pose2d_filtered_fnames(config, session_path):
                                '*.h5'))
     return fnames
 
-def make_summarize_fun(get_fnames_session, output_fname):
+def make_summarize_fun(get_fnames_session, output_fname, h5=False):
 
     def summarize_fun(config):
         output = process_all(config, get_fnames_session)
@@ -46,7 +46,13 @@ def make_summarize_fun(get_fnames_session, output_fname):
         for key,fnames in tqdm(items, ncols=70, desc='sessions'):
             fnames = sorted(fnames, key=natural_keys)
             for fname in tqdm(fnames, ncols=70, desc='files'):
-                d = pd.read_csv(fname)
+                if h5:
+                    d = pd.read_hdf(fname)
+                    scorer = d.columns.levels[0][0]
+                    d = d[scorer]
+                else:
+                    d = pd.read_csv(fname)
+
                 for num,foldername in enumerate(key, start=1):
                     k = 'folder_{}'.format(num)
                     d[k] = foldername
@@ -66,11 +72,17 @@ def make_summarize_fun(get_fnames_session, output_fname):
 
         print('Saving output...')
         dout.to_csv(outname, index=False)
+        if h5:
+            dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
 
     return summarize_fun
 
-summarize_angles = make_summarize_fun(get_angle_fnames, 'angles.csv')
-summarize_pose3d = make_summarize_fun(get_pose3d_fnames, 'pose_3d.csv')
+
+summarize_angles = make_summarize_fun(get_angle_fnames, 'angles.csv', h5=False)
+summarize_pose3d = make_summarize_fun(get_pose3d_fnames, 'pose_3d.csv', h5=False)
+
+summarize_pose2d = make_summarize_fun(get_pose2d_fnames, 'pose_2d.csv', h5=True)
+summarize_pose2d_filtered = make_summarize_fun(get_pose2d_filtered_fnames, 'pose_2d_filtered.csv', h5=True)
 
 def summarize_errors(config):
     output = process_all(config, get_pose2d_filtered_fnames)
@@ -82,6 +94,9 @@ def summarize_errors(config):
         fnames = sorted(fnames, key=natural_keys)
         for fname in tqdm(fnames, ncols=70, desc='files'):
             data = pd.read_hdf(fname)
+            scorer = data.columns.levels[0][0]
+            data = data[scorer]
+
             bp_index = data.columns.names.index('bodyparts')
             bodyparts = list(data.columns.levels[bp_index])
 
