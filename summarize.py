@@ -72,9 +72,11 @@ def make_summarize_fun(get_fnames_session, output_fname, h5=False):
 
         print('Saving output...')
         dout.to_csv(outname, index=False)
+
         if h5:
             basename = true_basename(outname)
-            dout.to_hdf(basename+'.h5', 'df_with_missing', format='table', mode='w')
+            outfull_new = os.path.join(outdir, basename+'.h5')
+            dout.to_hdf(outfull_new, 'df_with_missing', format='table', mode='w')
 
     return summarize_fun
 
