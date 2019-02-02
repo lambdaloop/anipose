@@ -188,6 +188,7 @@ Furthermore, it is often useful to set the zero to a standard reference point. A
 
 An example configuration:
 ```toml
+[triangulation]
 axes = [
     ["x", "L1A", "L3A"],
     ["z", "L1B", "L1A"]
@@ -195,7 +196,51 @@ axes = [
 reference_point = "L1A"
 ```
 
-## Calibration
+## Calibration marker configuration
 
+Anipose uses [ArUco markers](https://www.uco.es/investiga/grupos/ava/node/26) for
+calibration. They are superior to checkerboards in that they are more
+robust to blurring, rotation, and cropping. This makes them ideal for calibrating arbitrary camera setups.
+
+In order to configure this, it should be possible to specify which
+ArUco board was used to calibrate the cameras. What should be configurable:
+- The type of board (ArUco / ChArUco)
+- the size of the board (number squares in X and Y directions)
+- ArUco marker dictionary (number of bits and number of markers in dictionary)
+- Length of marker side in appropriate unit (triangulation is set to this unit)
+- Length of marker separation (for ArUco) or square side (for ChArUco), in same unit
+
+
+```toml
+[calibration]
+# aruco / charuco
+board_type = "aruco"
+
+# width and height of grid
+board_size = [2, 2]
+
+# number of bits in the markers
+board_marker_bits = 5
+
+# number of markers in dictionary (less is best)
+board_marker_dict_number = 50
+
+# length of marker side
+board_marker_length = 4 # mm
+
+# If aruco, length of marker separation
+board_marker_separation_length = 1 # mm
+
+# If charuco, square side length
+# board_square_side_length = 8 # mm
+```
+
+## Calibration: how to actually calibrate
 TODO: Document how to calibrate cameras
+
 TODO: Document where to place the calibration folder and how this is processed
+
+## Triangulation
+TODO: document how to specify ROIs
+
+TODO: provide example python/matlab code to automatically generate toml files
