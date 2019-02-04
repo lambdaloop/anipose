@@ -57,13 +57,15 @@ def get_cam_name(config, fname):
     if not match:
         return None
     else:
-        return match.groups()[0]
+        name = match.groups()[0]
+        return name.strip()
 
 def get_video_name(config, fname):
     basename = true_basename(fname)
 
     cam_regex = config['triangulation']['cam_regex']
-    return re.sub(cam_regex, '', basename)
+    vidname = re.sub(cam_regex, '', basename)
+    return vidname.strip()
 
 def get_duration(vidname):
     metadata = skvideo.io.ffprobe(vidname)
