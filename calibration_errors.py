@@ -151,7 +151,7 @@ def process_session(config, session_path):
         if os.path.exists(outname):
             continue
 
-        dout = process_trig_errors(fd, intrinsics, extrinsics)
+        dout = process_trig_errors(config, fd, intrinsics, extrinsics)
         dout.to_csv(outname, index=False)
 
 
