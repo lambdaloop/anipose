@@ -38,7 +38,7 @@ def fill_points(corners, ids):
 
     return out
 
-def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics):
+def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20):
     minlen = np.inf
     caps = dict()
     for cam_name, fname in fname_dict.items():
@@ -61,20 +61,33 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics):
         mat = np.matmul(left, right)
         cam_mats.append(mat)
 
+    go = skip
     all_points = []
+    framenums = []
     for framenum in trange(minlen, desc='detecting', ncols=70):
         row = []
         for cam_name in cam_names:
             intrinsics = cam_intrinsics[cam_name]
             cap = caps[cam_name]
             ret, frame = cap.read()
+
+            if framenum % skip != 0 and go <= 0:
+                continue
+
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             corners, ids = detect_aruco(gray, intrinsics)
             points = fill_points(corners, ids)
             row.append(points)
-        all_points.append(row)
+
+        if ~np.all(np.isnan(row)):
+            all_points.append(row)
+            framenums.append(framenum)
+            go = skip
+
+        go = max(0, go-1)
 
     all_points_raw = np.array(all_points)
+    framenums = np.array(framenums)
 
     shape = all_points_raw.shape
 
@@ -99,7 +112,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics):
             dout[bp + '_' + axis] = all_points_3d[:, bp_num, ax_num]
         dout[bp + '_error'] = errors[:, bp_num]
 
-    dout['fnum'] = np.arange(length)
+    dout['fnum'] = framenums
 
     return dout
 
@@ -151,6 +164,7 @@ def process_session(config, session_path):
         if os.path.exists(outname):
             continue
 
+        print(outname)
         dout = process_trig_errors(config, fd, intrinsics, extrinsics)
         dout.to_csv(outname, index=False)
 
