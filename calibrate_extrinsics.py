@@ -9,11 +9,14 @@ from glob import glob
 from collections import defaultdict
 import toml
 
-from common import *
+from common import \
+    find_calibration_folder, make_process_fun, \
+    get_cam_name, get_video_name, load_intrinsics
 
 # TODO: make this board configurable
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 board = aruco.GridBoard_create(2, 2, 4, 1, dictionary)
+
 
 def detect_aruco(gray, intrinsics):
     # grayb = gray
@@ -26,7 +29,7 @@ def detect_aruco(gray, intrinsics):
     params.adaptiveThreshWinSizeStep = 50
     params.adaptiveThreshConstant = 5
 
-    corners, ids, rejectedImgPoints = aruco.detectMarkers(grayb, dictionary,  parameters=params)
+    corners, ids, rejectedImgPoints = aruco.detectMarkers(grayb, dictionary, parameters=params)
 
     INTRINSICS_K = np.array(intrinsics['camera_mat'])
     INTRINSICS_D = np.array(intrinsics['dist_coeff'])
@@ -168,14 +171,6 @@ def get_extrinsics(fname_dicts, cam_intrinsics, skip=20):
     pairs = get_all_matrix_pairs(matrix_list, sorted(cam_names))
 
     return pairs
-
-def load_intrinsics(folder, cam_names):
-    intrinsics = {}
-    for cname in cam_names:
-        fname = os.path.join(folder, 'intrinsics_{}.toml'.format(cname))
-        intrinsics[cname] = toml.load(fname)
-    return intrinsics
-
 
 def process_session(config, session_path):
     # pipeline_videos_raw = config['pipeline_videos_raw']

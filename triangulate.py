@@ -12,23 +12,9 @@ from glob import glob
 from scipy import optimize
 
 from common import make_process_fun, find_calibration_folder, \
-    get_video_name, get_cam_name, natural_keys
+    get_video_name, get_cam_name, natural_keys, \
+    load_intrinsics, load_extrinsics
 
-
-def load_intrinsics(folder, cam_names):
-    intrinsics = {}
-    for cname in cam_names:
-        fname = os.path.join(folder, 'intrinsics_{}.toml'.format(cname))
-        intrinsics[cname] = toml.load(fname)
-    return intrinsics
-
-def load_extrinsics(folder):
-    extrinsics = toml.load(os.path.join(folder, 'extrinsics.toml'))
-    extrinsics_out = dict()
-    for k, v in extrinsics.items():
-        new_k = tuple(k.split('_'))
-        extrinsics_out[new_k] = v
-    return extrinsics_out
 
 def expand_matrix(mtx):
     z = np.zeros((4,4))
@@ -142,11 +128,12 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
 
 def triangulate(config,
                 calib_folder, video_folder, pose_folder,
-                fname_dict, output_fname, cam_align='C'):
+                fname_dict, output_fname):
 
     ## TODO: make the recorder.toml file configurable
     record_fname = os.path.join(video_folder, 'recorder.toml')
-
+    cam_align = config['triangulation']['cam_align']
+    
     if os.path.exists(record_fname):
         record_dict = toml.load(record_fname)
     else:

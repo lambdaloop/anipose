@@ -36,7 +36,7 @@ axes = [
     ["z", "L1B", "L1A"]
 ]
 reference_point = "L1A"
-
+cam_align = "C"
 
 [angles]
 L1_CF = ["L1A", "L1B", "L1C"]

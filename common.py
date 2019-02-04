@@ -5,7 +5,7 @@ from collections import deque
 from glob import glob
 import skvideo.io
 from subprocess import check_output
-
+import toml
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -88,7 +88,7 @@ def process_all(config, process_session, **args):
     nesting = config['nesting']
 
     output = dict()
-    
+
     if nesting == 0:
         output[()] = process_session(config, pipeline_prefix, **args)
         return output
@@ -141,3 +141,18 @@ def find_calibration_folder(config, session_path):
 
         curpath = os.path.dirname(curpath)
         level -= 1
+
+def load_intrinsics(folder, cam_names):
+    intrinsics = {}
+    for cname in cam_names:
+        fname = os.path.join(folder, 'intrinsics_{}.toml'.format(cname))
+        intrinsics[cname] = toml.load(fname)
+    return intrinsics
+
+def load_extrinsics(folder):
+    extrinsics = toml.load(os.path.join(folder, 'extrinsics.toml'))
+    extrinsics_out = dict()
+    for k, v in extrinsics.items():
+        new_k = tuple(k.split('_'))
+        extrinsics_out[new_k] = v
+    return extrinsics_out

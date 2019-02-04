@@ -96,6 +96,13 @@ def calibrate_extrinsics(config):
 
 @cli.command()
 @pass_config
+def calibrate_extrinsics(config):
+    from calibration_errors import get_errors_all
+    click.echo('Getting all the calibration errors...')
+    get_errors_all(config)
+
+@cli.command()
+@pass_config
 def analyze(config):
     from pose_videos import pose_videos_all
     click.echo('Analyzing videos...')
