@@ -96,7 +96,7 @@ def calibrate_extrinsics(config):
 
 @cli.command()
 @pass_config
-def calibrate_extrinsics(config):
+def calibration_errors(config):
     from calibration_errors import get_errors_all
     click.echo('Getting all the calibration errors...')
     get_errors_all(config)
