@@ -9,10 +9,7 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 ## Getting started
 
 Clone the repository somewhere onto your computer.
-
-
-
-
+...
 
 ## Input specification
 
