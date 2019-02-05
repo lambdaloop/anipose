@@ -9,7 +9,7 @@ import sys
 from collections import defaultdict
 from pprint import pprint
 
-from common import process_all, true_basename, natural_keys, get_cam_name
+from .common import process_all, true_basename, natural_keys, get_cam_name
 
 def get_angle_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,

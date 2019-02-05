@@ -9,7 +9,7 @@ import io
 from contextlib import redirect_stdout
 import deeplabcut
 
-from common import natural_keys, make_process_fun
+from .common import natural_keys, make_process_fun
 
 def rename_dlc_files(folder, base):
     files = glob(os.path.join(folder, base+'*'))

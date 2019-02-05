@@ -8,7 +8,7 @@ from tqdm import tqdm, trange
 import sys
 from collections import defaultdict
 
-from common import make_process_fun, get_data_length, natural_keys
+from .common import make_process_fun, get_data_length, natural_keys
 
 
 def compute_angles(config, labels_fname, outname):

@@ -9,7 +9,7 @@ from glob import glob
 from collections import defaultdict
 import toml
 
-from common import \
+from .common import \
     find_calibration_folder, make_process_fun, \
     get_cam_name, get_video_name, load_intrinsics
 

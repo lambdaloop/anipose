@@ -9,7 +9,7 @@ from glob import glob
 from scipy import signal
 from scipy.interpolate import splev, splrep
 
-from common import make_process_fun, natural_keys
+from .common import make_process_fun, natural_keys
 
 
 def nan_helper(y):

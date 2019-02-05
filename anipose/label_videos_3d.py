@@ -15,7 +15,7 @@ import sys
 from collections import defaultdict
 from matplotlib.pyplot import get_cmap
 
-from common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length, natural_keys
+from .common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length, natural_keys
 
 def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]

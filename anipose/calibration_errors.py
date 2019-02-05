@@ -9,11 +9,11 @@ from glob import glob
 from collections import defaultdict
 import pandas as pd
 
-from common import \
+from .common import \
     find_calibration_folder, make_process_fun, \
     get_cam_name, get_video_name, load_intrinsics, load_extrinsics
-from triangulate import triangulate_optim, triangulate_simple, reprojection_error
-from calibrate_extrinsics import detect_aruco
+from .triangulate import triangulate_optim, triangulate_simple, reprojection_error
+from .calibrate_extrinsics import detect_aruco
 
 def expand_matrix(mtx):
     z = np.zeros((4,4))

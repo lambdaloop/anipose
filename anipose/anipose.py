@@ -4,7 +4,7 @@ import os
 import os.path
 import toml
 import click
-from common import full_path
+from .common import full_path
 
 ## possible commands
 # anipose calibrate # run calibration of intrinsics and extrinsics
@@ -74,8 +74,8 @@ def cli(ctx, config):
 @cli.command()
 @pass_config
 def calibrate(config):
-    from calibrate_intrinsics import calibrate_intrinsics_all
-    from calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate_intrinsics import calibrate_intrinsics_all
+    from .calibrate_extrinsics import calibrate_extrinsics_all
     click.echo('Calibrating...')
     calibrate_intrinsics_all(config)
     calibrate_extrinsics_all(config)
@@ -83,42 +83,42 @@ def calibrate(config):
 @cli.command()
 @pass_config
 def calibrate_intrinsics(config):
-    from calibrate_intrinsics import calibrate_intrinsics_all
+    from .calibrate_intrinsics import calibrate_intrinsics_all
     click.echo('Calibrating intrinsics...')
     calibrate_intrinsics_all(config)
 
 @cli.command()
 @pass_config
 def calibrate_extrinsics(config):
-    from calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate_extrinsics import calibrate_extrinsics_all
     click.echo('Calibrating extrinsics...')
     calibrate_extrinsics_all(config)
 
 @cli.command()
 @pass_config
 def calibration_errors(config):
-    from calibration_errors import get_errors_all
+    from .calibration_errors import get_errors_all
     click.echo('Getting all the calibration errors...')
     get_errors_all(config)
 
 @cli.command()
 @pass_config
 def analyze(config):
-    from pose_videos import pose_videos_all
+    from .pose_videos import pose_videos_all
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
 @cli.command()
 @pass_config
 def filter(config):
-    from filter_pose import filter_pose_all
+    from .filter_pose import filter_pose_all
     click.echo('Filtering tracked points...')
     filter_pose_all(config)
 
 @cli.command()
 @pass_config
 def triangulate(config):
-    from triangulate import triangulate_all
+    from .triangulate import triangulate_all
     click.echo('Triangulating points...')
     triangulate_all(config)
 
@@ -126,14 +126,14 @@ def triangulate(config):
 @cli.command()
 @pass_config
 def angles(config):
-    from compute_angles import compute_angles_all
+    from .compute_angles import compute_angles_all
     click.echo('Computing angles...')
     compute_angles_all(config)
 
 @cli.command()
 @pass_config
 def summarize(config):
-    from summarize import summarize_angles, summarize_pose3d
+    from .summarize import summarize_angles, summarize_pose3d
     click.echo('Summarizing angles...')
     summarize_angles(config)
 
@@ -143,7 +143,7 @@ def summarize(config):
 @cli.command()
 @pass_config
 def summarize_2d(config):
-    from summarize import summarize_pose2d, summarize_pose2d_filtered
+    from .summarize import summarize_pose2d, summarize_pose2d_filtered
     click.echo('Summarizing pose 2d...')
     summarize_pose2d(config)
 
@@ -155,7 +155,7 @@ def summarize_2d(config):
 @cli.command()
 @pass_config
 def summarize_errors(config):
-    from summarize import summarize_errors
+    from .summarize import summarize_errors
     click.echo('Summarizing errors...')
     summarize_errors(config)
 
@@ -163,31 +163,31 @@ def summarize_errors(config):
 @cli.command()
 @pass_config
 def label_2d(config):
-    from label_videos import label_videos_all
+    from .label_videos import label_videos_all
     click.echo('Labeling videos in 2D...')
     label_videos_all(config)
 
 @cli.command()
 @pass_config
 def label_2d_filter(config):
-    from label_videos import label_videos_filtered_all
+    from .label_videos import label_videos_filtered_all
     click.echo('Labeling videos in 2D...')
     label_videos_filtered_all(config)
 
 @cli.command()
 @pass_config
 def label_3d(config):
-    from label_videos_3d import label_videos_3d_all
+    from .label_videos_3d import label_videos_3d_all
     click.echo('Labeling videos in 3D...')
     label_videos_3d_all(config)
 
 @cli.command()
 @pass_config
 def run_data(config):
-    from calibrate_intrinsics import calibrate_intrinsics_all
-    from calibrate_extrinsics import calibrate_extrinsics_all
-    from pose_videos import pose_videos_all
-    from triangulate import triangulate_all
+    from .calibrate_intrinsics import calibrate_intrinsics_all
+    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .pose_videos import pose_videos_all
+    from .triangulate import triangulate_all
 
     click.echo('Calibrating...')
     calibrate_intrinsics_all(config)
@@ -205,8 +205,8 @@ def run_data(config):
 @cli.command()
 @pass_config
 def run_viz(config):
-    from label_videos import label_videos_all
-    from label_videos_3d import label_videos_3d_all
+    from .label_videos import label_videos_all
+    from .label_videos_3d import label_videos_3d_all
 
     click.echo('Labeling videos in 2D...')
     label_videos_all(config)
@@ -217,11 +217,11 @@ def run_viz(config):
 @cli.command()
 @pass_config
 def run_all(config):
-    from calibrate_intrinsics import calibrate_intrinsics_all
-    from calibrate_extrinsics import calibrate_extrinsics_all
-    from pose_videos import pose_videos_all
-    from triangulate import triangulate_all
-    from compute_angles import compute_angles_all
+    from .calibrate_intrinsics import calibrate_intrinsics_all
+    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .pose_videos import pose_videos_all
+    from .triangulate import triangulate_all
+    from .compute_angles import compute_angles_all
 
     click.echo('Calibrating...')
     calibrate_intrinsics_all(config)
@@ -231,7 +231,7 @@ def run_all(config):
     pose_videos_all(config)
 
     if config['filter_enabled']:
-        from filter_pose import filter_pose_all
+        from .filter_pose import filter_pose_all
         click.echo('Filtering tracked points...')
         filter_pose_all(config)
 
@@ -241,8 +241,8 @@ def run_all(config):
     click.echo('Computing angles...')
     compute_angles_all(config)
 
-    from label_videos import label_videos_all
-    from label_videos_3d import label_videos_3d_all
+    from .label_videos import label_videos_all
+    from .label_videos_3d import label_videos_3d_all
 
     click.echo('Labeling videos in 2D...')
     label_videos_all(config)

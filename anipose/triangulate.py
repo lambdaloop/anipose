@@ -11,7 +11,7 @@ from numpy import array as arr
 from glob import glob
 from scipy import optimize
 
-from common import make_process_fun, find_calibration_folder, \
+from .common import make_process_fun, find_calibration_folder, \
     get_video_name, get_cam_name, natural_keys, \
     load_intrinsics, load_extrinsics
 

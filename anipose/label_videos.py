@@ -10,7 +10,7 @@ from tqdm import trange
 
 from matplotlib.pyplot import get_cmap
 
-from common import make_process_fun, natural_keys
+from .common import make_process_fun, natural_keys
 
 def get_duration(vidname):
     metadata = skvideo.io.ffprobe(vidname)
