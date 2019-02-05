@@ -66,7 +66,7 @@ def load_config(fname):
 
 @click.group()
 @click.option('--config', type=click.Path(exists=True, dir_okay=False),
-              help='The config file to use instead of the default "config.toml".')
+              help='The config file to use instead of the default "config.toml" .')
 @click.pass_context
 def cli(ctx, config):
     ctx.obj = load_config(config)

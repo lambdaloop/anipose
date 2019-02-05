@@ -6,6 +6,14 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 
 (NOTE: This is not yet ready for production, still some issues to fix to make the experience smooth )
 
+## Getting started
+
+Clone the repository somewhere onto your computer.
+
+
+
+
+
 ## Input specification
 
 Ideally someone who is collecting data should just be able to put all
@@ -30,23 +38,25 @@ layout of folder for videos for 2d tracking
 
 ```
 /experiment/config.toml
-/experiment/session1/vid1.avi
-/experiment/session1/vid2.avi
-/experiment/session2/vid1.avi
-/experiment/session2/vid2.avi
+/experiment/session1/videos-raw/vid1.avi
+/experiment/session1/videos-raw/vid2.avi
+/experiment/session2/videos-raw/vid1.avi
+/experiment/session2/videos-raw/vid2.avi
 ```
 
 layout of folder for videos for 3d tracking
 
 ```
 /experiment/config.toml
-/experiment/session1/vid_abc_cam1.avi
-/experiment/session1/vid_abc_cam2.avi
-/experiment/session1/vid_abc_cam3.avi
+/experiment/session1/videos-raw/vid_abc_cam1.avi
+/experiment/session1/videos-raw/vid_abc_cam2.avi
+/experiment/session1/videos-raw/vid_abc_cam3.avi
 /experiment/session1/calibration/calib_v1_cam1.avi
 /experiment/session1/calibration/calib_v1_cam2.avi
 /experiment/session1/calibration/calib_v1_cam3.avi
 ```
+
+
 
 ## Configuration
 
