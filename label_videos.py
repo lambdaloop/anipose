@@ -45,7 +45,10 @@ def connect_all(img, points, scheme, bodyparts):
 
 def visualize_labels(config, labels_fname, vid_fname, outname):
 
-    scheme = config['labeling']['scheme']
+    try:
+        scheme = config['labeling']['scheme']
+    except KeyError:
+        scheme = []
 
     dlabs = pd.read_hdf(labels_fname)
     if len(dlabs.columns.levels) > 2:

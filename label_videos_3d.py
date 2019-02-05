@@ -60,16 +60,12 @@ def get_points(dx, bodyparts):
 
 
 
-## TODO: specify this scheme in config.toml
-scheme = [
-    ['L1A', 'L1B', 'L1C', 'L1D', 'L1E'],
-    ['L2A', 'L2B', 'L2C', 'L2D', 'L2E'],
-    ['L3A', 'L3B', 'L3C', 'L3D', 'L3E']
-]
+def visualize_labels(config, labels_fname, outname, fps=300):
 
-
-
-def visualize_labels(labels_fname, outname, fps=300):
+    try:
+        scheme = config['labeling']['scheme']
+    except KeyError:
+        scheme = []
 
     data = pd.read_csv(labels_fname)
     cols = [x for x in data.columns if '_error' in x]
@@ -109,7 +105,7 @@ def visualize_labels(labels_fname, outname, fps=300):
     mlab.orientation_axes()
 
     view = list(mlab.view())
-    
+
     for framenum in trange(data.shape[0],ncols=70):
         fig.scene.disable_render = True
 
@@ -133,7 +129,7 @@ def visualize_labels(labels_fname, outname, fps=300):
 
         view[0] += -0.2
         mlab.view(*view, reset_roll=False)
-        
+
         writer.writeFrame(img)
 
     mlab.close(all=True)
@@ -176,7 +172,7 @@ def process_session(config, session_path):
         some_vid = orig_fnames[basename][0]
         params = get_video_params(some_vid)
 
-        visualize_labels(fname, out_fname, params['fps'])
+        visualize_labels(config, fname, out_fname, params['fps'])
 
 
 label_videos_3d_all = make_process_fun(process_session)
