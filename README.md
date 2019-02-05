@@ -34,23 +34,23 @@ layout of folder for videos for 2d tracking
 
 
 ```
-/experiment/config.toml
-/experiment/session1/videos-raw/vid1.avi
-/experiment/session1/videos-raw/vid2.avi
-/experiment/session2/videos-raw/vid1.avi
-/experiment/session2/videos-raw/vid2.avi
+.../experiment/config.toml
+.../experiment/session1/videos-raw/vid1.avi
+.../experiment/session1/videos-raw/vid2.avi
+.../experiment/session2/videos-raw/vid1.avi
+.../experiment/session2/videos-raw/vid2.avi
 ```
 
 layout of folder for videos for 3d tracking
 
 ```
-/experiment/config.toml
-/experiment/session1/videos-raw/vid_abc_cam1.avi
-/experiment/session1/videos-raw/vid_abc_cam2.avi
-/experiment/session1/videos-raw/vid_abc_cam3.avi
-/experiment/session1/calibration/calib_v1_cam1.avi
-/experiment/session1/calibration/calib_v1_cam2.avi
-/experiment/session1/calibration/calib_v1_cam3.avi
+.../experiment/config.toml
+.../experiment/session1/videos-raw/vid_abc_cam1.avi
+.../experiment/session1/videos-raw/vid_abc_cam2.avi
+.../experiment/session1/videos-raw/vid_abc_cam3.avi
+.../experiment/session1/calibration/calib_v1_cam1.avi
+.../experiment/session1/calibration/calib_v1_cam2.avi
+.../experiment/session1/calibration/calib_v1_cam3.avi
 ```
 
 
