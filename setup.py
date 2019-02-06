@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: LGPL License"
+        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)"
     ],
     entry_points={
         'console_scripts': ['anipose=anipose.anipose:cli']
