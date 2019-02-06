@@ -12,6 +12,11 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 1) Setup DeepLabCut by following instruction [here](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md)
 2) Install Anipose through pip: `pip install anipose`
 
+## Documentation
+
+- [Setting up Anipose for 2D tracking](./docs/start_2d.md)
+- [Setting up Anipose for 3D tracking](./docs/start_3d.md)
+
 ## Why this project?
 
 DeepLabCut is great for training a network to track features in a video, and to run it on a small set of videos.
@@ -32,12 +37,6 @@ For 3D tracking, Anipose can:
 - generate 3D videos from 3D points
 - compute angles in 3D
 - aggregate all 3D data and angles into one file (for easier analysis)
-
-
-## Documentation
-
-- [Setting up Anipose for 2D tracking](./docs/start_2d.md)
-- [Setting up Anipose for 3D tracking](./docs/start_3d.md)
 
 
 ## References
