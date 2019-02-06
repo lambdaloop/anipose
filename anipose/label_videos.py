@@ -112,13 +112,13 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
 
 
 def process_session(config, session_path, filtered=False):
-    pipeline_videos_raw = config['pipeline_videos_raw']
+    pipeline_videos_raw = config['pipeline']['videos_raw']
     if filtered:
-        pipeline_videos_labeled = config['pipeline_videos_labeled_2d_filter']
-        pipeline_pose = config['pipeline_pose_2d_filter']
+        pipeline_videos_labeled = config['pipeline']['videos_labeled_2d_filter']
+        pipeline_pose = config['pipeline']['pose_2d_filter']
     else:
-        pipeline_videos_labeled = config['pipeline_videos_labeled_2d']
-        pipeline_pose = config['pipeline_pose_2d']
+        pipeline_videos_labeled = config['pipeline']['videos_labeled_2d']
+        pipeline_pose = config['pipeline']['pose_2d']
 
     print(session_path)
 

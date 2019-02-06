@@ -128,7 +128,7 @@ def make_process_fun(process_session, **args):
     return fun
 
 def find_calibration_folder(config, session_path):
-    pipeline_calibration_videos = config['pipeline_calibration_videos']
+    pipeline_calibration_videos = config['pipeline']['calibration_videos']
     nesting = config['nesting']
 
     level = nesting

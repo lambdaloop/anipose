@@ -138,9 +138,9 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
 
 def process_session(config, session_path):
-    pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_videos_labeled_3d = config['pipeline_videos_labeled_3d']
-    pipeline_3d = config['pipeline_pose_3d']
+    pipeline_videos_raw = config['pipeline']['videos_raw']
+    pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
+    pipeline_3d = config['pipeline']['pose_3d']
 
 
     vid_fnames = glob(os.path.join(session_path,

@@ -130,9 +130,9 @@ def calibrate_camera(fnames, numsq=2):
 
 
 def process_session(config, session_path):
-    # pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_calibration_videos = config['pipeline_calibration_videos']
-    pipeline_calibration_results = config['pipeline_calibration_results']
+    # pipeline_videos_raw = config['pipeline']['videos_raw']
+    pipeline_calibration_videos = config['pipeline']['calibration_videos']
+    pipeline_calibration_results = config['pipeline']['calibration_results']
 
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:

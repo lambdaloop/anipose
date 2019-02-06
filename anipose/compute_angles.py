@@ -46,8 +46,8 @@ def compute_angles(config, labels_fname, outname):
 
 
 def process_session(config, session_path):
-    pipeline_3d = config['pipeline_pose_3d']
-    pipeline_angles = config['pipeline_angles']
+    pipeline_3d = config['pipeline']['pose_3d']
+    pipeline_angles = config['pipeline']['angles']
 
     labels_fnames = glob(os.path.join(session_path,
                                       pipeline_3d, '*.csv'))

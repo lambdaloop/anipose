@@ -13,25 +13,25 @@ from .common import process_all, true_basename, natural_keys, get_cam_name
 
 def get_angle_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,
-                               config['pipeline_angles'],
+                               config['pipeline']['angles'],
                                '*.csv'))
     return fnames
 
 def get_pose3d_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,
-                               config['pipeline_pose_3d'],
+                               config['pipeline']['pose_3d'],
                                '*.csv'))
     return fnames
 
 def get_pose2d_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,
-                               config['pipeline_pose_2d'],
+                               config['pipeline']['pose_2d'],
                                '*.h5'))
     return fnames
 
 def get_pose2d_filtered_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,
-                               config['pipeline_pose_2d_filter'],
+                               config['pipeline']['pose_2d_filter'],
                                '*.h5'))
     return fnames
 
@@ -64,7 +64,7 @@ def make_summarize_fun(get_fnames_session, output_fname, h5=False):
         dout['project'] = config['project']
 
         outdir = os.path.join(config['path'],
-                              config['pipeline_summaries'])
+                              config['pipeline']['summaries'])
 
         os.makedirs(outdir, exist_ok=True)
 
@@ -119,7 +119,7 @@ def summarize_errors(config):
     dout['project'] = config['project']
 
     outdir = os.path.join(config['path'],
-                          config['pipeline_summaries'])
+                          config['pipeline']['summaries'])
 
     os.makedirs(outdir, exist_ok=True)
 

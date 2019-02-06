@@ -9,18 +9,19 @@ from .common import full_path
 pass_config = click.make_pass_decorator(dict)
 
 DEFAULT_CONFIG = {
-    'pipeline_videos_raw': 'videos-raw',
-    'pipeline_pose_2d': 'pose-2d',
-    'pipeline_pose_2d_filter': 'pose-2d-filtered',
-    'pipeline_pose_3d': 'pose-3d',
-    'pipeline_videos_labeled_2d': 'videos-labeled',
-    'pipeline_videos_labeled_2d_filter': 'videos-labeled-filtered',
-    'pipeline_calibration_videos': 'calibration',
-    'pipeline_calibration_results': 'calibration',
-    'pipeline_videos_labeled_3d': 'videos-3d',
-    'pipeline_angles': 'angles',
-    'pipeline_summaries': 'summaries',
-
+    'pipeline': {
+        'videos_raw': 'videos-raw',
+        'pose_2d': 'pose-2d',
+        'pose_2d_filter': 'pose-2d-filtered',
+        'pose_3d': 'pose-3d',
+        'videos_labeled_2d': 'videos-labeled',
+        'videos_labeled_2d_filter': 'videos-labeled-filtered',
+        'calibration_videos': 'calibration',
+        'calibration_results': 'calibration',
+        'videos_labeled_3d': 'videos-3d',
+        'angles': 'angles',
+        'summaries': 'summaries',
+    },
     'filter': {
         'enabled': True,
         'medfilt': 13,

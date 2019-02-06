@@ -65,8 +65,8 @@ def filter_pose(config, fname, outname):
 
 
 def process_session(config, session_path):
-    pipeline_pose = config['pipeline_pose_2d']
-    pipeline_pose_filter = config['pipeline_pose_2d_filter']
+    pipeline_pose = config['pipeline']['pose_2d']
+    pipeline_pose_filter = config['pipeline']['pose_2d_filter']
 
 
     pose_folder = os.path.join(session_path, pipeline_pose)

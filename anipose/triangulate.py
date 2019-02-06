@@ -247,11 +247,11 @@ def triangulate(config,
 
 
 def process_session(config, session_path):
-    pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_calibration_results = config['pipeline_calibration_results']
-    pipeline_pose = config['pipeline_pose_2d']
-    pipeline_pose_filter = config['pipeline_pose_2d_filter']
-    pipeline_3d = config['pipeline_pose_3d']
+    pipeline_videos_raw = config['pipeline']['videos_raw']
+    pipeline_calibration_results = config['pipeline']['calibration_results']
+    pipeline_pose = config['pipeline']['pose_2d']
+    pipeline_pose_filter = config['pipeline']['pose_2d_filter']
+    pipeline_3d = config['pipeline']['pose_3d']
 
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:

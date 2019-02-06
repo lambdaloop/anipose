@@ -21,8 +21,8 @@ def rename_dlc_files(folder, base):
 
 
 def process_session(config, session_path):
-    pipeline_videos_raw = config['pipeline_videos_raw']
-    pipeline_pose = config['pipeline_pose_2d']
+    pipeline_videos_raw = config['pipeline']['videos_raw']
+    pipeline_pose = config['pipeline']['pose_2d']
 
     config_name = os.path.join(config['model_folder'], 'config.yaml')
 
