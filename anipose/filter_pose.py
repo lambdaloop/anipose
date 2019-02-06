@@ -29,16 +29,16 @@ def filter_pose(config, fname, outname):
 
         x, y, score = arr(data[bp]).T
 
-        xmed = signal.medfilt(x, kernel_size=config['filter_medfilt'])
-        ymed = signal.medfilt(y, kernel_size=config['filter_medfilt'])
+        xmed = signal.medfilt(x, kernel_size=config['filter']['medfilt'])
+        ymed = signal.medfilt(y, kernel_size=config['filter']['medfilt'])
 
         errx = np.abs(x - xmed)
         erry = np.abs(y - ymed)
         err = errx + erry
 
         bad = np.zeros(len(x), dtype='bool')
-        bad[err >= config['filter_offset_threshold']] = True
-        bad[score < config['filter_score_threshold']] = True
+        bad[err >= config['filter']['offset_threshold']] = True
+        bad[score < config['filter']['score_threshold']] = True
         
         Xf = arr([x,y]).T
         Xf[bad] = np.nan
@@ -50,7 +50,7 @@ def filter_pose(config, fname, outname):
             nans, ix = nan_helper(vals)
             # some data missing, but not too much
             if np.sum(nans) > 0 and np.mean(~nans) > 0.5 and np.sum(~nans) > 5:
-                if config['filter_spline']:
+                if config['filter']['spline']:
                     spline = splrep(ix(~nans), vals[~nans], k=3, s=0)
                     vals[nans]= splev(ix(nans), spline)
                 else:

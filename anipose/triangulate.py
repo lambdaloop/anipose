@@ -257,7 +257,7 @@ def process_session(config, session_path):
     if calibration_path is None:
         return
 
-    if config['filter_enabled']:
+    if config['filter']['enabled']:
         pose_folder = os.path.join(session_path, pipeline_pose_filter)
     else:
         pose_folder = os.path.join(session_path, pipeline_pose)

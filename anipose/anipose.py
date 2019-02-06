@@ -6,14 +6,6 @@ import toml
 import click
 from .common import full_path
 
-## possible commands
-# anipose calibrate # run calibration of intrinsics and extrinsics
-# anipose analyze # analyze the poses for each video
-# anipose label # create videos for each pose
-# anipose run_data # run only the data portion (no viz)
-# anipose run_viz # run only the visualization pipeline
-# anipose run_all # run everything (run_data then run_viz)
-
 pass_config = click.make_pass_decorator(dict)
 
 DEFAULT_CONFIG = {
@@ -29,11 +21,13 @@ DEFAULT_CONFIG = {
     'pipeline_angles': 'angles',
     'pipeline_summaries': 'summaries',
 
-    'filter_enabled': True,
-    'filter_medfilt': 13,
-    'filter_offset_threshold': 25,
-    'filter_score_threshold': 0.8,
-    'filter_spline': True
+    'filter': {
+        'enabled': True,
+        'medfilt': 13,
+        'offset_threshold': 25,
+        'score_threshold': 0.8,
+        'spline': True
+    }
 }
 
 
@@ -61,6 +55,10 @@ def load_config(fname):
     for k, v in DEFAULT_CONFIG.items():
         if k not in config:
             config[k] = v
+        elif isinstance(v, dict): # handle nested defaults
+            for k2, v2 in v.items():
+                if k2 not in config[k]:
+                    config[k][k2] = v2
 
     return config
 
@@ -147,7 +145,7 @@ def summarize_2d(config):
     click.echo('Summarizing pose 2d...')
     summarize_pose2d(config)
 
-    if config['filter_enabled']:
+    if config['filter']['enabled']:
         click.echo('Summarizing pose 2d filtered...')
         summarize_pose2d_filtered(config)
 
@@ -230,7 +228,7 @@ def run_all(config):
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
-    if config['filter_enabled']:
+    if config['filter']['enabled']:
         from .filter_pose import filter_pose_all
         click.echo('Filtering tracked points...')
         filter_pose_all(config)
