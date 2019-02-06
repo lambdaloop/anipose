@@ -1,3 +1,7 @@
+# Setting up Anipose for 3D tracking
+
+First, set up Anipose for 2D tracking by following the instructions [here](start_2d.md).
+
 ## Configuring the standardized 3D pose
 
 In order to properly compare across different trials, different animals, and different setups, the 3D coordinates must be standardized relative to a common reference frame.

@@ -1,4 +1,14 @@
-## Input specification
+# Setting up Anipose for 2D tracking
+
+So you want to setup Anipose for 2D tracking? Well, you've come to the right place!
+
+It's really quite simple, all you need to do are the following:
+
+1) Train a network to label your data [using DeepLabCut](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/UseOverviewGuide.md) 
+2) Setup your folder structure for the experiment in the appropriate format
+3) Create a `config.toml` file with the parameters for your experiment
+
+## Folder structure
 
 Ideally someone who is collecting data should just be able to put all
 the videos into a single folder during a data collection run.
@@ -6,19 +16,7 @@ the videos into a single folder during a data collection run.
 Different data collection sessions (e.g. on different days) are usually
 placed into different folders.
 
-We'll need a config file to specify what to use for tracking and
-post-processing. However, it's cumbersome to remember to put a new
-config file for each new session, especially if the config doesn't
-really change from session to session.
-
-It would be nice to be able to place a separate config file into each
-session though, to override the experiment config as needed.
-
-It would be extra nice to reprocess the data if any of the config
-parameters change.
-
 layout of folder for videos for 2d tracking
-
 
 ```
 .../experiment/config.toml
