@@ -4,7 +4,7 @@ So you want to setup Anipose for 2D tracking? Well, you've come to the right pla
 
 It's really quite simple, all you need to do are the following:
 
-1) Train a network to label your data [using DeepLabCut](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/UseOverviewGuide.md) 
+1) Train a network to label your data [using DeepLabCut](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/UseOverviewGuide.md)
 2) Setup your folder structure for the experiment in the appropriate format
 3) Create a `config.toml` file with the parameters for your experiment
 
@@ -12,6 +12,9 @@ It's really quite simple, all you need to do are the following:
 
 Anipose tries to follow the organization that people tend to come to
 naturally for organizing behavioral videos, with one key modification.
+
+The modification is that the *final folder* should be `videos-raw` (the name may be configurable, but it should be the same for each folder). This allows Anipose to know these are the input videos, and to create further folders with the processed data (e.g. `pose-2d`, `pose-2d-filtered`, `videos-labeled`).
+
 
 Here is the general layout of files for videos for 2D tracking
 
@@ -24,21 +27,26 @@ experiment/session2/videos-raw/vid2.avi
 ```
 
 There is one main experiment folder, and some subfolders under that.
-The names for the experiment and session folders can be whatever you like. 
+The names for the experiment and session folders can be whatever you like.
 
-Furthermore, the nesting can be arbitrarily large. Thus, an equally valid structure could be (here with nesting of 2 folders instead of 1 as above):
+Furthermore, the nesting can be arbitrarily large. Thus, an equally valid structure could be (here with nesting of 2 folders instead of 1 as above, note the arbitrary names as well):
 ```
-experiment/session1/fly1/videos-raw/vid-2019-02-06-01.avi
-experiment/session1/fly2/videos-raw/vid-2019-02-06-02.avi
-experiment/session2/fly1/videos-raw/vid-2019-02-07-01.avi
+flypose/config.toml
+flypose/session-2019-02-06/fly1/videos-raw/vid-2019-02-06-01.avi
+flypose/session-2019-02-06/fly2/videos-raw/vid-2019-02-06-02.avi
+flypose/session-2019-02-07/fly1/videos-raw/vid-2019-02-07-01.avi
 ```
-
-The key is that the final folder should be `videos-raw` (the name may be configurable, but it should be the same for each folder). This allows Anipose to know these are the input videos, and to create further folders with the processed data (e.g. `pose-2d`, `pose-2d-filtered`, `videos-labeled`).  
 
 
 ## Configuration
 
-Example config file for 2d/3d tracking:
+Got your folder structure setup? Great!
+Let's setup the configuration!
+
+Anipose uses the [TOML](https://github.com/toml-lang/toml) configuration format, as it is simple and can be read/written easily from Python and Matlab. Consider reading through the [specification](https://github.com/toml-lang/toml) to get a sense of it.
+
+
+Here is an annotated config file for 2D tracking:
 
 ```toml
 # Project name
@@ -50,16 +58,19 @@ model_folder = '/Data/Videos/DLC_Analysis/Running-Brandon-2019-01-29'
 # How many folders are nested in structure?
 nesting = 1
 
+[pipeline]
+videos_raw = "videos-raw" # change this if you'd like to change name of "videos-raw" folder
+
 # Settings for a threshold filter
 # Removes data outside threshold (probably errors in tracking), and interpolates
 [filter]
 enabled = true
-medfilt = 13
-offset_threshold = 25
-score_threshold = 0.8
-spline = true
+medfilt = 13 # length of median filter
+offset_threshold = 25 # offset from median filter to count as jump
+score_threshold = 0.8 # score below which to count as bad
+spline = true # interpolate using cubic spline instead of linear
 
-# labeling scheme...specify lines that you want to draw
+# labeling scheme...specify lines that you want to draw for visualizing labels in videos
 [labeling]
 scheme = [ ["head", "thorax", "abdomen"], ["thorax", "leg-1"] ]
 ```
@@ -87,21 +98,6 @@ It can be one of the following values:
   - **pose-3d** = 3d tracking for each group of input videos
   - **angles** = computed angles from 3d tracking
   - **videos-3d** = 3d videos generated from 3d tracking
-
-## Outline of processing plan
-
-For each experiment, for each session
-
-1.  Compress the videos into videos-raw
-2.  Place the configuration files into config (based on defaults and
-    session config)
-3.  Perform the 2d tracking based on the configuration
-4.  Label the individual videos with 2d tracking
-5.  If 3d tracking is enabled
-    1.  Perform camera calibration
-    2.  Perform triangulation of 2d tracking
-    3.  Compute angles, if needed
-    4.  Generate 3d videos
 
 ## Using the pipeline in the field
 
