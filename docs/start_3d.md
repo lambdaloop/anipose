@@ -2,6 +2,20 @@
 
 First, set up Anipose for 2D tracking by following the instructions [here](start_2d.md).
 
+## Folder structure
+
+Here is the general layout of folders for videos for 3D tracking
+
+```
+.../experiment/config.toml
+.../experiment/session1/videos-raw/vid_abc_cam1.avi
+.../experiment/session1/videos-raw/vid_abc_cam2.avi
+.../experiment/session1/videos-raw/vid_abc_cam3.avi
+.../experiment/session1/calibration/calib_v1_cam1.avi
+.../experiment/session1/calibration/calib_v1_cam2.avi
+.../experiment/session1/calibration/calib_v1_cam3.avi
+```
+
 ## Configuring the standardized 3D pose
 
 In order to properly compare across different trials, different animals, and different setups, the 3D coordinates must be standardized relative to a common reference frame.

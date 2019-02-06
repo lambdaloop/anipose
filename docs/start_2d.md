@@ -10,34 +10,30 @@ It's really quite simple, all you need to do are the following:
 
 ## Folder structure
 
-Ideally someone who is collecting data should just be able to put all
-the videos into a single folder during a data collection run.
+Anipose tries to follow the organization that people tend to come to
+naturally for organizing behavioral videos, with one key modification.
 
-Different data collection sessions (e.g. on different days) are usually
-placed into different folders.
-
-layout of folder for videos for 2d tracking
+Here is the general layout of files for videos for 2D tracking
 
 ```
-.../experiment/config.toml
-.../experiment/session1/videos-raw/vid1.avi
-.../experiment/session1/videos-raw/vid2.avi
-.../experiment/session2/videos-raw/vid1.avi
-.../experiment/session2/videos-raw/vid2.avi
+experiment/config.toml
+experiment/session1/videos-raw/vid1.avi
+experiment/session1/videos-raw/vid2.avi
+experiment/session2/videos-raw/vid1.avi
+experiment/session2/videos-raw/vid2.avi
 ```
 
-layout of folder for videos for 3d tracking
+There is one main experiment folder, and some subfolders under that.
+The names for the experiment and session folders can be whatever you like. 
 
+Furthermore, the nesting can be arbitrarily large. Thus, an equally valid structure could be (here with nesting of 2 folders instead of 1 as above):
 ```
-.../experiment/config.toml
-.../experiment/session1/videos-raw/vid_abc_cam1.avi
-.../experiment/session1/videos-raw/vid_abc_cam2.avi
-.../experiment/session1/videos-raw/vid_abc_cam3.avi
-.../experiment/session1/calibration/calib_v1_cam1.avi
-.../experiment/session1/calibration/calib_v1_cam2.avi
-.../experiment/session1/calibration/calib_v1_cam3.avi
+experiment/session1/fly1/videos-raw/vid-2019-02-06-01.avi
+experiment/session1/fly2/videos-raw/vid-2019-02-06-02.avi
+experiment/session2/fly1/videos-raw/vid-2019-02-07-01.avi
 ```
 
+The key is that the final folder should be `videos-raw` (the name may be configurable, but it should be the same for each folder). This allows Anipose to know these are the input videos, and to create further folders with the processed data (e.g. `pose-2d`, `pose-2d-filtered`, `videos-labeled`).  
 
 
 ## Configuration
