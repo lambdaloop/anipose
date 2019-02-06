@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="lambdaloop",
+    name="anipose",
     version="0.1.0",
     author="Pierre Karashchuk",
     author_email="krchtchk@gmail.com",
