@@ -1,5 +1,8 @@
 # Anipose
 
+[![PyPI version](https://badge.fury.io/py/anipose.svg)](https://badge.fury.io/py/anipose)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+
 Anipose is a framework for scalable [DeepLabCut](https://github.com/AlexEMG/DeepLabCut)-based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders.
 
 The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any pose".
