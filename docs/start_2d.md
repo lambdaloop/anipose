@@ -13,7 +13,7 @@ Just follow these steps:
 Anipose tries to follow the organization that people tend to come to
 naturally for organizing behavioral videos, with one key modification.
 
-The modification is that the *final folder* should be `videos-raw` (the name may be configurable, but it should be the same for each folder). This allows Anipose to know these are the input videos, and to create further folders with the processed data (e.g. `pose-2d`, `pose-2d-filtered`, `videos-labeled`).
+The modification is that the *final folder* should be `videos-raw`. This allows Anipose to know these are the input videos, and to create further folders with the processed data (e.g. `pose-2d`, `pose-2d-filtered`, `videos-labeled`).
 
 
 Here is the general layout of files for videos for 2D tracking
@@ -46,7 +46,9 @@ Let's setup the configuration!
 Anipose uses the [TOML](https://github.com/toml-lang/toml) configuration format, as it is simple and can be read/written easily from Python and Matlab. Consider reading through the [specification](https://github.com/toml-lang/toml) to get a sense of it.
 
 
-Here is an annotated config file for 2D tracking:
+Below is an annotated example config file for 2D tracking. Create a
+file called `config.toml` within your experiment folder with this
+structure, and update the parameters.
 
 ```toml
 # Project name
@@ -61,15 +63,6 @@ nesting = 1
 [pipeline]
 videos_raw = "videos-raw" # change this if you'd like to change name of "videos-raw" folder
 
-# Settings for a threshold filter
-# Removes data outside threshold (probably errors in tracking), and interpolates
-[filter]
-enabled = true
-medfilt = 13 # length of median filter
-offset_threshold = 25 # offset from median filter to count as jump
-score_threshold = 0.8 # score below which to count as bad
-spline = true # interpolate using cubic spline instead of linear
-
 # labeling scheme...specify lines that you want to draw for visualizing labels in videos
 [labeling]
 scheme = [
@@ -79,22 +72,31 @@ scheme = [
 ```
 
 
-## Using the pipeline in the field
+## Filtering the data
 
-Ideally, there should be one repository with all the code, and the data
-is held separate. Each data folder should come with a configuration file
-of its own. The user should be able to invoke some pipeline script to
-process everything, and separate pipeline scripts for each step.
+You may enable filtering of the data (it is off by default). This compares the data to a median filtered version and looks for outliers. We found this helps find and remove tracking errors, even if the score is high for these.
 
-Perhaps something like:
+To do this, you can edit your config with these parameters:
+```toml
+# Settings for a threshold filter
+# Removes data outside threshold (probably errors in tracking), and interpolates
+[filter]
+enabled = true
+medfilt = 13 # length of median filter
+offset_threshold = 25 # offset from median filter to count as jump
+score_threshold = 0.8 # score below which to count as bad
+spline = true # interpolate using cubic spline instead of linear
+```
+
+## Running Anipose
+
 
 ```
-anipose calibrate # run calibration of intrinsics and extrinsics
-anipose label # label the poses for each video
-anipose label-videos # create videos for each pose
-anipose run-data # run only the data portion (no viz)
-anipose run-viz # run only the visualization pipeline
-anipose run-all # run everything (run-data then run-viz)
+anipose analyze # analyze the poses for each video
+anipose filter # filter out the tracked poses
+anipose label_videos # create videos for each pose
+anipose summarize_2d # summarize the 2d tracked data (both raw and filtered)
+anipose summarize_errors # summarize the errors in the tracking
 ```
 
 The program anipose should parse out the config within the folder, and
