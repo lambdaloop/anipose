@@ -1,16 +1,7 @@
-# path = "/home/pierre/research/tuthill/flywalk-pipeline-go/test2"
-# model_folder = "/jellyfish/research/tuthill/DeepLabCut_pierre/pose-tensorflow/models"
 
 project = "flypose"
-
 path = "/media/beast/pierre/flywalk-pipeline-go/test2"
-
-# model_folder = "/home/tuthill/pierre/DeepLabCut_pierre/pose-tensorflow/models"
 model_folder = "/home/tuthill/pierre/flypose-test-Pierre-2018-12-10"
-
-model_name = "flypose-subset-midpointsDec18-trainset95shuffle1"
-model_train_iter = 1030000
-
 
 nesting = 1
 
