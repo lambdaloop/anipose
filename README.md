@@ -37,4 +37,20 @@ Here are some references for DeepLabCut and other things this project relies upo
     booktitle = {ECCV'16},
     url = {http://arxiv.org/abs/1605.03170}
 }
+
+@article{romero-ramirez_speeded_2018,
+	title = {Speeded up detection of squared fiducial markers},
+	doi = {10.1016/j.imavis.2018.05.004},
+	journal = {Image and Vision Computing},
+	author = {Romero-Ramirez, Francisco J. and Muñoz-Salinas, Rafael and Medina-Carnicer, Rafael},
+	year = {2018},
+}
+
+@article{garrido-jurado_generation_2016,
+	title = {Generation of fiducial marker dictionaries using {Mixed} {Integer} {Linear} {Programming}},
+	doi = {10.1016/j.patcog.2015.09.023},
+	journal = {Pattern Recognition},
+	author = {Garrido-Jurado, S. and Muñoz-Salinas, R. and Madrid-Cuevas, F.J. and Medina-Carnicer, R.},
+	year = {2016},
+}
 ```
