@@ -1,8 +1,8 @@
 # Setting up Anipose for 2D tracking
 
-So you want to setup Anipose for 2D tracking? Well, you've come to the right place!
+So you want to setup Anipose for 2D tracking at scale? Well, you've come to the right place!
 
-It's really quite simple, all you need to do are the following:
+Just follow these steps:
 
 1) Train a network to label your data [using DeepLabCut](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/UseOverviewGuide.md)
 2) Setup your folder structure for the experiment in the appropriate format
@@ -72,32 +72,12 @@ spline = true # interpolate using cubic spline instead of linear
 
 # labeling scheme...specify lines that you want to draw for visualizing labels in videos
 [labeling]
-scheme = [ ["head", "thorax", "abdomen"], ["thorax", "leg-1"] ]
+scheme = [
+  ["head", "thorax", "abdomen"],
+  ["thorax", "leg-1"]
+]
 ```
 
-## Output specification
-
-The output structure should match the input structure, with additional
-files resulting from the tracking.
-
-The structure should be as follows:
-
-/experiment/session/FOLDER
-
-Where FOLDER is a folder storing the output of a specific processing
-step.
-
-It can be one of the following values:
-
-  - **videos-raw** = input videos
-  - **pose-2d** = 2d tracking for each of the input videos
-  - **pose-2d-filtered** = filtered version of 2d tracking
-  - **videos-labeled** = videos labeled with the 2d tracking
-  - **videos-labeled-filtered** = videos labeled with the filtered 2d tracking
-  - **calibration** = camera parameters obtained from 3d calibration, along with calibration videos
-  - **pose-3d** = 3d tracking for each group of input videos
-  - **angles** = computed angles from 3d tracking
-  - **videos-3d** = 3d videos generated from 3d tracking
 
 ## Using the pipeline in the field
 
@@ -124,13 +104,13 @@ underneath.
 
 ## Summarizing the data
 
-After computing the whole pipeline for all videos, the final outputs of
-interest (the 3d pose coordinates and angles, possibly the 2d
-coordinates) are scattered across a lot of folders.
+After computing the whole pipeline for all videos, the final outputs
+of interest (the 2D coordinates) are scattered across a lot of
+folders.
 
 For further processing and analysis, it is often useful to have one
 central file with all the data. Hence, Anipose provides the command
-“summarize”, which summarizes everything into a “summaries” folder.
-The output csv for each of angles, 3d, and 2d tracking coordinates has
-all the data from all sessions, and a few extra columns to show where
-the data comes from.
+“summarize_2d”, which summarizes everything into a “summaries” folder.
+The output csv for the 2d tracking coordinates has all the data from
+all sessions, and a few extra columns to show where the data comes
+from.
