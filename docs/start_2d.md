@@ -90,7 +90,9 @@ spline = true # interpolate using cubic spline instead of linear
 
 ## Running Anipose
 
+With the configuration file and folder structure setup, you can now run Anipose on your full dataset!
 
+Anipose is run from the command line. For 2D tracking, the relevant commands are as follows:
 ```
 anipose analyze # analyze the poses for each video
 anipose filter # filter out the tracked poses
