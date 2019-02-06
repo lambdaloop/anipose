@@ -4,7 +4,6 @@ import os
 import os.path
 import toml
 import click
-from .common import full_path
 
 pass_config = click.make_pass_decorator(dict)
 
@@ -31,6 +30,11 @@ DEFAULT_CONFIG = {
     }
 }
 
+def full_path(path):
+    path_user = os.path.expanduser(path)
+    path_full = os.path.abspath(path_user)
+    path_norm = os.path.normpath(path_full)
+    return path_norm
 
 def load_config(fname):
     if fname is None:
@@ -64,6 +68,7 @@ def load_config(fname):
     return config
 
 @click.group()
+@click.version_option()
 @click.option('--config', type=click.Path(exists=True, dir_okay=False),
               help='The config file to use instead of the default "config.toml" .')
 @click.pass_context
