@@ -1,4 +1,5 @@
 import cv2
+from cv2 import aruco
 import re
 import os, os.path
 from collections import deque
@@ -158,3 +159,50 @@ def load_extrinsics(folder):
         new_k = tuple(k.split('_'))
         extrinsics_out[new_k] = v
     return extrinsics_out
+
+ARUCO_DICTS = {
+    (4, 50): aruco.DICT_4X4_50,
+    (5, 50): aruco.DICT_5X5_50,
+    (6, 50): aruco.DICT_6X6_50,
+    (7, 50): aruco.DICT_7X7_50,
+
+    (4, 100): aruco.DICT_4X4_100,
+    (5, 100): aruco.DICT_5X5_100,
+    (6, 100): aruco.DICT_6X6_100,
+    (7, 100): aruco.DICT_7X7_100,
+
+    (4, 250): aruco.DICT_4X4_250,
+    (5, 250): aruco.DICT_5X5_250,
+    (6, 250): aruco.DICT_6X6_250,
+    (7, 250): aruco.DICT_7X7_250,
+
+    (4, 1000): aruco.DICT_4X4_1000,
+    (5, 1000): aruco.DICT_5X5_1000,
+    (6, 1000): aruco.DICT_6X6_1000,
+    (7, 1000): aruco.DICT_7X7_1000
+}
+
+def get_calibration_board(config):
+    dkey = (config['calibration']['board_marker_bits'],
+            config['calibration']['board_marker_dict_number'])
+    dictionary = aruco.getPredefinedDictionary(ARUCO_DICTS[dkey])
+    board_size = config['calibration']['board_size']
+    board_type = config['calibration']['board_type'].lower()
+    if board_type == 'aruco':
+        board = aruco.GridBoard_create(
+            board_size[0], board_size[1],
+            config['calibration']['board_marker_length'],
+            config['calibration']['board_marker_separation_length'],
+            dictionary)
+    elif board_type == 'charuco':
+        board = aruco.CharucoBoard_create(
+            board_size[0], board_size[1],
+            config['calibration']['board_square_side_length'],
+            config['calibration']['board_marker_length'],
+            dictionary)
+    else:
+        raise ValueError("board_type should be either "
+                         "'aruco' or 'charuco', not '{}'".format(
+                             board_type))
+
+    return board

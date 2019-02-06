@@ -11,7 +11,8 @@ from collections import defaultdict
 import toml
 from time import time
 
-from .common import make_process_fun, get_cam_name, find_calibration_folder, get_video_params
+from .common import make_process_fun, get_cam_name, find_calibration_folder, \
+    get_video_params, get_calibration_board
 
 def get_corners(fname, board):
     cap = cv2.VideoCapture(fname)
@@ -64,7 +65,7 @@ def trim_corners(allCorners, allIds, maxBoards=85):
     return allCorners, allIds
 
 
-def reformat_corners(allCorners, allIds, numsq=2):
+def reformat_corners(allCorners, allIds):
     markerCounter = np.array([len(cs) for cs in allCorners])
     allCornersConcat = itertools.chain.from_iterable(allCorners)
     allIdsConcat = itertools.chain.from_iterable(allIds)
@@ -100,13 +101,11 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
 
     return out
 
-def calibrate_camera(fnames, numsq=2):
+def calibrate_camera(fnames, board):
     allCorners = []
     allIds = []
 
-    ## TODO: configure aruco board
-    dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
-    board = aruco.GridBoard_create(numsq, numsq, 4, 1, dictionary)
+    board_size = board.getGridSize()
 
     video_params = get_video_params(fnames[0])
 
@@ -116,15 +115,16 @@ def calibrate_camera(fnames, numsq=2):
         allIds.extend(someIds)
 
     allCorners, allIds = trim_corners(allCorners, allIds, maxBoards=85)
-    allCornersConcat, allIdsConcat, markerCounter = reformat_corners(allCorners, allIds, numsq)
+    allCornersConcat, allIdsConcat, markerCounter = reformat_corners(allCorners, allIds)
 
     print()
 
     print("found {} markers, {} boards, {} complete boards".format(
         len(allCornersConcat), len(markerCounter),
-        np.sum(markerCounter == numsq*numsq)))
+        np.sum(markerCounter == board_size[0]*board_size[1])))
 
-    calib_params = calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_params)
+    calib_params = calibrate_aruco(allCornersConcat, allIdsConcat,
+                                   markerCounter, board, video_params)
 
     return calib_params
 
@@ -152,6 +152,8 @@ def process_session(config, session_path):
         cname = get_cam_name(config, vid)
         cam_videos[cname].append(vid)
 
+    board = get_calibration_board(config)
+
     for cname in cam_names:
         fnames = cam_videos[cname]
         outname_base = 'intrinsics_{}.toml'.format(cname)
@@ -162,7 +164,7 @@ def process_session(config, session_path):
         if os.path.exists(outname):
             continue
         else:
-            calib = calibrate_camera(fnames)
+            calib = calibrate_camera(fnames, board)
             with open(outname, 'w') as f:
                 toml.dump(calib, f)
 

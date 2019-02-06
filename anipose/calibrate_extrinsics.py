@@ -11,14 +11,10 @@ import toml
 
 from .common import \
     find_calibration_folder, make_process_fun, \
-    get_cam_name, get_video_name, load_intrinsics
+    get_cam_name, get_video_name, load_intrinsics, \
+    get_calibration_board
 
-# TODO: make this board configurable
-dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
-board = aruco.GridBoard_create(2, 2, 4, 1, dictionary)
-
-
-def detect_aruco(gray, intrinsics):
+def detect_aruco(gray, intrinsics, board):
     # grayb = gray
     grayb = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -29,7 +25,8 @@ def detect_aruco(gray, intrinsics):
     params.adaptiveThreshWinSizeStep = 50
     params.adaptiveThreshConstant = 5
 
-    corners, ids, rejectedImgPoints = aruco.detectMarkers(grayb, dictionary, parameters=params)
+    corners, ids, rejectedImgPoints = aruco.detectMarkers(
+        grayb, board.dictionary, parameters=params)
 
     INTRINSICS_K = np.array(intrinsics['camera_mat'])
     INTRINSICS_D = np.array(intrinsics['dist_coeff'])
@@ -47,9 +44,9 @@ def detect_aruco(gray, intrinsics):
 
     return detectedCorners, detectedIds
 
-def estimate_pose(gray, intrinsics):
+def estimate_pose(gray, intrinsics, board):
 
-    detectedCorners, detectedIds = detect_aruco(gray, intrinsics)
+    detectedCorners, detectedIds = detect_aruco(gray, intrinsics, board)
     if len(detectedIds) < 3:
         return False, None
 
@@ -88,7 +85,7 @@ def mean_transform(M_list):
 
     return make_M(rvec, tvec)
 
-def get_matrices(fname_dict, cam_intrinsics, skip=20):
+def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
     minlen = np.inf
     caps = dict()
     for cam_name, fname in fname_dict.items():
@@ -117,7 +114,7 @@ def get_matrices(fname_dict, cam_intrinsics, skip=20):
 
             intrinsics = cam_intrinsics[cam_name]
 
-            success, result = estimate_pose(gray, intrinsics)
+            success, result = estimate_pose(gray, intrinsics, board)
             if not success:
                 continue
 
@@ -160,11 +157,11 @@ def get_all_matrix_pairs(matrix_list, cam_names):
 
     return out
 
-def get_extrinsics(fname_dicts, cam_intrinsics, skip=20):
+def get_extrinsics(fname_dicts, cam_intrinsics, board, skip=20):
     matrix_list = []
     cam_names = set()
     for fd in fname_dicts:
-        ml = get_matrices(fd, cam_intrinsics, skip=skip)
+        ml = get_matrices(fd, cam_intrinsics, board, skip=skip)
         matrix_list.extend(ml)
         cam_names.update(fd.keys())
 
@@ -204,6 +201,8 @@ def process_session(config, session_path):
     os.makedirs(outdir, exist_ok=True)
     outname = os.path.join(outdir, outname_base)
 
+    board = get_calibration_board(config)
+
     print(outname)
     if os.path.exists(outname):
         return
@@ -217,7 +216,7 @@ def process_session(config, session_path):
             fname_dict = dict(zip(cam_names, fnames))
             fname_dicts.append(fname_dict)
 
-        extrinsics = get_extrinsics(fname_dicts, intrinsics)
+        extrinsics = get_extrinsics(fname_dicts, intrinsics, board)
         extrinsics_out = {}
         for k, v in extrinsics.items():
             new_key = k[0] + '_' + k[1]
