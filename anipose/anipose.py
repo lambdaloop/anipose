@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
         'summaries': 'summaries',
     },
     'filter': {
-        'enabled': True,
+        'enabled': False,
         'medfilt': 13,
         'offset_threshold': 25,
         'score_threshold': 0.8,
