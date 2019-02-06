@@ -9,7 +9,7 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 ## Getting started
 
 1) Setup DeepLabCut by following instruction [here](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md)
-2) Install Anipose through pip: `pip install git+https://github.com/lambdaloop/anipose`
+2) Install Anipose through pip: `pip install anipose`
 
 
 ## Input specification
