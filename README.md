@@ -64,7 +64,7 @@ Example config file for 2d/3d tracking:
 # Project name
 project = "flypose"
 
-# Chnage this to match deeplabcut folder (one with trained network)
+# Change this to match deeplabcut folder (one with trained network)
 model_folder = '/Data/Videos/DLC_Analysis/Running-Brandon-2019-01-29'
 
 # How many folders are nested in structure?
