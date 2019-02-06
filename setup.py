@@ -15,7 +15,10 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)"
+        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Image Recognition"
     ],
     entry_points={
         'console_scripts': ['anipose=anipose.anipose:cli']
