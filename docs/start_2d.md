@@ -92,7 +92,7 @@ spline = true # interpolate using cubic spline instead of linear
 
 With the configuration file and folder structure setup, you can now run Anipose on your full dataset!
 
-Anipose is run from the command line. For 2D tracking, the relevant commands are as follows:
+For 2D tracking, the relevant commands are as follows:
 ```
 anipose analyze # analyze the poses for each video
 anipose filter # filter out the tracked poses
@@ -101,10 +101,7 @@ anipose summarize_2d # summarize the 2d tracked data (both raw and filtered)
 anipose summarize_errors # summarize the errors in the tracking
 ```
 
-The program anipose should parse out the config within the folder, and
-figure out all the appropriate parameters to pass to the functions
-underneath.
-
+To run these, open a command line window, go to the folder where your experiment is stored, and run one of the commands above.
 
 ## Summarizing the data
 
