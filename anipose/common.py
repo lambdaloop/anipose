@@ -208,3 +208,10 @@ def get_calibration_board(config):
                              board_type))
 
     return board
+
+def get_calibration_board_image(config):
+    board = get_calibration_board(config)
+    numx, numy = board.getGridSize()
+    size = numx*200, numy*200
+    img = board.draw(size)
+    return img

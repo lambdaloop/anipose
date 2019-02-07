@@ -187,6 +187,16 @@ def label_3d(config):
 
 @cli.command()
 @pass_config
+def draw_calibration(config):
+    from .common import get_calibration_board_image
+    import cv2
+    click.echo('Drawing calibration board...')
+    img = get_calibration_board_image(config)
+    cv2.imwrite('calibration.png', img)
+
+
+@cli.command()
+@pass_config
 def run_data(config):
     from .calibrate_intrinsics import calibrate_intrinsics_all
     from .calibrate_extrinsics import calibrate_extrinsics_all
