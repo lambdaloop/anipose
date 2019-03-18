@@ -10,6 +10,7 @@ import toml
 from numpy import array as arr
 from glob import glob
 from scipy import optimize
+import cv2
 
 from .common import make_process_fun, find_calibration_folder, \
     get_video_name, get_cam_name, natural_keys, \
@@ -133,7 +134,7 @@ def triangulate(config,
     ## TODO: make the recorder.toml file configurable
     record_fname = os.path.join(video_folder, 'recorder.toml')
     cam_align = config['triangulation']['cam_align']
-    
+
     if os.path.exists(record_fname):
         record_dict = toml.load(record_fname)
     else:
@@ -161,12 +162,13 @@ def triangulate(config,
     offsets = []
     cam_mats = []
     for cname in cam_names:
-        left = expand_matrix(arr(intrinsics[cname]['camera_mat']))
+        # left = expand_matrix(arr(intrinsics[cname]['camera_mat']))
         if cname == cam_align:
             right = np.identity(4)
         else:
             right = arr(extrinsics[(cname, cam_align)])
-        mat = np.matmul(left, right)
+        # mat = np.matmul(left, right)
+        mat = right.copy()
         cam_mats.append(mat)
         offsets.append(offsets_dict[cname])
 
@@ -188,6 +190,7 @@ def triangulate(config,
 
     # frame, camera, bodypart, xy
     all_points_raw = np.zeros((length, len(cam_names), len(bodyparts), 2))
+    all_points_und = np.zeros((length, len(cam_names), len(bodyparts), 2))
     all_scores = np.zeros((length, len(cam_names), len(bodyparts)))
 
     for ix_cam, (cam_name, pose_name, offset) in \
@@ -201,6 +204,13 @@ def triangulate(config,
             X = arr(dd[bp])
             all_points_raw[index, ix_cam, ix_bp, :] = X[:, :2] + [offset[0], offset[1]]
             all_scores[index, ix_cam, ix_bp] = X[:, 2]
+
+        calib = intrinsics[cam_name]
+        points = all_points_raw[:, ix_cam].reshape(-1, 1, 2)
+        points_new = cv2.undistortPoints(
+            points, arr(calib['camera_mat']), arr(calib['dist_coeff']))
+        all_points_und[:, ix_cam] = points_new.reshape(all_points_raw[:, ix_cam].shape)
+
 
     shape = all_points_raw.shape
 
@@ -217,11 +227,11 @@ def triangulate(config,
     num_cams.fill(np.nan)
 
     # TODO: configure this threshold
-    all_points_raw[all_scores < 0.75] = np.nan
+    all_points_und[all_scores < 0.75] = np.nan
 
-    for i in trange(all_points_raw.shape[0], ncols=70):
-        for j in range(all_points_raw.shape[2]):
-            pts = all_points_raw[i, :, j, :]
+    for i in trange(all_points_und.shape[0], ncols=70):
+        for j in range(all_points_und.shape[2]):
+            pts = all_points_und[i, :, j, :]
             good = ~np.isnan(pts[:, 0])
             if np.sum(good) >= 2:
                 # TODO: make triangulation type configurable
