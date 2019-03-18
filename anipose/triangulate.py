@@ -53,7 +53,8 @@ def optim_error_fun(points, camera_mats):
         p3d = np.array([x[0], x[1], x[2], 1])
         proj = np.dot(camera_mats, p3d)
         resid = points - proj[:, :2] / proj[:, 2, None]
-        return resid.flatten()
+        # return resid.flatten()
+        return np.linalg.norm(resid, axis=1)
     return fun
 
 def triangulate_optim(points, camera_mats, max_error=20):
@@ -229,15 +230,19 @@ def triangulate(config,
     # TODO: configure this threshold
     all_points_und[all_scores < 0.75] = np.nan
 
+    mat = arr(intrinsics[cam_names[0]]['camera_mat'])
+    pt_scale = fx = mat[0,0]
+
     for i in trange(all_points_und.shape[0], ncols=70):
         for j in range(all_points_und.shape[2]):
             pts = all_points_und[i, :, j, :]
             good = ~np.isnan(pts[:, 0])
             if np.sum(good) >= 2:
                 # TODO: make triangulation type configurable
-                p3d = triangulate_optim(pts[good], cam_mats[good])
+                # p3d = triangulate_optim(pts[good], cam_mats[good])
+                p3d = triangulate_simple(pts[good], cam_mats[good])
                 all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error(p3d, pts[good], cam_mats[good])
+                errors[i,j] = reprojection_error(p3d, pts[good], cam_mats[good]) * pt_scale
                 num_cams[i,j] = np.sum(good)
                 scores_3d[i,j] = np.min(all_scores[i, :, j][good])
 
