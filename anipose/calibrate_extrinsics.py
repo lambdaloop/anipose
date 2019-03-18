@@ -75,11 +75,10 @@ def estimate_pose(gray, intrinsics, board):
 
     # flip the orientation as needed to make all the cameras align
     rotmat, _ = cv2.Rodrigues(rvec)
-    test = np.dot([1,1,0], rotmat).dot([0,0,1])
-
-    if test > 0:
-        rvec[1,0] = -rvec[1,0]
-        rvec[0,0] = -rvec[0,0]
+    # test = np.dot([1,1,0], rotmat).dot([0,0,1])
+    # if test > 0:
+    #     rvec[1,0] = -rvec[1,0]
+    #     rvec[0,0] = -rvec[0,0]
 
     return True, (detectedCorners, detectedIds, rvec, tvec)
 
@@ -172,6 +171,7 @@ def get_transform(matrix_list, left, right):
     M_mean = mean_transform(L)
     M_mean = mean_transform_robust(L, M_mean, error=0.5)
     M_mean = mean_transform_robust(L, M_mean, error=0.2)
+    M_mean = mean_transform_robust(L, M_mean, error=0.1)
     return M_mean
 
 
