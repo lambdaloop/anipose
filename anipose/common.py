@@ -76,9 +76,12 @@ def get_duration(vidname):
     return duration
 
 def get_nframes(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    length = int(metadata['video']['@nb_frames'])
-    return length
+    try:
+        metadata = skvideo.io.ffprobe(vidname)
+        length = int(metadata['video']['@nb_frames'])
+        return length
+    except KeyError:
+        return 0
 
 def full_path(path):
     path_user = os.path.expanduser(path)
