@@ -14,6 +14,23 @@ from .common import \
     get_cam_name, get_video_name, load_intrinsics, \
     get_calibration_board
 
+def fill_points(corners, ids):
+    # TODO: this should change with calibration board config
+    # 16 comes from 4 boxes (2x2) with 4 corners each
+    out = np.zeros((16, 2))
+    out.fill(np.nan)
+
+    if ids is None:
+        return out
+
+    for id_wrap, corner_wrap in zip(ids, corners):
+        ix = id_wrap[0]
+        corner = corner_wrap.flatten().reshape(4,2)
+        if ix >= 4: continue
+        out[ix*4:(ix+1)*4,:] = corner
+
+    return out
+
 def detect_aruco(gray, intrinsics, board):
     # grayb = gray
     grayb = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -80,10 +97,22 @@ def mean_transform(M_list):
     rvecs = [cv2.Rodrigues(M[:3,:3])[0][:, 0] for M in M_list]
     tvecs = [M[:3, 3] for M in M_list]
 
-    rvec = np.median(rvecs, axis=0)
-    tvec = np.median(tvecs, axis=0)
+    rvec = np.mean(rvecs, axis=0)
+    tvec = np.mean(tvecs, axis=0)
 
     return make_M(rvec, tvec)
+
+def mean_transform_robust(M_list, approx=None, error=0.3):
+    if approx is None:
+        M_list_robust = M_list
+    else:
+        M_list_robust = []
+        for M in M_list:
+            rot_error = (M - approx)[:3,:3]
+            m = np.max(np.abs(rot_error))
+            if m < error:
+                M_list_robust.append(M)
+    return mean_transform(M_list_robust)
 
 def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
     minlen = np.inf
@@ -141,6 +170,8 @@ def get_transform(matrix_list, left, right):
             M = np.matmul(d[left], np.linalg.inv(d[right]))
             L.append(M)
     M_mean = mean_transform(L)
+    M_mean = mean_transform_robust(L, M_mean, error=0.5)
+    M_mean = mean_transform_robust(L, M_mean, error=0.2)
     return M_mean
 
 
@@ -158,6 +189,7 @@ def get_all_matrix_pairs(matrix_list, cam_names):
     return out
 
 def get_extrinsics(fname_dicts, cam_intrinsics, board, skip=20):
+    ## TODO optimize transforms based on reprojection errors
     matrix_list = []
     cam_names = set()
     for fd in fname_dicts:
