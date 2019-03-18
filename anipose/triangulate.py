@@ -228,7 +228,7 @@ def triangulate(config,
     num_cams.fill(np.nan)
 
     # TODO: configure this threshold
-    all_points_und[all_scores < 0.75] = np.nan
+    all_points_und[all_scores < 0.3] = np.nan
 
     mat = arr(intrinsics[cam_names[0]]['camera_mat'])
     pt_scale = fx = mat[0,0]
