@@ -36,6 +36,9 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
     cam_align = config['triangulation']['cam_align']
     board = get_calibration_board(config)
 
+    mat = np.array(cam_intrinsics[cam_align]['camera_mat'])
+    pt_scale = (mat[0,0] + mat[1,1])/2
+
     cam_mats = []
     for cname in cam_names:
         left = expand_matrix(np.array(cam_intrinsics[cname]['camera_mat']))
@@ -43,7 +46,8 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
             right = np.identity(4)
         else:
             right = np.array(extrinsics[(cname, cam_align)])
-        mat = np.matmul(left, right)
+        # mat = np.matmul(left, right)
+        mat = right
         cam_mats.append(mat)
 
     go = skip
@@ -77,8 +81,13 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
                 tvec = np.zeros(3)*np.nan
 
             points = fill_points(corners, ids)
+            points_flat = points.reshape(-1, 1, 2)
+            points_new = cv2.undistortPoints(
+                points_flat,
+                np.array(intrinsics['camera_mat']),
+                np.array(intrinsics['dist_coeff']))
 
-            row.append(points)
+            row.append(points_new.reshape(points.shape))
             rvecs.append(rvec)
             tvecs.append(tvec)
 
@@ -110,7 +119,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
             if ~np.any(np.isnan(pts)):
                 p3d = triangulate_optim(pts, cam_mats)
                 all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error(p3d, pts, cam_mats)
+                errors[i,j] = reprojection_error(p3d, pts, cam_mats) * pt_scale
 
     ## all_tvecs
     # framenum, camera num, axis
