@@ -230,8 +230,8 @@ def triangulate(config,
     # TODO: configure this threshold
     all_points_und[all_scores < 0.3] = np.nan
 
-    mat = arr(intrinsics[cam_names[0]]['camera_mat'])
-    pt_scale = fx = mat[0,0]
+    mat = arr(intrinsics[cam_align]['camera_mat'])
+    pt_scale = (mat[0,0] + mat[1,1])/2
 
     for i in trange(all_points_und.shape[0], ncols=70):
         for j in range(all_points_und.shape[2]):
