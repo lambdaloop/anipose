@@ -6,8 +6,11 @@ from tqdm import trange
 import numpy as np
 import os, os.path
 from glob import glob
-from collections import defaultdict
+from collections import defaultdict, Counter
 import toml
+from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.vq import whiten
+
 
 from .common import \
     find_calibration_folder, make_process_fun, \
@@ -92,6 +95,25 @@ def make_M(rvec, tvec):
     return out
 
 
+def get_most_common(vals):
+    Z = linkage(whiten(vals), 'ward')
+    n_clust = max(len(vals)/10, 3)
+    clusts = fcluster(Z, t=n_clust, criterion='maxclust')
+    cc = Counter(clusts[clusts >= 0])
+    most = cc.most_common(n=1)
+    top = most[0][0]
+    good = clusts == top
+    return good
+
+def select_matrices(Ms):
+    Ms = np.array(Ms)
+    rvecs = [cv2.Rodrigues(M[:3,:3])[0][:, 0] for M in Ms]
+    tvecs = np.array([M[:3, 3] for M in Ms]) 
+    best = get_most_common(np.hstack([rvecs, tvecs]))
+    Ms_best = Ms[best]
+    return Ms_best
+
+
 def mean_transform(M_list):
     rvecs = [cv2.Rodrigues(M[:3,:3])[0][:, 0] for M in M_list]
     tvecs = [M[:3, 3] for M in M_list]
@@ -112,6 +134,7 @@ def mean_transform_robust(M_list, approx=None, error=0.3):
             if m < error:
                 M_list_robust.append(M)
     return mean_transform(M_list_robust)
+
 
 def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
     minlen = np.inf
@@ -168,9 +191,10 @@ def get_transform(matrix_list, left, right):
         if left in d and right in d:
             M = np.matmul(d[left], np.linalg.inv(d[right]))
             L.append(M)
-    M_mean = mean_transform(L)
-    M_mean = mean_transform_robust(L, M_mean, error=0.5)
-    M_mean = mean_transform_robust(L, M_mean, error=0.2)
+    L_best = select_matrices(L)
+    M_mean = mean_transform(L_best)
+    # M_mean = mean_transform_robust(L, M_mean, error=0.5)
+    # M_mean = mean_transform_robust(L, M_mean, error=0.2)
     M_mean = mean_transform_robust(L, M_mean, error=0.1)
     return M_mean
 
