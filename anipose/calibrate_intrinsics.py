@@ -14,7 +14,7 @@ from time import time
 from .common import make_process_fun, get_cam_name, find_calibration_folder, \
     get_video_params, get_calibration_board
 
-def get_corners(fname, board):
+def get_corners(fname, board, skip=20):
     cap = cv2.VideoCapture(fname)
 
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -22,12 +22,17 @@ def get_corners(fname, board):
     allCorners = []
     allIds = []
 
-    for i in trange(length, ncols=70):
+    go = skip
+
+    board_size = board.getGridSize()
+    max_size = board_size[0]*board_size[1]
+
+    for framenum in trange(length, ncols=70):
         ret, frame = cap.read()
         if not ret:
             break
 
-        if i % 10 != 0:
+        if framenum % skip != 0 and go <= 0:
             continue
 
         gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
@@ -46,10 +51,12 @@ def get_corners(fname, board):
 
         # img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        if len(detectedCorners) >= 2:
+        if len(detectedCorners) >= 2 and len(detectedCorners) <= max_size:
             allCorners.append(detectedCorners)
             allIds.append(detectedIds)
+            go = skip
 
+        go = max(0, go-1)
 
     cap.release()
 
@@ -58,7 +65,7 @@ def get_corners(fname, board):
 
 def trim_corners(allCorners, allIds, maxBoards=85):
     counts = np.array([len(cs) for cs in allCorners])
-    sort = -counts + np.random.random(size=counts.shape)/2
+    sort = -counts + np.random.random(size=counts.shape)/10
     subs = np.argsort(sort)[:maxBoards]
     allCorners = [allCorners[ix] for ix in subs]
     allIds = [allIds[ix] for ix in subs]
@@ -84,7 +91,12 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
     cameraMat = np.eye(3)
     distCoeffs = np.zeros(5)
     dim = (video_params['width'], video_params['height'])
-    error, cameraMat, distCoeffs, rvecs, tvecs = aruco.calibrateCameraAruco(allCornersConcat, allIdsConcat, markerCounter, board, dim, cameraMat, distCoeffs)
+    calib_flags = cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_FIX_K3 + \
+        cv2.CALIB_FIX_PRINCIPAL_POINT
+    error, cameraMat, distCoeffs, rvecs, tvecs = aruco.calibrateCameraAruco(
+        allCornersConcat, allIdsConcat, markerCounter, board,
+        dim, cameraMat, distCoeffs,
+        flags=calib_flags)
 
     tend = time()
     tdiff = tend - tstart
@@ -114,7 +126,7 @@ def calibrate_camera(fnames, board):
         allCorners.extend(someCorners)
         allIds.extend(someIds)
 
-    allCorners, allIds = trim_corners(allCorners, allIds, maxBoards=85)
+    allCorners, allIds = trim_corners(allCorners, allIds, maxBoards=100)
     allCornersConcat, allIdsConcat, markerCounter = reformat_corners(allCorners, allIds)
 
     print()
