@@ -34,23 +34,18 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
 
     cam_names = sorted(fname_dict.keys())
 
-    cam_align = config['triangulation']['cam_align']
     board = get_calibration_board(config)
-    board_type = get_board_type(board)
 
     cam_mats = []
     cam_mats_dist = []
     for cname in cam_names:
-        # left = expand_matrix(np.array(cam_intrinsics[cname]['camera_mat']))
+        mat = np.array(extrinsics[cname])
         left = np.array(cam_intrinsics[cname]['camera_mat'])
-        if cname == cam_align:
-            right = np.identity(4)
-        else:
-            right = np.array(extrinsics[(cname, cam_align)])
-        # mat = np.matmul(left, right)
-        mat = right
         cam_mats.append(mat)
         cam_mats_dist.append(left)
+
+    cam_mats = np.array(cam_mats)
+    cam_mats_dist = np.array(cam_mats_dist)
 
     go = skip
     all_points = []
@@ -112,16 +107,22 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
     all_points_3d = np.zeros((shape[0], shape[2], 3))
     all_points_3d.fill(np.nan)
 
+    num_cams = np.zeros((shape[0], shape[2]))
+    num_cams.fill(np.nan)
+
     errors = np.zeros((shape[0], shape[2]))
     errors.fill(np.nan)
 
     for i in trange(all_points_raw.shape[0], desc='triangulating', ncols=70):
         for j in range(all_points_raw.shape[2]):
             pts = all_points_raw[i, :, j, :]
-            if ~np.any(np.isnan(pts)):
-                p3d = triangulate_optim(pts, cam_mats)
+            good = ~np.isnan(pts[:, 0])
+            if np.sum(good) >= 2:
+                # p3d = triangulate_optim(pts, cam_mats)
+                p3d = triangulate_simple(pts[good], cam_mats[good])
                 all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error_und(p3d, pts, cam_mats, cam_mats_dist)
+                errors[i,j] = reprojection_error_und(p3d, pts[good], cam_mats[good], cam_mats_dist[good])
+                num_cams[i,j] = np.sum(good)
 
     ## all_tvecs
     # framenum, camera num, axis
@@ -132,6 +133,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
         for ax_num, axis in enumerate(['x','y','z']):
             dout[bp + '_' + axis] = all_points_3d[:, bp_num, ax_num]
         dout[bp + '_error'] = errors[:, bp_num]
+        dout[bp + '_ncams'] = num_cams[:, bp_num]
 
     for cam_num in range(shape[1]):
         cname = cam_names[cam_num]

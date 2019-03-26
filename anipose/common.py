@@ -160,11 +160,7 @@ def load_intrinsics(folder, cam_names):
 
 def load_extrinsics(folder):
     extrinsics = toml.load(os.path.join(folder, 'extrinsics.toml'))
-    extrinsics_out = dict()
-    for k, v in extrinsics.items():
-        new_k = tuple(k.split('_'))
-        extrinsics_out[new_k] = v
-    return extrinsics_out
+    return extrinsics
 
 ARUCO_DICTS = {
     (4, 50): aruco.DICT_4X4_50,

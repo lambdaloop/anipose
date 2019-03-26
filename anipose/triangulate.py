@@ -83,9 +83,12 @@ def triangulate_optim(points, camera_mats, max_error=20):
         return np.array([0,0,0,0])
 
     fun = optim_error_fun(points, camera_mats)
-    res = optimize.least_squares(fun, p3d[:3])
-    x = res.x
-    p3d = np.array([x[0], x[1], x[2], 1])
+    try:
+        res = optimize.least_squares(fun, p3d[:3])
+        x = res.x
+        p3d = np.array([x[0], x[1], x[2], 1])
+    except ValueError:
+        pass
 
     return p3d
 
@@ -152,7 +155,6 @@ def triangulate(config,
 
     ## TODO: make the recorder.toml file configurable
     record_fname = os.path.join(video_folder, 'recorder.toml')
-    cam_align = config['triangulation']['cam_align']
 
     if os.path.exists(record_fname):
         record_dict = toml.load(record_fname)
@@ -183,14 +185,8 @@ def triangulate(config,
     cam_mats_dist = []
 
     for cname in cam_names:
+        mat = arr(extrinsics[cname])
         left = arr(intrinsics[cname]['camera_mat'])
-        # left = expand_matrix(left)
-        if cname == cam_align:
-            right = np.identity(4)
-        else:
-            right = arr(extrinsics[(cname, cam_align)])
-        # mat = np.matmul(left, right)
-        mat = right.copy()
         cam_mats.append(mat)
         cam_mats_dist.append(left)
         offsets.append(offsets_dict[cname])
