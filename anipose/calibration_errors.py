@@ -82,13 +82,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
                 rvec = np.zeros(3)*np.nan
                 tvec = np.zeros(3)*np.nan
 
-            if board_type == 'checkerboard':
-                if corners is not None:
-                    points = corners.reshape(-1, 2)
-                else:
-                    points = np.copy(board.objPoints)[:, :2]*np.nan
-            else:
-                points = fill_points(corners, ids)
+            points = fill_points(corners, ids, board)
             points_flat = points.reshape(-1, 1, 2)
             points_new = cv2.undistortPoints(
                 points_flat,

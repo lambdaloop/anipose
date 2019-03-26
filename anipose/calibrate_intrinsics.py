@@ -52,8 +52,6 @@ def get_corners_aruco(fname, board, skip=20):
 
         detectedCorners, detectedIds, rejectedCorners, recoveredIdxs = aruco.refineDetectedMarkers(grayb, board, corners, ids, rejectedImgPoints, parameters=params)
 
-        # img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
         if len(detectedCorners) >= 2 and len(detectedCorners) <= max_size:
             allCorners.append(detectedCorners)
             allIds.append(detectedIds)

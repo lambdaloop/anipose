@@ -18,22 +18,30 @@ from .common import \
     get_cam_name, get_video_name, load_intrinsics, \
     get_calibration_board, get_board_type
 
-def fill_points(corners, ids):
-    # TODO: this should change with calibration board config
-    # 16 comes from 4 boxes (2x2) with 4 corners each
-    out = np.zeros((16, 2))
-    out.fill(np.nan)
+def fill_points(corners, ids, board):
+    board_type = get_board_type(board)
 
-    if ids is None:
+    if board_type == 'checkerboard':
+        if corners is not None:
+            return corners.reshape(-1, 2)
+        else:
+            return np.copy(board.objPoints)[:, :2]*np.nan
+    else:
+        # TODO: this should change with aruco calibration board config
+        # 16 comes from 4 boxes (2x2) with 4 corners each
+        out = np.zeros((16, 2))
+        out.fill(np.nan)
+
+        if ids is None:
+            return out
+
+        for id_wrap, corner_wrap in zip(ids, corners):
+            ix = id_wrap[0]
+            corner = corner_wrap.flatten().reshape(4,2)
+            if ix >= 4: continue
+            out[ix*4:(ix+1)*4,:] = corner
+
         return out
-
-    for id_wrap, corner_wrap in zip(ids, corners):
-        ix = id_wrap[0]
-        corner = corner_wrap.flatten().reshape(4,2)
-        if ix >= 4: continue
-        out[ix*4:(ix+1)*4,:] = corner
-
-    return out
 
 def detect_aruco(gray, intrinsics, board):
     # grayb = gray
@@ -49,8 +57,11 @@ def detect_aruco(gray, intrinsics, board):
     corners, ids, rejectedImgPoints = aruco.detectMarkers(
         grayb, board.dictionary, parameters=params)
 
-    INTRINSICS_K = np.array(intrinsics['camera_mat'])
-    INTRINSICS_D = np.array(intrinsics['dist_coeff'])
+    if intrinsics is None:
+        INTRINSICS_K = INTRINSICS_D = None
+    else:
+        INTRINSICS_K = np.array(intrinsics['camera_mat'])
+        INTRINSICS_D = np.array(intrinsics['dist_coeff'])
 
     if ids is None:
         return [], []
@@ -77,7 +88,6 @@ def estimate_pose_aruco(gray, intrinsics, board):
     ret, rvec, tvec = aruco.estimatePoseBoard(detectedCorners, detectedIds, board,
                                               INTRINSICS_K, INTRINSICS_D)
 
-    # rotmat, _ = cv2.Rodrigues(rvec)
     return True, (detectedCorners, detectedIds, rvec, tvec)
 
 def estimate_pose_checkerboard(grayf, intrinsics, board):
@@ -86,7 +96,7 @@ def estimate_pose_checkerboard(grayf, intrinsics, board):
                       interpolation=cv2.INTER_CUBIC)
 
     board_size = board.getChessboardSize()
-    
+
     corners, check_score = detect_checkerboard(gray, board_size)
 
     if corners is None:
@@ -101,7 +111,7 @@ def estimate_pose_checkerboard(grayf, intrinsics, board):
         confidence=0.9, reprojectionError=10)
 
     return True, (corners, None, rvec, tvec)
-    
+
 
 def estimate_pose(gray, intrinsics, board):
     board_type = get_board_type(board)
@@ -133,7 +143,7 @@ def get_most_common(vals):
 def select_matrices(Ms):
     Ms = np.array(Ms)
     rvecs = [cv2.Rodrigues(M[:3,:3])[0][:, 0] for M in Ms]
-    tvecs = np.array([M[:3, 3] for M in Ms]) 
+    tvecs = np.array([M[:3, 3] for M in Ms])
     best = get_most_common(np.hstack([rvecs, tvecs]))
     Ms_best = Ms[best]
     return Ms_best
