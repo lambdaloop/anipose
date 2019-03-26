@@ -10,7 +10,7 @@ from collections import defaultdict
 import pandas as pd
 
 from .common import \
-    get_calibration_board, \
+    get_calibration_board, get_board_type, \
     find_calibration_folder, make_process_fun, \
     get_cam_name, get_video_name, load_intrinsics, load_extrinsics
 from .triangulate import triangulate_optim, triangulate_simple, reprojection_error
@@ -35,6 +35,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
 
     cam_align = config['triangulation']['cam_align']
     board = get_calibration_board(config)
+    board_type = get_board_type(board)
 
     mat = np.array(cam_intrinsics[cam_align]['camera_mat'])
     pt_scale = (mat[0,0] + mat[1,1])/2
@@ -80,7 +81,13 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
                 rvec = np.zeros(3)*np.nan
                 tvec = np.zeros(3)*np.nan
 
-            points = fill_points(corners, ids)
+            if board_type == 'checkerboard':
+                if corners is not None:
+                    points = corners.reshape(-1, 2)
+                else:
+                    points = np.copy(board.objPoints)[:, :2]*np.nan
+            else:
+                points = fill_points(corners, ids)
             points_flat = points.reshape(-1, 1, 2)
             points_new = cv2.undistortPoints(
                 points_flat,

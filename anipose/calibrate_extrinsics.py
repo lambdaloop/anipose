@@ -11,11 +11,12 @@ import toml
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.cluster.vq import whiten
 
+from checkerboard import detect_checkerboard
 
 from .common import \
     find_calibration_folder, make_process_fun, \
     get_cam_name, get_video_name, load_intrinsics, \
-    get_calibration_board
+    get_calibration_board, get_board_type
 
 def fill_points(corners, ids):
     # TODO: this should change with calibration board config
@@ -64,7 +65,7 @@ def detect_aruco(gray, intrinsics, board):
 
     return detectedCorners, detectedIds
 
-def estimate_pose(gray, intrinsics, board):
+def estimate_pose_aruco(gray, intrinsics, board):
 
     detectedCorners, detectedIds = detect_aruco(gray, intrinsics, board)
     if len(detectedIds) < 3:
@@ -76,14 +77,38 @@ def estimate_pose(gray, intrinsics, board):
     ret, rvec, tvec = aruco.estimatePoseBoard(detectedCorners, detectedIds, board,
                                               INTRINSICS_K, INTRINSICS_D)
 
-    # flip the orientation as needed to make all the cameras align
-    rotmat, _ = cv2.Rodrigues(rvec)
-    # test = np.dot([1,1,0], rotmat).dot([0,0,1])
-    # if test > 0:
-    #     rvec[1,0] = -rvec[1,0]
-    #     rvec[0,0] = -rvec[0,0]
-
+    # rotmat, _ = cv2.Rodrigues(rvec)
     return True, (detectedCorners, detectedIds, rvec, tvec)
+
+def estimate_pose_checkerboard(grayf, intrinsics, board):
+    ratio = 400.0/grayf.shape[0]
+    gray = cv2.resize(grayf, (0,0), fx=ratio, fy=ratio,
+                      interpolation=cv2.INTER_CUBIC)
+
+    board_size = board.getChessboardSize()
+    
+    corners, check_score = detect_checkerboard(gray, board_size, trim=False)
+
+    if corners is None:
+        return False, None
+
+    INTRINSICS_K = np.array(intrinsics['camera_mat'])
+    INTRINSICS_D = np.array(intrinsics['dist_coeff'])
+
+    retval, rvec, tvec, inliers = cv2.solvePnPRansac(
+        board.objPoints, corners,
+        INTRINSICS_K, INTRINSICS_D,
+        confidence=0.9, reprojectionError=10)
+
+    return True, (corners, None, rvec, tvec)
+    
+
+def estimate_pose(gray, intrinsics, board):
+    board_type = get_board_type(board)
+    if board_type == 'checkerboard':
+        return estimate_pose_checkerboard(gray, intrinsics, board)
+    else:
+        return estimate_pose_aruco(gray, intrinsics, board)
 
 
 def make_M(rvec, tvec):

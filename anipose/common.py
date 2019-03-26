@@ -9,6 +9,7 @@ from glob import glob
 import skvideo.io
 from subprocess import check_output
 import toml
+import numpy as np
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -187,30 +188,69 @@ ARUCO_DICTS = {
     (7, 1000): aruco.DICT_7X7_1000
 }
 
+class Checkerboard:
+    def __init__(self, squaresX, squaresY, squareLength):
+        self.squaresX = squaresX
+        self.squaresY = squaresY
+        self.squareLength = squareLength
+
+        objp = np.zeros((squaresX * squaresY, 3), np.float32)
+        objp[:, :2] = np.mgrid[0:squaresY, 0:squaresX].T.reshape(-1, 2)
+        objp *= squareLength
+        self.chessboardCorners = objp
+        self.objPoints = objp
+
+    def getChessboardSize(self):
+        size = (self.squaresX, self.squaresY)
+        return size
+
+    def getGridSize(self):
+        return self.getChessboardSize()
+    
+    def getSquareLength(self):
+        return self.squareLength
+
 def get_calibration_board(config):
-    dkey = (config['calibration']['board_marker_bits'],
-            config['calibration']['board_marker_dict_number'])
-    dictionary = aruco.getPredefinedDictionary(ARUCO_DICTS[dkey])
     board_size = config['calibration']['board_size']
     board_type = config['calibration']['board_type'].lower()
-    if board_type == 'aruco':
-        board = aruco.GridBoard_create(
-            board_size[0], board_size[1],
-            config['calibration']['board_marker_length'],
-            config['calibration']['board_marker_separation_length'],
-            dictionary)
-    elif board_type == 'charuco':
-        board = aruco.CharucoBoard_create(
-            board_size[0], board_size[1],
-            config['calibration']['board_square_side_length'],
-            config['calibration']['board_marker_length'],
-            dictionary)
+
+    if board_type in ['aruco', 'charuco']:
+        dkey = (config['calibration']['board_marker_bits'],
+                config['calibration']['board_marker_dict_number'])
+        dictionary = aruco.getPredefinedDictionary(ARUCO_DICTS[dkey])
+        if board_type == 'aruco':
+            board = aruco.GridBoard_create(
+                board_size[0], board_size[1],
+                config['calibration']['board_marker_length'],
+                config['calibration']['board_marker_separation_length'],
+                dictionary)
+        elif board_type == 'charuco':
+            board = aruco.CharucoBoard_create(
+                board_size[0], board_size[1],
+                config['calibration']['board_square_side_length'],
+                config['calibration']['board_marker_length'],
+                dictionary)
+    elif board_type == 'checkerboard':
+        board = Checkerboard(board_size[0], board_size[1],
+                             config['calibration']['board_square_side_length'])
     else:
-        raise ValueError("board_type should be either "
-                         "'aruco' or 'charuco', not '{}'".format(
+        raise ValueError("board_type should be one of "
+                         "'aruco', 'charuco', or 'checkerboard' not '{}'".format(
                              board_type))
 
     return board
+
+
+def get_board_type(board):
+    if isinstance(board, cv2.aruco_GridBoard):
+        return 'aruco'
+    elif isinstance(board, cv2.aruco_CharucoBoard):
+        return 'charuco'
+    elif isinstance(board, Checkerboard):
+        return 'checkerboard'
+    else:
+        return None
+
 
 def get_calibration_board_image(config):
     board = get_calibration_board(config)

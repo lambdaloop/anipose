@@ -11,10 +11,13 @@ from collections import defaultdict
 import toml
 from time import time
 
-from .common import make_process_fun, get_cam_name, find_calibration_folder, \
-    get_video_params, get_calibration_board
+from checkerboard import detect_checkerboard
 
-def get_corners(fname, board, skip=20):
+from .common import make_process_fun, get_cam_name, find_calibration_folder, \
+    get_video_params, get_calibration_board, get_board_type
+
+## TODO: check if this works with a charuco board
+def get_corners_aruco(fname, board, skip=20):
     cap = cv2.VideoCapture(fname)
 
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -61,6 +64,49 @@ def get_corners(fname, board, skip=20):
     cap.release()
 
     return allCorners, allIds
+
+
+def get_corners_checkerboard(fname, board, skip=20):
+    cap = cv2.VideoCapture(fname)
+
+    length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    allCorners = []
+    allScores = []
+
+    go = skip
+
+    board_size = board.getChessboardSize()
+
+    for framenum in trange(length, ncols=70):
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if framenum % skip != 0 and go <= 0:
+            continue
+
+        grayf = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        ## TODO: adjust the checkerboard library to handle more general ratios
+        ## TODO: make this ratio and trimming configurable
+        ratio = 400.0/grayf.shape[0]
+        gray = cv2.resize(grayf, (0,0), fx=ratio, fy=ratio,
+                          interpolation=cv2.INTER_CUBIC)
+
+        corners, check_score = detect_checkerboard(gray, board_size, trim=True)
+
+        if corners is not None and len(corners) > 0:
+            corners_new = corners / ratio
+            allCorners.append(corners_new)
+            allScores.append(check_score)
+            go = skip
+
+        go = max(0, go-1)
+
+    cap.release()
+
+    return allCorners, allScores
 
 
 def trim_corners(allCorners, allIds, maxBoards=85):
@@ -113,16 +159,52 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
 
     return out
 
-def calibrate_camera(fnames, board):
+
+def calibrate_checkerboard(allCorners, board, video_params):
+
+    print("calibrating...")
+    tstart = time()
+
+    objpoints = [np.copy(board.objPoints) for _ in allCorners]
+    objpoints = np.array(objpoints, dtype='float32')
+
+    allCorners = np.array(allCorners, dtype='float32')
+
+    cameraMat = np.eye(3)
+    distCoeffs = np.zeros(5)
+    dim = (video_params['width'], video_params['height'])
+    calib_flags = cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_FIX_K3 + \
+        cv2.CALIB_FIX_PRINCIPAL_POINT
+
+    error, cameraMat, distCoeffs, rvecs, tvecs = cv2.calibrateCamera(
+        objpoints, allCorners, dim, None, None,
+        flags=calib_flags)
+
+    tend = time()
+    tdiff = tend - tstart
+    print("calibration took {} minutes and {:.1f} seconds".format(
+        int(tdiff/60), tdiff-int(tdiff/60)*60))
+
+    out = dict()
+    out['error'] = error
+    out['camera_mat'] = cameraMat.tolist()
+    out['dist_coeff'] = distCoeffs.tolist()
+    out['width'] = video_params['width']
+    out['height'] = video_params['height']
+    out['fps'] = video_params['fps']
+
+    return out
+
+
+def calibrate_camera_aruco(fnames, board):
     allCorners = []
     allIds = []
 
     board_size = board.getGridSize()
-
     video_params = get_video_params(fnames[0])
 
     for fname in fnames:
-        someCorners, someIds = get_corners(fname, board)
+        someCorners, someIds = get_corners_aruco(fname, board)
         allCorners.extend(someCorners)
         allIds.extend(someIds)
 
@@ -139,6 +221,40 @@ def calibrate_camera(fnames, board):
                                    markerCounter, board, video_params)
 
     return calib_params
+
+def calibrate_camera_checkerboard(fnames, board):
+    video_params = get_video_params(fnames[0])
+
+    allCorners = []
+    allScores = []
+
+    for fname in fnames:
+        corners, scores = get_corners_checkerboard(fname, board)
+        allCorners.extend(corners)
+        allScores.extend(scores)
+
+    allCorners = np.array(allCorners)
+    allScores = np.array(allScores)
+
+    n_sub = 200
+    if len(allCorners) > n_sub:
+        good = np.argsort(allScores)[:n_sub]
+        allCorners = allCorners[good]
+        allScores = allScores[good]
+
+    print('found {} checkerboard grids'.format(len(allCorners)))
+        
+    calib_params = calibrate_checkerboard(allCorners, board, video_params)
+
+    return calib_params
+
+
+def calibrate_camera(fnames, board):
+    board_type = get_board_type(board)
+    if board_type == 'checkerboard':
+        return calibrate_camera_checkerboard(fnames, board)
+    else:
+        return calibrate_camera_aruco(fnames, board)
 
 
 def process_session(config, session_path):
