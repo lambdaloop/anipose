@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="anipose",
-    version="0.2.6",
+    version="0.2.7",
     author="Pierre Karashchuk",
     author_email="krchtchk@gmail.com",
     description="Framework for scalable DeepLabCut based analysis including 3D tracking",
@@ -33,7 +33,8 @@ setuptools.setup(
         'pandas',
         'tqdm',
         'click',
-        'scikit-video'
+        'scikit-video',
+        'checkerboard'
     ],
     extras_require={
         'viz':  ["mayavi"]
