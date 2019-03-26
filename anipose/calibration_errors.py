@@ -13,7 +13,8 @@ from .common import \
     get_calibration_board, get_board_type, \
     find_calibration_folder, make_process_fun, \
     get_cam_name, get_video_name, load_intrinsics, load_extrinsics
-from .triangulate import triangulate_optim, triangulate_simple, reprojection_error
+from .triangulate import triangulate_optim, triangulate_simple, \
+    reprojection_error, reprojection_error_und
 from .calibrate_extrinsics import detect_aruco, estimate_pose, fill_points
 
 def expand_matrix(mtx):
@@ -37,12 +38,11 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
     board = get_calibration_board(config)
     board_type = get_board_type(board)
 
-    mat = np.array(cam_intrinsics[cam_align]['camera_mat'])
-    pt_scale = (mat[0,0] + mat[1,1])/2
-
     cam_mats = []
+    cam_mats_dist = []
     for cname in cam_names:
-        left = expand_matrix(np.array(cam_intrinsics[cname]['camera_mat']))
+        # left = expand_matrix(np.array(cam_intrinsics[cname]['camera_mat']))
+        left = np.array(cam_intrinsics[cname]['camera_mat'])
         if cname == cam_align:
             right = np.identity(4)
         else:
@@ -50,6 +50,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
         # mat = np.matmul(left, right)
         mat = right
         cam_mats.append(mat)
+        cam_mats_dist.append(left)
 
     go = skip
     all_points = []
@@ -126,7 +127,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
             if ~np.any(np.isnan(pts)):
                 p3d = triangulate_optim(pts, cam_mats)
                 all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error(p3d, pts, cam_mats) * pt_scale
+                errors[i,j] = reprojection_error_und(p3d, pts, cam_mats, cam_mats_dist)
 
     ## all_tvecs
     # framenum, camera num, axis

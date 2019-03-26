@@ -35,6 +35,24 @@ def reprojection_error(p3d, points2d, camera_mats):
     errors = np.linalg.norm(proj - points2d, axis=1)
     return np.mean(errors)
 
+
+def distort_points_cams(points, camera_mats):
+    out = []
+    for i in range(len(points)):
+        point = np.append(points[i], 1)
+        mat = camera_mats[i]
+        new = mat.dot(point)[:2]
+        out.append(new)
+    return np.array(out)
+
+def reprojection_error_und(p3d, points2d, camera_mats, camera_mats_dist):
+    proj = np.dot(camera_mats, p3d)
+    proj = proj[:, :2] / proj[:, 2, None]
+    proj_d = distort_points_cams(proj, camera_mats_dist)
+    points2d_d = distort_points_cams(points2d, camera_mats_dist)
+    errors = np.linalg.norm(proj_d - points2d_d, axis=1)
+    return np.mean(errors)
+
 def triangulate_simple(points, camera_mats):
     num_cams = len(camera_mats)
     A = np.zeros((num_cams*2, 4))
@@ -162,8 +180,11 @@ def triangulate(config,
 
     offsets = []
     cam_mats = []
+    cam_mats_dist = []
+
     for cname in cam_names:
-        # left = expand_matrix(arr(intrinsics[cname]['camera_mat']))
+        left = arr(intrinsics[cname]['camera_mat'])
+        # left = expand_matrix(left)
         if cname == cam_align:
             right = np.identity(4)
         else:
@@ -171,10 +192,12 @@ def triangulate(config,
         # mat = np.matmul(left, right)
         mat = right.copy()
         cam_mats.append(mat)
+        cam_mats_dist.append(left)
         offsets.append(offsets_dict[cname])
 
     offsets = arr(offsets)
     cam_mats = arr(cam_mats)
+    cam_mats_dist = arr(cam_mats_dist)
 
     maxlen = 0
     for pose_name in pose_names:
@@ -230,9 +253,6 @@ def triangulate(config,
     # TODO: configure this threshold
     all_points_und[all_scores < 0.3] = np.nan
 
-    mat = arr(intrinsics[cam_align]['camera_mat'])
-    pt_scale = (mat[0,0] + mat[1,1])/2
-
     for i in trange(all_points_und.shape[0], ncols=70):
         for j in range(all_points_und.shape[2]):
             pts = all_points_und[i, :, j, :]
@@ -242,7 +262,7 @@ def triangulate(config,
                 # p3d = triangulate_optim(pts[good], cam_mats[good])
                 p3d = triangulate_simple(pts[good], cam_mats[good])
                 all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error(p3d, pts[good], cam_mats[good]) * pt_scale
+                errors[i,j] = reprojection_error_und(p3d, pts[good], cam_mats[good], cam_mats_dist[good])
                 num_cams[i,j] = np.sum(good)
                 scores_3d[i,j] = np.min(all_scores[i, :, j][good])
 
