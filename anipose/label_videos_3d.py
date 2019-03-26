@@ -51,7 +51,7 @@ def get_points(dx, bodyparts):
     ## TODO: make error thresholds configurable
     errors[np.isnan(errors)] = 10000
     ncams[np.isnan(ncams)] = 0
-    good = (errors < 250) &  (ncams >= 3)
+    good = (errors < 250) #&  (ncams >= 3)
 
     points = np.array(points)
     points[~good] = np.nan
@@ -69,9 +69,11 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
     data = pd.read_csv(labels_fname)
     cols = [x for x in data.columns if '_error' in x]
-    # bodyparts = [c.replace('_error', '') for c in cols]
 
-    bodyparts = sorted(set([x for dx in scheme for x in dx]))
+    if len(scheme) == 0:
+        bodyparts = [c.replace('_error', '') for c in cols]
+    else:
+        bodyparts = sorted(set([x for dx in scheme for x in dx]))
 
     bp_dict = dict(zip(bodyparts, range(len(bodyparts))))
 
