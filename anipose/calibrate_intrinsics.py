@@ -94,7 +94,7 @@ def get_corners_checkerboard(fname, board, skip=20):
         gray = cv2.resize(grayf, (0,0), fx=ratio, fy=ratio,
                           interpolation=cv2.INTER_CUBIC)
 
-        corners, check_score = detect_checkerboard(gray, board_size, trim=True)
+        corners, check_score = detect_checkerboard(gray, board_size)
 
         if corners is not None and len(corners) > 0:
             corners_new = corners / ratio

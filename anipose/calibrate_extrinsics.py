@@ -87,7 +87,7 @@ def estimate_pose_checkerboard(grayf, intrinsics, board):
 
     board_size = board.getChessboardSize()
     
-    corners, check_score = detect_checkerboard(gray, board_size, trim=False)
+    corners, check_score = detect_checkerboard(gray, board_size)
 
     if corners is None:
         return False, None
