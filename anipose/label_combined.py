@@ -154,7 +154,7 @@ def get_plotting_params(caps_2d, cap_3d, ang_names):
     nframes = min(nframes, param_3d['nframes'])
 
     fps = param_3d['fps']
-    
+
     height_font = spacing_angle//2
     font_face = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = cv2.getFontScaleFromHeight(
@@ -164,7 +164,7 @@ def get_plotting_params(caps_2d, cap_3d, ang_names):
     font_thickness = 2
 
     mid_3d = int((width_total - width_3d) / 2)
-    
+
     d = {
         'height_angle': height_angle,
         'spacing_angle': spacing_angle,
@@ -243,7 +243,7 @@ def draw_data(start_img, frames_2d, frame_3d, all_angles, pp):
 
     data_color = (0,0,0)
     indicator_color = (150,150,150)
-    
+
     for angnum, angles in enumerate(all_angles):
         start_y = start_angles + (height_angle + spacing_angle)*angnum
         rect = (150, width_total-100, start_y, start_y + height_angle)
@@ -256,7 +256,7 @@ def draw_data(start_img, frames_2d, frame_3d, all_angles, pp):
                  indicator_color, thickness=2)
 
     return imout
-    
+
 
 def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
     angles = pd.read_csv(angle_fname)

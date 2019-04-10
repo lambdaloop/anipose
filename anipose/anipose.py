@@ -192,7 +192,7 @@ def label_combined(config):
     from .label_combined import label_combined_all
     click.echo('Labeling combined videos...')
     label_combined_all(config)
-    
+
 @cli.command()
 @pass_config
 def draw_calibration(config):
