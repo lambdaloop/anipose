@@ -72,6 +72,20 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
 
     cmap = get_cmap('tab10')
 
+    points = [(dlabs[bp]['x'], dlabs[bp]['y']) for bp in bodyparts]
+    points = np.array(points)
+
+    scores = [dlabs[bp]['likelihood'] for bp in bodyparts]
+    scores = np.array(scores)
+    scores[np.isnan(scores)] = 0
+    scores[np.isnan(points[:, 0])] = 0
+
+    good = np.array(scores) > 0.1
+    points[:, 0, :][~good] = np.nan
+    points[:, 1, :][~good] = np.nan
+
+    all_points = points
+
     for ix in trange(last, ncols=70):
         ret, frame = cap.read()
         if not ret:
@@ -79,30 +93,20 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
 
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        if True:
-            labels = dlabs.iloc[ix]
+        labels = dlabs.iloc[ix]
 
-            points = [(labels[bp]['x'], labels[bp]['y']) for bp in bodyparts]
-            points = np.array(points)
+        points = all_points[:, :, ix]
 
-            scores = [labels[bp]['likelihood'] for bp in bodyparts]
-            scores = np.array(scores)
-            scores[np.isnan(scores)] = 0
-            scores[np.isnan(points[:, 0])] = 0
-            good = np.array(scores) > 0.1
+        connect_all(img, points, scheme, bodyparts)
 
-            points[~good] = np.nan
-
-            connect_all(img, points, scheme, bodyparts)
-
-            for lnum, (x, y) in enumerate(points):
-                if np.isnan(x) or np.isnan(y):
-                    continue
-                x = int(round(x))
-                y = int(round(y))
-                col = cmap(lnum % 10, bytes=True)
-                col = [int(c) for c in col]
-                cv2.circle(img,(x,y), 7, col[:3], -1)
+        for lnum, (x, y) in enumerate(points):
+            if np.isnan(x) or np.isnan(y):
+                continue
+            x = int(round(x))
+            y = int(round(y))
+            col = cmap(lnum % 10, bytes=True)
+            col = [int(c) for c in col]
+            cv2.circle(img,(x,y), 7, col[:3], -1)
 
         writer.writeFrame(img)
 
