@@ -1,4 +1,3 @@
-
 project = "flypose"
 path = "/media/beast/pierre/flywalk-pipeline-go/test2"
 model_folder = "/home/tuthill/pierre/flypose-test-Pierre-2018-12-10"

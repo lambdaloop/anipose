@@ -25,7 +25,7 @@ def get_corners_aruco(fname, board, skip=20):
     allCorners = []
     allIds = []
 
-    go = skip
+    go = int(skip/2)
 
     board_size = board.getGridSize()
     max_size = board_size[0]*board_size[1]
@@ -55,7 +55,7 @@ def get_corners_aruco(fname, board, skip=20):
         if len(detectedCorners) >= 2 and len(detectedCorners) <= max_size:
             allCorners.append(detectedCorners)
             allIds.append(detectedIds)
-            go = skip
+            go = int(skip/2)
 
         go = max(0, go-1)
 
@@ -72,7 +72,7 @@ def get_corners_checkerboard(fname, board, skip=20):
     allCorners = []
     allScores = []
 
-    go = skip
+    go = int(skip/2)
 
     board_size = board.getChessboardSize()
 
@@ -98,7 +98,7 @@ def get_corners_checkerboard(fname, board, skip=20):
             corners_new = corners / ratio
             allCorners.append(corners_new)
             allScores.append(check_score)
-            go = skip
+            go = int(skip/2)
 
         go = max(0, go-1)
 
