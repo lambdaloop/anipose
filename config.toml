@@ -41,7 +41,6 @@ scheme = [
 ]
 
 [triangulation]
-triangulate = true
 cam_regex = '_([A-Z])$'
 axes = [
     ["x", "L1A", "L3A"],
