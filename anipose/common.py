@@ -39,7 +39,7 @@ def get_video_params_cap(cap):
 
 def get_video_params(fname):
     cap = cv2.VideoCapture(fname)
-    params = get_video_params(cap)
+    params = get_video_params_cap(cap)
     cap.release()
     return params
 
@@ -249,7 +249,7 @@ def get_board_type(board):
     else:
         return None
 
-
+## TODO: support checkerbooard drawing
 def get_calibration_board_image(config):
     board = get_calibration_board(config)
     numx, numy = board.getGridSize()
