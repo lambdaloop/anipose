@@ -24,10 +24,10 @@ Here is the general layout of files for videos for 2D tracking
 
 ```
 experiment/config.toml
-experiment/session1/videos-raw/vid1.avi
-experiment/session1/videos-raw/vid2.avi
-experiment/session2/videos-raw/vid1.avi
-experiment/session2/videos-raw/vid2.avi
+experiment/trial 1/videos-raw/vid1-trial1.avi
+experiment/trial 1/videos-raw/vid2-trial1.avi
+experiment/trial 2/videos-raw/vid1-trial2.avi
+experiment/trial 2/videos-raw/vid2-trial2.avi
 ```
 
 
