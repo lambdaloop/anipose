@@ -274,7 +274,9 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
 
         vals[err > 10] = np.nan
         nans, ix = nan_helper(vals)
-        vals[nans] = np.interp(ix(nans), ix(~nans), vals[~nans])
+        # some data missing, but not too much
+        if np.sum(nans) > 0 and np.sum(~nans) > 5:
+            vals[nans] = np.interp(ix(nans), ix(~nans), vals[~nans])
 
         ang_values[name] = vals
 
