@@ -18,6 +18,10 @@ The modification is that the *final folder* should be `videos-raw`. This allows 
 
 Here is the general layout of files for videos for 2D tracking
 
+<p align="center">
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/folder_structure.png" width="50%" >
+</p>
+
 ```
 experiment/config.toml
 experiment/session1/videos-raw/vid1.avi
@@ -25,6 +29,7 @@ experiment/session1/videos-raw/vid2.avi
 experiment/session2/videos-raw/vid1.avi
 experiment/session2/videos-raw/vid2.avi
 ```
+
 
 There is one main experiment folder, and some subfolders under that.
 The names for the experiment and session folders can be whatever you like.

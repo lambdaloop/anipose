@@ -23,7 +23,7 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 <img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/tracking_3cams_full_slower5.gif" width="50%" >
 </p>
 <p align="center">
-Videos of flies by Evyn Dickinson, <a href=http://faculty.washington.edu/tuthill/>Tuthill Lab</a>
+Videos of flies by Evyn Dickinson (slowed 5x), <a href=http://faculty.washington.edu/tuthill/>Tuthill Lab</a>
 </p>
 
 
