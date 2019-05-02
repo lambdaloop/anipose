@@ -20,8 +20,10 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 ## Demos
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/tracking_3cams_full_slower5.gif" width="70%" >
-Data by Evyn Dickinson, <i>Tuthill Lab</i>
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/tracking_3cams_full_slower5.gif" width="50%" >
+</p>
+<p align="center">
+Videos by Evyn Dickinson, <a href=http://faculty.washington.edu/tuthill/>Tuthill Lab</a>
 </p>
 
 
