@@ -19,7 +19,7 @@ The modification is that the *final folder* should be `videos-raw`. This allows 
 Here is the general layout of files for videos for 2D tracking
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/folder_structure.png" width="50%" >
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/folder_structure.png" height="40%" >
 </p>
 
 ```
@@ -35,11 +35,16 @@ There is one main experiment folder, and some subfolders under that.
 The names for the experiment and session folders can be whatever you like.
 
 Furthermore, the nesting can be arbitrarily large. Thus, an equally valid structure could be (here with nesting of 2 folders instead of 1 as above, note the arbitrary names as well):
+
+<p align="center">
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/folder_structure_2.png" height="40%" >
+</p>
+
 ```
 flypose/config.toml
-flypose/session-2019-02-06/fly1/videos-raw/vid-2019-02-06-01.avi
-flypose/session-2019-02-06/fly2/videos-raw/vid-2019-02-06-02.avi
-flypose/session-2019-02-07/fly1/videos-raw/vid-2019-02-07-01.avi
+flypose/2019-02-06/fly1/videos-raw/vid-2019-02-06-01.avi
+flypose/2019-02-06/fly2/videos-raw/vid-2019-02-06-02.avi
+flypose/2019-02-07/fly1/videos-raw/vid-2019-02-07-01.avi
 ```
 
 
