@@ -160,10 +160,10 @@ def triangulate(config,
         record_dict = toml.load(record_fname)
     else:
         record_dict = None
-        if 'cameras' not in config:
-        ## TODO: more detailed error?
-            print("-- no crop windows found")
-            return
+        # if 'cameras' not in config:
+        # ## TODO: more detailed error?
+        #     print("-- no crop windows found")
+        #     return
 
     cam_names, pose_names = list(zip(*sorted(fname_dict.items())))
 
@@ -174,9 +174,10 @@ def triangulate(config,
     for cname in cam_names:
         if record_dict is None:
             if cname not in config['cameras']:
-                print("-- no crop windows found for camera {}".format(cname))
-                return
-            offsets_dict[cname] = config['cameras'][cname]['offset']
+                print("W: no crop windows found for camera {}".format(cname))
+                offsets_dict[cname] = [0, 0]
+            else:
+                offsets_dict[cname] = config['cameras'][cname]['offset']
         else:
             offsets_dict[cname] = record_dict['cameras'][cname]['video']['ROIPosition']
 
