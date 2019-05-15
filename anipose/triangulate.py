@@ -174,7 +174,7 @@ def triangulate(config,
     for cname in cam_names:
         if record_dict is None:
             if cname not in config['cameras']:
-                print("W: no crop windows found for camera {}".format(cname))
+                print("W: no crop window found for camera {}, assuming no crop".format(cname))
                 offsets_dict[cname] = [0, 0]
             else:
                 offsets_dict[cname] = config['cameras'][cname]['offset']
