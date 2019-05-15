@@ -104,6 +104,9 @@ def detect_aruco(gray, intrinsics, board):
         ret, detectedCorners, detectedIds = aruco.interpolateCornersCharuco(
             detectedCorners, detectedIds, gray, board)
 
+        if detectedIds is None:
+            detectedCorners = detectedIds = []
+
     return detectedCorners, detectedIds
 
 def estimate_pose_aruco(gray, intrinsics, board):
@@ -123,6 +126,9 @@ def estimate_pose_aruco(gray, intrinsics, board):
     else:
         ret, rvec, tvec = aruco.estimatePoseBoard(
             detectedCorners, detectedIds, board, INTRINSICS_K, INTRINSICS_D)
+
+    if not ret or rvec is None or tvec is None:
+        return False, None
 
     return True, (detectedCorners, detectedIds, rvec, tvec)
 
