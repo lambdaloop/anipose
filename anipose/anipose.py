@@ -69,7 +69,7 @@ def load_config(fname):
     return config
 
 @click.group()
-# @click.version_option()
+@click.version_option()
 @click.option('--config', type=click.Path(exists=True, dir_okay=False),
               help='The config file to use instead of the default "config.toml" .')
 @click.pass_context
