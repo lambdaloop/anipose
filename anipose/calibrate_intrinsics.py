@@ -14,9 +14,9 @@ from time import time
 from checkerboard import detect_checkerboard
 
 from .common import make_process_fun, get_cam_name, find_calibration_folder, \
-    get_video_params, get_calibration_board, get_board_type
+    get_video_params, get_calibration_board, get_board_type, get_board_size, get_expected_corners
 
-## TODO: check if this works with a charuco board
+
 def get_corners_aruco(fname, board, skip=20):
     cap = cv2.VideoCapture(fname)
 
@@ -27,8 +27,10 @@ def get_corners_aruco(fname, board, skip=20):
 
     go = int(skip/2)
 
-    board_size = board.getGridSize()
-    max_size = board_size[0]*board_size[1]
+    board_type = get_board_type(board)
+    board_size = get_board_size(board)
+
+    max_size = get_expected_corners(board)
 
     for framenum in trange(length, ncols=70):
         ret, frame = cap.read()
@@ -39,7 +41,6 @@ def get_corners_aruco(fname, board, skip=20):
             continue
 
         gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-        grayb = gray
 
         params = aruco.DetectorParameters_create()
         params.cornerRefinementMethod = aruco.CORNER_REFINE_CONTOUR
@@ -48,11 +49,23 @@ def get_corners_aruco(fname, board, skip=20):
         params.adaptiveThreshWinSizeStep = 50
         params.adaptiveThreshConstant = 5
 
-        corners, ids, rejectedImgPoints = aruco.detectMarkers(grayb, board.dictionary, parameters=params)
+        corners, ids, rejectedImgPoints = aruco.detectMarkers(
+            gray, board.dictionary, parameters=params)
 
-        detectedCorners, detectedIds, rejectedCorners, recoveredIdxs = aruco.refineDetectedMarkers(grayb, board, corners, ids, rejectedImgPoints, parameters=params)
+        if corners is None or len(corners) <= 2:
+            go = max(0, go-1)
+            continue
 
-        if len(detectedCorners) >= 2 and len(detectedCorners) <= max_size:
+        detectedCorners, detectedIds, rejectedCorners, recoveredIdxs = \
+            aruco.refineDetectedMarkers(gray, board, corners, ids,
+                                        rejectedImgPoints, parameters=params)
+
+        if board_type == 'charuco' and len(detectedCorners) > 0:
+            ret, detectedCorners, detectedIds = aruco.interpolateCornersCharuco(
+                detectedCorners, detectedIds, gray, board)
+
+        if detectedCorners is not None and \
+           len(detectedCorners) >= 2 and len(detectedCorners) <= max_size:
             allCorners.append(detectedCorners)
             allIds.append(detectedIds)
             go = int(skip/2)
@@ -157,6 +170,37 @@ def calibrate_aruco(allCornersConcat, allIdsConcat, markerCounter, board, video_
 
     return out
 
+def calibrate_charuco(allCorners, allIds, board, video_params):
+
+    print("calibrating...")
+    tstart = time()
+
+    cameraMat = np.eye(3)
+    distCoeffs = np.zeros(5)
+    dim = (video_params['width'], video_params['height'])
+    calib_flags = cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_FIX_K3 + \
+        cv2.CALIB_FIX_PRINCIPAL_POINT
+
+    error, cameraMat, distCoeffs, rvecs, tvecs = aruco.calibrateCameraCharuco(
+        allCorners, allIds, board,
+        dim, cameraMat, distCoeffs,
+        flags=calib_flags)
+
+    tend = time()
+    tdiff = tend - tstart
+    print("calibration took {} minutes and {:.1f} seconds".format(
+        int(tdiff/60), tdiff-int(tdiff/60)*60))
+
+    out = dict()
+    out['error'] = error
+    out['camera_mat'] = cameraMat.tolist()
+    out['dist_coeff'] = distCoeffs.tolist()
+    out['width'] = video_params['width']
+    out['height'] = video_params['height']
+    out['fps'] = video_params['fps']
+
+    return out
+
 
 def calibrate_checkerboard(allCorners, board, video_params):
 
@@ -193,12 +237,12 @@ def calibrate_checkerboard(allCorners, board, video_params):
 
     return out
 
-
 def calibrate_camera_aruco(fnames, board):
     allCorners = []
     allIds = []
 
-    board_size = board.getGridSize()
+    board_size = get_board_size(board)
+    board_type = get_board_type(board)
     video_params = get_video_params(fnames[0])
 
     for fname in fnames:
@@ -211,12 +255,17 @@ def calibrate_camera_aruco(fnames, board):
 
     print()
 
+    expected_markers = get_expected_corners(board)
+
     print("found {} markers, {} boards, {} complete boards".format(
         len(allCornersConcat), len(markerCounter),
-        np.sum(markerCounter == board_size[0]*board_size[1])))
+        np.sum(markerCounter == expected_markers)))
 
-    calib_params = calibrate_aruco(allCornersConcat, allIdsConcat,
-                                   markerCounter, board, video_params)
+    if board_type == 'charuco':
+        calib_params = calibrate_charuco(allCorners, allIds, board, video_params)
+    else:
+        calib_params = calibrate_aruco(allCornersConcat, allIdsConcat,
+                                       markerCounter, board, video_params)
 
     return calib_params
 
@@ -241,7 +290,7 @@ def calibrate_camera_checkerboard(fnames, board):
         allScores = allScores[good]
 
     print('found {} checkerboard grids'.format(len(allCorners)))
-        
+
     calib_params = calibrate_checkerboard(allCorners, board, video_params)
 
     return calib_params

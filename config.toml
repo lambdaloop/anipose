@@ -5,26 +5,26 @@ model_folder = "/home/tuthill/pierre/flypose-test-Pierre-2018-12-10"
 nesting = 1
 
 [calibration]
-# aruco / charuco / checkerboard
-board_type = "aruco"
+# checkerboard / charuco / aruco
+board_type = "charuco"
 
 # width and height of grid
-board_size = [2, 2]
+board_size = [6, 6]
 
-# number of bits in the markers
-board_marker_bits = 5
+# number of bits in the markers, if aruco/charuco
+board_marker_bits = 4
 
-# number of markers in dictionary (less is best)
+# number of markers in dictionary, if aruco/charuco
 board_marker_dict_number = 50
 
 # length of marker side
-board_marker_length = 4 # mm
+board_marker_length = 0.375 # mm
 
 # If aruco, length of marker separation
-board_marker_separation_length = 1 # mm
+# board_marker_separation_length = 1 # mm
 
-# If charuco, square side length
-# board_square_side_length = 8 # mm
+# If charuco or checkerboard, square side length
+board_square_side_length = 0.5 # mm
 
 [filter]
 enabled = true

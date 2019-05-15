@@ -249,10 +249,26 @@ def get_board_type(board):
     else:
         return None
 
-## TODO: support checkerbooard drawing
+def get_board_size(board):
+    board_type = get_board_type(board)
+    if board_type == 'charuco':
+        return board.getChessboardSize()
+    else:
+        return board.getGridSize()
+
+def get_expected_corners(board):
+    board_size = get_board_size(board)
+    board_type = get_board_type(board)
+    if board_type == 'charuco':
+        return (board_size[0]-1)*(board_size[1]-1)
+    else:
+        return board_size[0]*board_size[1]
+
+    
+## TODO: support checkerboard drawing
 def get_calibration_board_image(config):
     board = get_calibration_board(config)
-    numx, numy = board.getGridSize()
+    numx, numy = get_board_size(board)
     size = numx*200, numy*200
     img = board.draw(size)
     return img
