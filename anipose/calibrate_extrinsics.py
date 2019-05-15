@@ -68,6 +68,8 @@ def reconstruct_checkerboard(row, camera_mats, camera_mats_dist):
 
 
 def detect_aruco(gray, intrinsics, board):
+    board_type = get_board_type(board)
+
     # grayb = gray
     grayb = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -98,6 +100,10 @@ def detect_aruco(gray, intrinsics, board):
                                     INTRINSICS_K, INTRINSICS_D,
                                     parameters=params)
 
+    if board_type == 'charuco' and len(detectedCorners) > 0:
+        ret, detectedCorners, detectedIds = aruco.interpolateCornersCharuco(
+            detectedCorners, detectedIds, gray, board)
+
     return detectedCorners, detectedIds
 
 def estimate_pose_aruco(gray, intrinsics, board):
@@ -109,8 +115,14 @@ def estimate_pose_aruco(gray, intrinsics, board):
     INTRINSICS_K = np.array(intrinsics['camera_mat'])
     INTRINSICS_D = np.array(intrinsics['dist_coeff'])
 
-    ret, rvec, tvec = aruco.estimatePoseBoard(detectedCorners, detectedIds, board,
-                                              INTRINSICS_K, INTRINSICS_D)
+    board_type = get_board_type(board)
+
+    if board_type == 'charuco':
+        ret, rvec, tvec = aruco.estimatePoseCharucoBoard(
+            detectedCorners, detectedIds, board, INTRINSICS_K, INTRINSICS_D)
+    else:
+        ret, rvec, tvec = aruco.estimatePoseBoard(
+            detectedCorners, detectedIds, board, INTRINSICS_K, INTRINSICS_D)
 
     return True, (detectedCorners, detectedIds, rvec, tvec)
 
@@ -357,7 +369,7 @@ def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
         cam_names.update(fd.keys())
 
     cam_names = sorted(cam_names)
-    
+
     # pairs = get_all_matrix_pairs(matrix_list, sorted(cam_names))
     graph = get_calibration_graph(matrix_list, cam_names)
     pairs = find_calibration_pairs(graph, source=cam_align)
