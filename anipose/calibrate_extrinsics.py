@@ -17,7 +17,7 @@ from checkerboard import detect_checkerboard
 from .common import \
     find_calibration_folder, make_process_fun, \
     get_cam_name, get_video_name, load_intrinsics, \
-    get_calibration_board, get_board_type
+    get_calibration_board, get_board_type, get_expected_corners
 
 from .triangulate import triangulate_optim, triangulate_simple, \
     reprojection_error, reprojection_error_und
@@ -30,23 +30,40 @@ def fill_points(corners, ids, board):
             return corners.reshape(-1, 2)
         else:
             return np.copy(board.objPoints)[:, :2]*np.nan
-    else:
-        # TODO: this should change with aruco calibration board config
-        # 16 comes from 4 boxes (2x2) with 4 corners each
-        out = np.zeros((16, 2))
+    elif board_type == 'aruco':
+        num_corners = get_expected_corners(board)
+
+        # N boxes with 4 corners each
+        out = np.zeros((num_corners*4, 2))
         out.fill(np.nan)
 
-        if ids is None:
+        if corners is None or ids is None:
             return out
 
         for id_wrap, corner_wrap in zip(ids, corners):
             ix = id_wrap[0]
-            corner = corner_wrap.flatten().reshape(4,2)
-            if ix >= 4: continue
+            corner = corner_wrap.flatten().reshape(4, 2)
+            if ix >= num_corners:
+                continue
             out[ix*4:(ix+1)*4,:] = corner
 
         return out
+    elif board_type == 'charuco':
+        num_corners = get_expected_corners(board)
 
+        out = np.zeros((num_corners, 2))
+        out.fill(np.nan)
+
+        if ids is None or corners is None:
+            return out
+
+        corners = corners.reshape(-1, 2)
+        ids = ids.flatten()
+
+        for ix, corner in zip(ids, corners):
+            out[ix] = corner
+
+        return out
 
 def reconstruct_checkerboard(row, camera_mats, camera_mats_dist):
     cam_names = sorted(row.keys())
@@ -95,7 +112,7 @@ def detect_aruco(gray, intrinsics, board):
         return corners, ids
 
     detectedCorners, detectedIds, rejectedCorners, recoveredIdxs = \
-        aruco.refineDetectedMarkers(grayb, board, corners, ids,
+        aruco.refineDetectedMarkers(gray, board, corners, ids,
                                     rejectedImgPoints,
                                     INTRINSICS_K, INTRINSICS_D,
                                     parameters=params)
