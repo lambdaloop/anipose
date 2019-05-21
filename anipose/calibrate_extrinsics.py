@@ -243,13 +243,11 @@ def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
 
     go = skip
     all_Ms = []
-    all_corners = []
-    all_ids = []
+    all_points = []
 
     for framenum in trange(minlen, ncols=70):
         M_dict = dict()
-        corner_dict = dict()
-        id_dict = dict()
+        point_dict = dict()
 
         for cam_name in cam_names:
             cap = caps[cam_name]
@@ -258,7 +256,7 @@ def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
             if framenum % skip != 0 and go <= 0:
                 continue
 
-            gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             intrinsics = cam_intrinsics[cam_name]
             success, result = estimate_pose(gray, intrinsics, board)
             if not success:
@@ -266,21 +264,28 @@ def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
 
             corners, ids, rvec, tvec = result
             M_dict[cam_name] = make_M(rvec, tvec)
-            corner_dict[cam_name] = corners
-            id_dict[cam_name] = ids
+
+            points = fill_points(corners, ids, board)
+            points_flat = points.reshape(-1, 1, 2)
+            points_new = cv2.undistortPoints(
+                points_flat,
+                np.array(intrinsics['camera_mat']),
+                np.array(intrinsics['dist_coeff']))
+
+            point_dict[cam_name] = points_new.reshape(points.shape)
+
 
         if len(M_dict) >= 2:
             go = skip
             all_Ms.append(M_dict)
-            all_corners.append(corner_dict)
-            all_ids.append(id_dict)
+            all_points.append(point_dict)
 
         go = max(0, go-1)
 
     for cam_name, cap in caps.items():
         cap.release()
 
-    return all_Ms, all_corners, all_ids
+    return all_Ms, all_points
 
 
 def get_transform(matrix_list, left, right):
@@ -377,18 +382,29 @@ def compute_camera_matrices(matrix_list, pairs, source=0):
         extrinsics[b] = np.matmul(ext, extrinsics[a])
     return extrinsics
 
+def estimate_calibration_errors(point_list, intrinsics, extrinsics):
+    errors = []
+    for points in point_list:
+        cnames = points.keys()
+        cam_mats = np.array([extrinsics[c] for c in cnames])
+        cam_mats_dist = np.array([intrinsics[c]['camera_mat'] for c in cnames])
+        pts = np.array([points[c] for c in cnames])
+        p3d = triangulate_simple(pts, cam_mats)
+        error = reprojection_error_und(p3d, pts, cam_mats, cam_mats_dist)
+        errors.append(error)
+    return np.array(errors)
+
+
 def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
     ## TODO optimize transforms based on reprojection errors
     ## TODO build up camera matrices based on pairs
     matrix_list = []
-    corner_list = []
-    id_list = []
+    point_list = []
     cam_names = set()
     for fd in fname_dicts:
-        ml, corners, ids = get_matrices(fd, cam_intrinsics, board, skip=skip)
+        ml, points = get_matrices(fd, cam_intrinsics, board, skip=skip)
         matrix_list.extend(ml)
-        corner_list.extend(corners)
-        id_list.extend(ids)
+        point_list.extend(points)
         cam_names.update(fd.keys())
 
     cam_names = sorted(cam_names)
@@ -398,7 +414,9 @@ def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
     pairs = find_calibration_pairs(graph, source=cam_align)
     extrinsics = compute_camera_matrices(matrix_list, pairs, source=cam_align)
 
-    return extrinsics
+    errors = estimate_calibration_errors(point_list, extrinsics)
+
+    return extrinsics, np.mean(errors)
 
 def process_session(config, session_path):
     # pipeline_videos_raw = config['pipeline']['videos_raw']
@@ -448,10 +466,11 @@ def process_session(config, session_path):
             fname_dict = dict(zip(cam_names, fnames))
             fname_dicts.append(fname_dict)
 
-        extrinsics = get_extrinsics(fname_dicts, intrinsics, cam_align, board)
+        extrinsics, error = get_extrinsics(fname_dicts, intrinsics, cam_align, board)
         extrinsics_out = {}
         for k, v in extrinsics.items():
             extrinsics_out[k] = v.tolist()
+        extrinsics_out['error'] = error
 
         with open(outname, 'w') as f:
             toml.dump(extrinsics_out, f)

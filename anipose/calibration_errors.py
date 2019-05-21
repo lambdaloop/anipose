@@ -148,6 +148,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
     return dout
 
 
+
 def process_session(config, session_path):
     # pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_calibration_videos = config['pipeline']['calibration_videos']
