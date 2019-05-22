@@ -332,7 +332,7 @@ def get_calibration_graph(imgpoints, cam_names):
     components = dict(zip(cam_names, range(n_cams)))
     edges = set(connections.items())
 
-    print(edges)
+    print(sorted(edges))
 
     graph = defaultdict(list)
 
@@ -389,9 +389,15 @@ def estimate_calibration_errors(point_list, intrinsics, extrinsics):
         cam_mats = np.array([extrinsics[c] for c in cnames])
         cam_mats_dist = np.array([intrinsics[c]['camera_mat'] for c in cnames])
         pts = np.array([points[c] for c in cnames])
-        p3d = triangulate_simple(pts, cam_mats)
-        error = reprojection_error_und(p3d, pts, cam_mats, cam_mats_dist)
-        errors.append(error)
+        for i in range(pts.shape[1]):
+            if np.sum(~np.isnan(pts[:, i, 0])) < 2:
+                continue
+            try:
+                p3d = triangulate_simple(pts[:, i], cam_mats)
+                error = reprojection_error_und(p3d, pts[:, i], cam_mats, cam_mats_dist)
+                errors.append(error)
+            except np.linalg.LinAlgError:
+                pass
     return np.array(errors)
 
 
@@ -414,7 +420,7 @@ def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
     pairs = find_calibration_pairs(graph, source=cam_align)
     extrinsics = compute_camera_matrices(matrix_list, pairs, source=cam_align)
 
-    errors = estimate_calibration_errors(point_list, extrinsics)
+    errors = estimate_calibration_errors(point_list, cam_intrinsics, extrinsics)
 
     return extrinsics, np.mean(errors)
 
@@ -470,7 +476,7 @@ def process_session(config, session_path):
         extrinsics_out = {}
         for k, v in extrinsics.items():
             extrinsics_out[k] = v.tolist()
-        extrinsics_out['error'] = error
+        extrinsics_out['error'] = float(error)
 
         with open(outname, 'w') as f:
             toml.dump(extrinsics_out, f)
