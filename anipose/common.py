@@ -147,7 +147,11 @@ def find_calibration_folder(config, session_path):
         checkpath = os.path.join(curpath, pipeline_calibration_videos)
         print(checkpath)
         videos = glob(os.path.join(checkpath, '*.avi'))
-        if len(videos) > 0:
+        intrinsics = glob(os.path.join(checkpath, 'intrinsics*.toml'))
+        extrinsics = glob(os.path.join(checkpath, 'extrinsics.toml'))
+
+        if len(videos) > 0 or \
+           (len(intrinsics) > 0 and len(extrinsics) > 0):
             return curpath
 
         curpath = os.path.dirname(curpath)
@@ -204,7 +208,7 @@ class Checkerboard:
 
     def getGridSize(self):
         return self.getChessboardSize()
-    
+
     def getSquareLength(self):
         return self.squareLength
 
@@ -264,7 +268,7 @@ def get_expected_corners(board):
     else:
         return board_size[0]*board_size[1]
 
-    
+
 ## TODO: support checkerboard drawing
 def get_calibration_board_image(config):
     board = get_calibration_board(config)
