@@ -102,7 +102,7 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
     mlab.clf()
     pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s,
-                        scale_mode='none', scale_factor=0.25)
+                        scale_mode='none', scale_factor=0.05)
     lines = connect_all(points, scheme, bp_dict, cmap)
     mlab.orientation_axes()
 
