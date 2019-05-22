@@ -158,7 +158,9 @@ def process_session(config, session_path):
 
 
     outdir = os.path.join(session_path, pipeline_videos_labeled_3d)
-    os.makedirs(outdir, exist_ok=True)
+
+    if len(labels_fnames) > 0:
+        os.makedirs(outdir, exist_ok=True)
 
     for fname in labels_fnames:
         basename = os.path.basename(fname)

@@ -356,7 +356,9 @@ def process_session(config, session_path):
     angle_fnames = sorted(angle_fnames, key=natural_keys)
 
     outdir = os.path.join(session_path, pipeline_videos_combined)
-    os.makedirs(outdir, exist_ok=True)
+
+    if len(angle_fnames) > 0:
+        os.makedirs(outdir, exist_ok=True)
 
     for angle_fname in angle_fnames:
         basename = true_basename(angle_fname)

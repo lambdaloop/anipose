@@ -32,10 +32,13 @@ def process_session(config, session_path):
     videos = glob(os.path.join(source_folder, '*.avi'))
     videos = sorted(videos, key=natural_keys)
 
+    if len(videos) > 0:
+        os.makedirs(outdir, exist_ok=True)
+
     for video in videos:
         basename = os.path.basename(video)
         basename, ext = os.path.splitext(basename)
-        os.makedirs(os.path.join(session_path, pipeline_pose), exist_ok=True)
+        
         dataname = os.path.join(outdir, basename + '.h5')
         print(dataname)
         if os.path.exists(dataname):

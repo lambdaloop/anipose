@@ -54,7 +54,9 @@ def process_session(config, session_path):
     labels_fnames = sorted(labels_fnames, key=natural_keys)
 
     outdir = os.path.join(session_path, pipeline_angles)
-    os.makedirs(outdir, exist_ok=True)
+
+    if len(labels_fnames) > 0:
+        os.makedirs(outdir, exist_ok=True)
 
     for fname in labels_fnames:
         basename = os.path.basename(fname)

@@ -72,11 +72,11 @@ def process_session(config, session_path):
     pose_folder = os.path.join(session_path, pipeline_pose)
     output_folder = os.path.join(session_path, pipeline_pose_filter)
 
-    os.makedirs(output_folder, exist_ok=True)
-
     pose_files = glob(os.path.join(pose_folder, '*.h5'))
     pose_files = sorted(pose_files, key=natural_keys)
 
+    if len(pose_files) > 0:
+        os.makedirs(output_folder, exist_ok=True)
 
     for fname in pose_files:
         basename = os.path.basename(fname)

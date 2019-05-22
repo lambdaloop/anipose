@@ -298,8 +298,6 @@ def process_session(config, session_path):
     video_folder = os.path.join(session_path, pipeline_videos_raw)
     output_folder = os.path.join(session_path, pipeline_3d)
 
-    os.makedirs(output_folder, exist_ok=True)
-
     pose_files = glob(os.path.join(pose_folder, '*.h5'))
 
     cam_videos = defaultdict(list)
@@ -311,6 +309,9 @@ def process_session(config, session_path):
     vid_names = cam_videos.keys()
     vid_names = sorted(vid_names, key=natural_keys)
 
+    if len(vid_names) > 0:
+        os.makedirs(output_folder, exist_ok=True)
+    
     fname_dicts = []
     for name in vid_names:
         print(name)
