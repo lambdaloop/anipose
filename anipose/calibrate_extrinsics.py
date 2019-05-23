@@ -3,7 +3,7 @@
 import cv2
 from cv2 import aruco
 from tqdm import trange
-import numpy as np
+# import numpy as np
 import os, os.path
 from glob import glob
 from collections import defaultdict, Counter
@@ -13,6 +13,9 @@ from scipy.cluster.vq import whiten
 import queue
 from scipy import optimize
 from time import time
+import autograd.numpy as np
+from autograd import grad
+from autograd.misc import optimizers
 
 from checkerboard import detect_checkerboard
 
@@ -23,6 +26,31 @@ from .common import \
 
 from .triangulate import triangulate_optim, triangulate_simple, \
     reprojection_error, reprojection_error_und
+
+from autograd.extend import primitive, defvjp
+
+@primitive
+def apad(array, width, mode, **kwargs):
+    return np.pad(array, width, mode, **kwargs)
+
+def _unpad(array, width):
+    if np.isscalar(width):
+        width = [[width, width]]
+    elif np.shape(width) == (1,):
+        width = [np.concatenate((width, width))]
+    elif np.shape(width) == (2,):
+        width = [width]
+    if np.shape(width)[0] == 1:
+        width = np.repeat(width, np.ndim(array), 0)
+    idxs = tuple(slice(l, -u or None) for l, u in width)
+    return array[idxs]
+
+def pad_vjp(ans, array, pad_width, mode, **kwargs):
+    assert mode == "constant", "Only constant mode padding is supported."
+    return lambda g: _unpad(g, pad_width)
+
+defvjp(apad, pad_vjp)
+
 
 def fill_points(corners, ids, board):
     board_type = get_board_type(board)
@@ -407,6 +435,33 @@ def estimate_calibration_errors(point_list, intrinsics, extrinsics):
     return np.array(errors)
 
 
+def rodrigues_vec(angles):
+    theta = np.linalg.norm(angles)
+    r = angles / theta
+
+    mat = [[0, -r[2], r[1]],
+           [r[2], 0, -r[0]],
+           [-r[1], r[0], 0]]
+    mat = np.array(mat)
+
+    R = np.cos(theta) * np.eye(3) + \
+        (1-np.cos(theta))*np.outer(r, r) + \
+        np.sin(theta) * mat
+
+    return R
+
+
+def make_M_vec(rvec, tvec):
+    #rotmat, _ = cv2.Rodrigues(rvec)
+    rotmat = rodrigues_vec(rvec.flatten())
+    rotmatm = apad(rotmat, [(0, 1), (0, 1)], mode='constant')
+    tvecf = np.reshape(tvec.flatten(), (3, 1))
+    tvecm = apad(tvecf, [(0, 1), (3, 0)], 'constant')
+    const = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]])
+    out = rotmatm + tvecm + const
+    return out
+
+
 def mats_to_params(mats):
     params = np.zeros(len(mats)*6)
     for i, M in enumerate(mats):
@@ -421,7 +476,7 @@ def params_to_mats(params):
     n_cams = len(params) // 6
     for i in range(n_cams):
         s = i*6
-        MX = make_M(params[s:s+3], params[s+3:s+6])
+        MX = make_M_vec(params[s:s+3], params[s+3:s+6])
         cam_mats.append(MX)
     cam_mats = np.array(cam_mats)
     return cam_mats
@@ -455,21 +510,48 @@ def setup_bundle_problem(point_list, intrinsics, extrinsics, cam_align):
     return out, cnames, cam_mats
 
 
+def triangulate_simple_vec(points, camera_mats):
+    num_cams = len(camera_mats)
+    A = np.zeros((num_cams * 2, 4))
+    for i in range(num_cams):
+        x, y = points[i]
+        mat = camera_mats[i]
+        row1 = apad(np.reshape(x*mat[2] - mat[0], (1, 4)),
+                      [(i*2, num_cams*2 - i*2 - 1), (0, 0)],
+                      'constant')
+        row2 = apad(np.reshape(y*mat[2] - mat[1], (1, 4)),
+                      [(i*2+1, num_cams*2 - i*2 - 2), (0, 0)],
+                      'constant')
+        A = A + row1
+        A = A + row2
+        # A[(i*2):(i*2+1)] = x*mat[2]-mat[0]
+        # A[(i*2+1):(i*2+2)] = y*mat[2]-mat[1]
+    u, s, vh = np.linalg.svd(A, full_matrices=False)
+    p3d = vh[-1]
+    p3d = p3d / p3d[3]
+    return p3d
+
+def reprojection_error_vec(p3d, points2d, camera_mats):
+    proj = np.dot(camera_mats, p3d)
+    proj = proj[:, :2] / proj[:, 2, None]
+    errors = np.linalg.norm(proj - points2d, axis=1)
+    return np.mean(errors)
+
 def evaluate_errors(the_points, params, all_good=None):
     cam_mats = params_to_mats(params)
-    errors = np.zeros(the_points.shape[0])
 
     if all_good is None:
         all_good = [None]*len(the_points)
         for ptnum, points in enumerate(the_points):
             all_good[ptnum] = ~np.isnan(points[:, 0])
 
+    errors = []
     for ptnum, points in enumerate(the_points):
         good = all_good[ptnum]
-        p3d = triangulate_simple(points[good], cam_mats[good])
-        err = reprojection_error(p3d, points[good], cam_mats[good])
-        errors[ptnum] = err
-    return errors
+        p3d = triangulate_simple_vec(points[good], cam_mats[good])
+        err = reprojection_error_vec(p3d, points[good], cam_mats[good])
+        errors.append(err)
+    return np.array(errors)
 
 def make_error_fun(the_points, n_samples=None, sum=False):
     the_points_sampled = the_points
@@ -490,15 +572,32 @@ def make_error_fun(the_points, n_samples=None, sum=False):
             return errors
     return error_fun, the_points_sampled
 
-def bundle_adjust(all_points, cam_names, cam_mats):
-    error_fun, points_sampled = make_error_fun(all_points, n_samples=100)
+def make_grad_fun(the_points, n_samples=3):
+    def grad_fun(params, t):
+        fun, _ = make_error_fun(the_points, n_samples=n_samples, sum=True)
+        gf = grad(fun)
+        scale = 1.0 / (1 + 2*t)
+        return gf(params) * scale
+    return grad_fun
 
+def bundle_adjust(all_points, cam_names, cam_mats):
     params = mats_to_params(cam_mats[1:])
 
-    opt = optimize.least_squares(error_fun, params, loss='linear',
-                                 method='trf', tr_solver='lsmr')
+    # error_fun, points_sampled = make_error_fun(all_points, n_samples=500)
+    # opt = optimize.least_squares(error_fun, params, loss='linear',
+    #                              method='trf', tr_solver='lsmr')
+    # best_params = opt.x
 
-    best_params = opt.x
+    error_fun_print, _ = make_error_fun(all_points, n_samples=50, sum=True)
+    def print_step(x, i, g):
+        if i % 25 == 0:
+            print(i, error_fun_print(x))
+    grad_fun = make_grad_fun(all_points, n_samples=1)
+    best_params = optimizers.adam(grad_fun, params,
+                                  callback=print_step,
+                                  step_size=0.001,
+                                  num_iters=1000)
+
     mats_new = params_to_mats(best_params)
 
     extrinsics_new = dict(zip(cam_names, mats_new))
