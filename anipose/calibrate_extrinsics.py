@@ -11,6 +11,8 @@ import toml
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.cluster.vq import whiten
 import queue
+from scipy import optimize
+from time import time
 
 from checkerboard import detect_checkerboard
 
@@ -188,6 +190,10 @@ def make_M(rvec, tvec):
     out[3, 3] = 1
     return out
 
+def get_rtvec(M):
+    rvec = cv2.Rodrigues(M[:3, :3])[0].flatten()
+    tvec = M[:3, 3].flatten()
+    return rvec, tvec
 
 def get_most_common(vals):
     Z = linkage(whiten(vals), 'ward')
@@ -230,7 +236,7 @@ def mean_transform_robust(M_list, approx=None, error=0.3):
     return mean_transform(M_list_robust)
 
 
-def get_matrices(fname_dict, cam_intrinsics, board, skip=20):
+def get_matrices(fname_dict, cam_intrinsics, board, skip=40):
     minlen = np.inf
     caps = dict()
     for cam_name, fname in fname_dict.items():
@@ -392,13 +398,112 @@ def estimate_calibration_errors(point_list, intrinsics, extrinsics):
         for i in range(pts.shape[1]):
             if np.sum(~np.isnan(pts[:, i, 0])) < 2:
                 continue
-            try:
-                p3d = triangulate_simple(pts[:, i], cam_mats)
-                error = reprojection_error_und(p3d, pts[:, i], cam_mats, cam_mats_dist)
-                errors.append(error)
-            except np.linalg.LinAlgError:
-                pass
+
+            good = ~np.isnan(pts[:, i, 0])
+            p3d = triangulate_simple(pts[good, i], cam_mats[good])
+            error = reprojection_error_und(p3d, pts[good, i], cam_mats[good], cam_mats_dist[good])
+            errors.append(error)
+
     return np.array(errors)
+
+
+def mats_to_params(mats):
+    params = np.zeros(len(mats)*6)
+    for i, M in enumerate(mats):
+        rvec, tvec = get_rtvec(M)
+        s = i*6
+        params[s:s+3] = rvec
+        params[s+3:s+6] = tvec
+    return params
+
+def params_to_mats(params):
+    cam_mats = [np.identity(4)]
+    n_cams = len(params) // 6
+    for i in range(n_cams):
+        s = i*6
+        MX = make_M(params[s:s+3], params[s+3:s+6])
+        cam_mats.append(MX)
+    cam_mats = np.array(cam_mats)
+    return cam_mats
+
+def setup_bundle_problem(point_list, intrinsics, extrinsics, cam_align):
+    out = []
+    # make sure cam_align is first
+    cnames = [cam_align] + sorted(set(extrinsics.keys()) - {cam_align})
+    cam_mats = np.array([extrinsics[c] for c in cnames])
+
+    points = point_list[0]
+    v = list(points.values())[0]
+    template = v*np.nan
+
+    for points in point_list:
+        keys = sorted(points.keys())
+        pts = []
+        for c in cnames:
+            if c in points:
+                p = points[c]
+            else:
+                p = template
+            pts.append(p)
+        pts = np.array(pts)
+        for i in range(pts.shape[1]):
+            if np.sum(~np.isnan(pts[:, i, 0])) < 2:
+                continue
+            out.append(pts[:, i])
+
+    out = np.array(out)
+    return out, cnames, cam_mats
+
+
+def evaluate_errors(the_points, params, all_good=None):
+    cam_mats = params_to_mats(params)
+    errors = np.zeros(the_points.shape[0])
+
+    if all_good is None:
+        all_good = [None]*len(the_points)
+        for ptnum, points in enumerate(the_points):
+            all_good[ptnum] = ~np.isnan(points[:, 0])
+
+    for ptnum, points in enumerate(the_points):
+        good = all_good[ptnum]
+        p3d = triangulate_simple(points[good], cam_mats[good])
+        err = reprojection_error(p3d, points[good], cam_mats[good])
+        errors[ptnum] = err
+    return errors
+
+def make_error_fun(the_points, n_samples=None, sum=False):
+    the_points_sampled = the_points
+    if n_samples is not None and n_samples < the_points.shape[0]:
+        samples = np.random.choice(the_points.shape[0], n_samples,
+                                   replace=False)
+        the_points_sampled = the_points[samples]
+
+    all_good = [None]*len(the_points_sampled)
+    for ptnum, points in enumerate(the_points_sampled):
+        all_good[ptnum] = ~np.isnan(points[:, 0])
+
+    def error_fun(params):
+        errors = evaluate_errors(the_points_sampled, params, all_good)
+        if sum:
+            return np.sum(errors)
+        else:
+            return errors
+    return error_fun, the_points_sampled
+
+def bundle_adjust(all_points, cam_names, cam_mats):
+    error_fun, points_sampled = make_error_fun(all_points, n_samples=100)
+
+    params = mats_to_params(cam_mats[1:])
+
+    opt = optimize.least_squares(error_fun, params, loss='linear',
+                                 method='trf', tr_solver='lsmr')
+
+    best_params = opt.x
+    mats_new = params_to_mats(best_params)
+
+    extrinsics_new = dict(zip(cam_names, mats_new))
+
+    return extrinsics_new
 
 
 def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
@@ -422,7 +527,21 @@ def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
 
     errors = estimate_calibration_errors(point_list, cam_intrinsics, extrinsics)
 
-    return extrinsics, np.mean(errors)
+    print('before', np.mean(errors))
+
+    all_points, cam_names_new, cam_mats = setup_bundle_problem(
+        point_list, cam_intrinsics, extrinsics, cam_align)
+
+    t1 = time()
+    extrinsics_new = bundle_adjust(all_points, cam_names_new, cam_mats)
+    t2 = time()
+
+    print('bundle adjustment took {:.1f} seconds'.format(t2 - t1))
+
+    errors = estimate_calibration_errors(point_list, cam_intrinsics, extrinsics_new)
+    print('after', np.mean(errors))
+
+    return extrinsics_new, np.mean(errors)
 
 def process_session(config, session_path):
     # pipeline_videos_raw = config['pipeline']['videos_raw']

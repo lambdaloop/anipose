@@ -75,6 +75,7 @@ def optim_error_fun(points, camera_mats):
         return np.linalg.norm(resid, axis=1)
     return fun
 
+
 def triangulate_optim(points, camera_mats, max_error=20):
     try:
         p3d = triangulate_simple(points, camera_mats)
