@@ -491,12 +491,21 @@ def make_error_fun(the_points, n_samples=None, sum=False):
     return error_fun, the_points_sampled
 
 def bundle_adjust(all_points, cam_names, cam_mats):
-    error_fun, points_sampled = make_error_fun(all_points, n_samples=100)
+    error_fun, points_sampled = make_error_fun(all_points, n_samples=1000)
 
     params = mats_to_params(cam_mats[1:])
 
-    opt = optimize.least_squares(error_fun, params, loss='linear',
-                                 method='trf', tr_solver='lsmr')
+    good_points = ~np.isnan(points_sampled[:, :, 0])
+    jac_sparsity = 1*np.repeat(good_points[:, 1:], 6, axis=1)
+
+    opt = optimize.least_squares(error_fun,
+                                 params,
+                                 loss='linear',
+                                 jac_sparsity=jac_sparsity,
+                                 method='trf',
+                                 tr_solver='lsmr',
+                                 verbose=2,
+                                 max_nfev=1000)
 
     best_params = opt.x
     mats_new = params_to_mats(best_params)
