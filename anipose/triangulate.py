@@ -66,6 +66,20 @@ def triangulate_simple(points, camera_mats):
     p3d = p3d / p3d[3]
     return p3d
 
+def triangulate_points(the_points, cam_mats):
+    p3ds = []
+    errors = []
+    for ptnum in range(the_points.shape[0]):
+        points = the_points[ptnum]
+        good = ~np.isnan(points[:, 0])
+        p3d = triangulate_simple(points[good], cam_mats[good])
+        err = reprojection_error(p3d, points[good], cam_mats[good])
+        p3ds.append(p3d)
+        errors.append(err)
+    p3ds = np.array(p3ds)
+    errors = np.array(errors)
+    return p3ds, errors
+
 def optim_error_fun(points, camera_mats):
     def fun(x):
         p3d = np.array([x[0], x[1], x[2], 1])

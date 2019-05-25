@@ -13,6 +13,7 @@ from scipy.cluster.vq import whiten
 import queue
 from scipy import optimize
 from time import time
+from scipy.sparse import lil_matrix
 
 from checkerboard import detect_checkerboard
 
@@ -22,6 +23,7 @@ from .common import \
     get_calibration_board, get_board_type, get_expected_corners
 
 from .triangulate import triangulate_optim, triangulate_simple, \
+    triangulate_points, \
     reprojection_error, reprojection_error_und
 
 def fill_points(corners, ids, board):
@@ -417,7 +419,8 @@ def mats_to_params(mats):
     return params
 
 def params_to_mats(params):
-    cam_mats = [np.identity(4)]
+    # cam_mats = [np.identity(4)]
+    cam_mats = []
     n_cams = len(params) // 6
     for i in range(n_cams):
         s = i*6
@@ -428,9 +431,7 @@ def params_to_mats(params):
 
 def setup_bundle_problem(point_list, intrinsics, extrinsics, cam_align):
     out = []
-    # make sure cam_align is first
-    cnames = [cam_align] + sorted(set(extrinsics.keys()) - {cam_align})
-    cam_mats = np.array([extrinsics[c] for c in cnames])
+    cnames = sorted(extrinsics.keys())
 
     points = point_list[0]
     v = list(points.values())[0]
@@ -452,24 +453,17 @@ def setup_bundle_problem(point_list, intrinsics, extrinsics, cam_align):
             out.append(pts[:, i])
 
     out = np.array(out)
-    return out, cnames, cam_mats
+    return out
 
 
-def evaluate_errors(the_points, params, all_good=None):
-    cam_mats = params_to_mats(params)
-    errors = np.zeros(the_points.shape[0])
+def evaluate_errors(the_points, cam_mats, p3ds, good):
+    points_pred = np.zeros(the_points.shape)
+    for i in range(cam_mats.shape[0]):
+        pp = p3ds.dot(cam_mats[i].T)
+        points_pred[:, i, :] = pp[:, :2] / pp[:, 2, None]
+    errors = points_pred - the_points
+    return errors[good]
 
-    if all_good is None:
-        all_good = [None]*len(the_points)
-        for ptnum, points in enumerate(the_points):
-            all_good[ptnum] = ~np.isnan(points[:, 0])
-
-    for ptnum, points in enumerate(the_points):
-        good = all_good[ptnum]
-        p3d = triangulate_simple(points[good], cam_mats[good])
-        err = reprojection_error(p3d, points[good], cam_mats[good])
-        errors[ptnum] = err
-    return errors
 
 def make_error_fun(the_points, n_samples=None, sum=False):
     the_points_sampled = the_points
@@ -478,44 +472,84 @@ def make_error_fun(the_points, n_samples=None, sum=False):
                                    replace=False)
         the_points_sampled = the_points[samples]
 
-    all_good = [None]*len(the_points_sampled)
-    for ptnum, points in enumerate(the_points_sampled):
-        all_good[ptnum] = ~np.isnan(points[:, 0])
+    n_cameras = the_points_sampled.shape[1]
+    good = ~np.isnan(the_points_sampled)
 
     def error_fun(params):
-        errors = evaluate_errors(the_points_sampled, params, all_good)
+        sub = n_cameras * 6
+        cam_mats = params_to_mats(params[:sub])
+        p3ds = params[sub:].reshape(-1, 3)
+        p3ds = np.hstack([p3ds, np.ones((len(p3ds), 1))])
+
+        errors = evaluate_errors(the_points_sampled, cam_mats, p3ds, good)
+        out = errors
         if sum:
-            return np.sum(errors)
+            return np.sum(out)
         else:
-            return errors
+            return out
     return error_fun, the_points_sampled
 
+
+def build_jac_sparsity(the_points):
+    point_indices = np.zeros(the_points.shape, dtype='int32')
+    cam_indices = np.zeros(the_points.shape, dtype='int32')
+
+    for i in range(the_points.shape[0]):
+        point_indices[i] = i
+
+    for j in range(the_points.shape[1]):
+        cam_indices[:, j] = j
+
+    good = ~np.isnan(the_points)
+
+    n_points = the_points.shape[0]
+    n_cams = the_points.shape[1]
+    n_params = n_cams*6 + n_points*3
+
+    n_errors = np.sum(good)
+
+    A_sparse = lil_matrix((n_errors, n_params), dtype='int16')
+
+    cam_indices_good = cam_indices[good]
+    point_indices_good = point_indices[good]
+
+    ix = np.arange(n_errors)
+
+    for i in range(6):
+        A_sparse[ix, cam_indices_good*6 + i] = 1
+
+    for i in range(3):
+        A_sparse[ix, n_cams*6 + point_indices_good*3 + i] = 1
+
+    return A_sparse
+
 def bundle_adjust(all_points, cam_names, cam_mats):
-    error_fun, points_sampled = make_error_fun(all_points, n_samples=1000)
+    n_cameras = len(cam_mats)
 
-    params = mats_to_params(cam_mats[1:])
+    error_fun, points_sampled = make_error_fun(all_points)
+    p3ds_sampled, _ = triangulate_points(points_sampled, cam_mats)
 
-    good_points = ~np.isnan(points_sampled[:, :, 0])
-    jac_sparsity = 1*np.repeat(good_points[:, 1:], 6, axis=1)
+    params_cams = mats_to_params(cam_mats)
+    params_points = p3ds_sampled[:, :3].reshape(-1)
+    params_full = np.hstack([params_cams, params_points])
 
-    opt = optimize.least_squares(error_fun,
-                                 params,
-                                 loss='linear',
-                                 jac_sparsity=jac_sparsity,
-                                 method='trf',
-                                 tr_solver='lsmr',
-                                 verbose=2,
-                                 max_nfev=1000)
+    jac_sparse = build_jac_sparsity(points_sampled)
+
+    opt = optimize.least_squares(error_fun, params_full,
+                                 jac_sparsity=jac_sparse,
+                                 x_scale='jac', loss='linear', ftol=1e-4,
+                                 method='trf', tr_solver='lsmr', verbose=2,
+                                 max_nfev=200)
 
     best_params = opt.x
-    mats_new = params_to_mats(best_params)
+    mats_new = params_to_mats(best_params[:n_cameras*6])
 
     extrinsics_new = dict(zip(cam_names, mats_new))
 
     return extrinsics_new
 
 
-def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
+def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=40):
     ## TODO optimize transforms based on reprojection errors
     ## TODO build up camera matrices based on pairs
     matrix_list = []
@@ -538,11 +572,13 @@ def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=20):
 
     print('before', np.mean(errors))
 
-    all_points, cam_names_new, cam_mats = setup_bundle_problem(
+    all_points = setup_bundle_problem(
         point_list, cam_intrinsics, extrinsics, cam_align)
 
+    cam_mats = np.array([extrinsics[c] for c in cam_names])
+
     t1 = time()
-    extrinsics_new = bundle_adjust(all_points, cam_names_new, cam_mats)
+    extrinsics_new = bundle_adjust(all_points, cam_names, cam_mats)
     t2 = time()
 
     print('bundle adjustment took {:.1f} seconds'.format(t2 - t1))
