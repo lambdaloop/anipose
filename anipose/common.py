@@ -117,17 +117,28 @@ def process_all(config, process_session, **args):
 
     while len(q) != 0:
         path, past_folders, level = q.pop()
-        if level == nesting:
+
+        if nesting == -1:
             output[past_folders] = process_session(config, path, **args)
-        elif level > nesting:
-            continue
-        elif level < nesting:
+
             folders = get_folders(path)
             next_folders = [ (os.path.join(path, folder),
                               past_folders + (folder,),
                               level+1)
                              for folder in folders ]
             q.extend(next_folders)
+        else:
+            if level == nesting:
+                output[past_folders] = process_session(config, path, **args)
+            elif level > nesting:
+                continue
+            elif level < nesting:
+                folders = get_folders(path)
+                next_folders = [ (os.path.join(path, folder),
+                                  past_folders + (folder,),
+                                  level+1)
+                                 for folder in folders ]
+                q.extend(next_folders)
 
     return output
 
