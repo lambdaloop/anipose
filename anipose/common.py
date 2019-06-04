@@ -10,6 +10,7 @@ import skvideo.io
 from subprocess import check_output
 import toml
 import numpy as np
+import pandas as pd
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -27,7 +28,11 @@ def wc(filename):
     return int(num)
 
 def get_data_length(fname):
-    return wc(fname) - 1
+    try:
+        numlines = wc(fname) - 1
+    except:
+        numlines = len(pd.read_csv(fname))
+    return numlines
 
 def get_video_params_cap(cap):
     params = dict()
@@ -92,6 +97,18 @@ def full_path(path):
     path_norm = os.path.normpath(path_full)
     return path_norm
 
+def split_full_path(path):
+    out = []
+    while path != '':
+        new, cur = os.path.split(path)
+        if cur != '':
+            out.append(cur)
+        if new == path:
+            out.append(new)
+            break
+        path = new
+    return list(reversed(out))
+
 
 def process_all(config, process_session, **args):
 
@@ -118,7 +135,7 @@ def process_all(config, process_session, **args):
     while len(q) != 0:
         path, past_folders, level = q.pop()
 
-        if nesting == -1:
+        if nesting < 0:
             output[past_folders] = process_session(config, path, **args)
 
             folders = get_folders(path)
