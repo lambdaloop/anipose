@@ -2,7 +2,7 @@
 
 import cv2
 from cv2 import aruco
-from tqdm import trange
+from tqdm import trange, tqdm
 import numpy as np
 import os, os.path
 from glob import glob
@@ -18,13 +18,15 @@ from scipy.sparse import lil_matrix
 from checkerboard import detect_checkerboard
 
 from .common import \
-    find_calibration_folder, make_process_fun, \
+    find_calibration_folder, make_process_fun, process_all, \
     get_cam_name, get_video_name, load_intrinsics, \
-    get_calibration_board, get_board_type, get_expected_corners
+    get_calibration_board, get_board_type, get_expected_corners, \
+    split_full_path
 
 from .triangulate import triangulate_optim, triangulate_simple, \
     triangulate_points, \
-    reprojection_error, reprojection_error_und
+    reprojection_error, reprojection_error_und, \
+    load_offsets_dict, load_pose2d_fnames, undistort_points
 
 def fill_points(corners, ids, board):
     board_type = get_board_type(board)
@@ -456,20 +458,22 @@ def setup_bundle_problem(point_list, intrinsics, extrinsics, cam_align):
     return out
 
 
-def evaluate_errors(the_points, cam_mats, p3ds, good):
+def evaluate_errors(the_points, cam_mats, p3ds, good=None):
     points_pred = np.zeros(the_points.shape)
     for i in range(cam_mats.shape[0]):
         pp = p3ds.dot(cam_mats[i].T)
         points_pred[:, i, :] = pp[:, :2] / pp[:, 2, None]
-    errors = points_pred - the_points
-    return errors[good]
+    errors = np.clip(points_pred - the_points, -1e6, 1e6)
+    if good is None:
+        return errors
+    else:
+        return errors[good]
 
 
 def make_error_fun(the_points, n_samples=None, sum=False):
     the_points_sampled = the_points
     if n_samples is not None and n_samples < the_points.shape[0]:
-        samples = np.random.choice(the_points.shape[0], n_samples,
-                                   replace=False)
+        samples = np.random.choice(the_points.shape[0], n_samples, replace=False)
         the_points_sampled = the_points[samples]
 
     n_cameras = the_points_sampled.shape[1]
@@ -523,10 +527,20 @@ def build_jac_sparsity(the_points):
 
     return A_sparse
 
-def bundle_adjust(all_points, cam_names, cam_mats):
+def bundle_adjust(all_points, cam_names, cam_mats, loss='linear'):
+    """performs bundle adjustment to improve estimates of camera matrices
+
+    Parameters
+    ----------
+    all_points: 2d points, array of shape (n_points, n_cams, 2)
+       undistorted 2d points
+    cam_names: array like
+    cam_mats: array of shape (n_cams, 4)
+    """
+
     n_cameras = len(cam_mats)
 
-    error_fun, points_sampled = make_error_fun(all_points)
+    error_fun, points_sampled = make_error_fun(all_points, n_samples=int(100e3))
     p3ds_sampled, _ = triangulate_points(points_sampled, cam_mats)
 
     params_cams = mats_to_params(cam_mats)
@@ -535,12 +549,13 @@ def bundle_adjust(all_points, cam_names, cam_mats):
 
     jac_sparse = build_jac_sparsity(points_sampled)
 
+    f_scale = np.std(points_sampled[~np.isnan(points_sampled)])*1e-2
+
     opt = optimize.least_squares(error_fun, params_full,
-                                 jac_sparsity=jac_sparse,
-                                 x_scale='jac', loss='linear', ftol=1e-4,
+                                 jac_sparsity=jac_sparse, f_scale=f_scale,
+                                 x_scale='jac', loss=loss, ftol=1e-5,
                                  method='trf', tr_solver='lsmr', verbose=2,
                                  max_nfev=200)
-
     best_params = opt.x
     mats_new = params_to_mats(best_params[:n_cameras*6])
 
@@ -550,8 +565,6 @@ def bundle_adjust(all_points, cam_names, cam_mats):
 
 
 def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=40):
-    ## TODO optimize transforms based on reprojection errors
-    ## TODO build up camera matrices based on pairs
     matrix_list = []
     point_list = []
     cam_names = set()
@@ -588,6 +601,88 @@ def get_extrinsics(fname_dicts, cam_intrinsics, cam_align, board, skip=40):
 
     return extrinsics_new, np.mean(errors)
 
+
+def adjust_extrinsics(cam_extrinsics, points, scores):
+    """performs bundle adjustment given a set of 2d tracked points to optimize
+
+    Parameters
+    ----------
+    cam_extrinsics: dict with cam names as keys
+    cam_intrinsics: dict with cam names as keys
+    points: array of shape (n_points, n_cams, n_parts, 2)
+    scores: array of same shap as points
+    """
+    cam_names = sorted(cam_extrinsics.keys())
+    cam_mats = np.array([cam_extrinsics[c] for c in cam_names])
+
+    scores = scores.swapaxes(1,2).reshape(-1, len(cam_names))
+    points_to_bundle = points.swapaxes(1,2).reshape(-1, len(cam_names), 2)
+    points_to_bundle[scores < 0.98] = np.nan
+
+    good = np.sum(~np.isnan(points_to_bundle[:, :, 0]), axis=1) >= 2
+    points_to_bundle = points_to_bundle[good]
+
+    extrinsics_new = bundle_adjust(points_to_bundle, cam_names, cam_mats, loss='huber')
+
+    return extrinsics_new
+
+
+def get_pose2d_fnames(config, session_path):
+    if config['filter']['enabled']:
+        pipeline_pose = config['pipeline']['pose_2d_filter']
+    else:
+        pipeline_pose = config['pipeline']['pose_2d']
+    fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
+    return session_path, fnames
+
+
+def load_2d_data(config, calibration_path, intrinsics):
+    start_path, _ = os.path.split(calibration_path)
+
+    nesting_path = len(split_full_path(config['path']))
+    nesting_start = len(split_full_path(start_path))
+    new_nesting = config['nesting'] - (nesting_start - nesting_path)
+
+    new_config = dict(config)
+    new_config['path'] = start_path
+    new_config['nesting'] = new_nesting
+
+    pose_fnames = process_all(config, get_pose2d_fnames)
+
+    cam_videos = defaultdict(list)
+
+    for key, (session_path, fnames) in pose_fnames.items():
+        for fname in fnames:
+            vidname = get_video_name(config, fname)
+            k = (key, session_path, vidname)
+            cam_videos[k].append(fname)
+
+    vid_names = sorted(cam_videos.keys())
+
+    all_points_und = []
+    all_scores = []
+
+    for name in tqdm(vid_names, desc='load points', ncols=80):
+        (key, session_path, vidname) = name
+        fnames = cam_videos[name]
+        cam_names = sorted([get_cam_name(config, f) for f in fnames])
+        fname_dict = dict(zip(cam_names, fnames))
+        video_folder = os.path.join(session_path, config['pipeline']['videos_raw'])
+        offsets_dict = load_offsets_dict(config, cam_names, video_folder)
+        out = load_pose2d_fnames(fname_dict, offsets_dict)
+        points_raw = out['points']
+        scores = out['scores']
+        points_und = undistort_points(points_raw, cam_names, intrinsics)
+
+        all_points_und.append(points_und)
+        all_scores.append(scores)
+
+    all_points_und = np.vstack(all_points_und)
+    all_scores = np.vstack(all_scores)
+
+    return all_points_und, all_scores
+
+
 def process_session(config, session_path):
     # pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_calibration_videos = config['pipeline']['calibration_videos']
@@ -604,46 +699,71 @@ def process_session(config, session_path):
     videos = sorted(videos)
 
     cam_videos = defaultdict(list)
-
     cam_names = set()
-
     for vid in videos:
         name = get_video_name(config, vid)
         cam_videos[name].append(vid)
         cam_names.add(get_cam_name(config, vid))
-
     vid_names = cam_videos.keys()
     cam_names = sorted(cam_names)
 
     outname_base = 'extrinsics.toml'
     outdir = os.path.join(calibration_path, pipeline_calibration_results)
-    os.makedirs(outdir, exist_ok=True)
     outname = os.path.join(outdir, outname_base)
+
+    try:
+        intrinsics = load_intrinsics(outdir, cam_names)
+    except:
+        print("intrinsics not found, have you run calibrate_intrinsics ?")
+        return
+
+    print(outname)
+    skip_calib = False
+
+    if os.path.exists(outname):
+        extrinsics = toml.load(outname)
+        if 'adjusted' in extrinsics and extrinsics['adjusted']:
+            return
+        else:
+            skip_calib = True
+            for k, v in extrinsics.items():
+                if isinstance(v, list):
+                    extrinsics[k] = np.array(v)
+            if 'error' in extrinsics:
+                error = extrinsics['error']
+            else:
+                error = -1
 
     board = get_calibration_board(config)
     cam_align = config['triangulation']['cam_align']
 
-    print(outname)
-    if os.path.exists(outname):
-        return
-    else:
-        intrinsics = load_intrinsics(outdir, cam_names)
-
+    if not skip_calib:
         fname_dicts = []
         for name in vid_names:
             fnames = cam_videos[name]
             cam_names = [get_cam_name(config, f) for f in fnames]
             fname_dict = dict(zip(cam_names, fnames))
             fname_dicts.append(fname_dict)
-
         extrinsics, error = get_extrinsics(fname_dicts, intrinsics, cam_align, board)
-        extrinsics_out = {}
-        for k, v in extrinsics.items():
-            extrinsics_out[k] = v.tolist()
-        extrinsics_out['error'] = float(error)
 
-        with open(outname, 'w') as f:
-            toml.dump(extrinsics_out, f)
+    points_tracked_und, tracked_scores = load_2d_data(config, calibration_path, intrinsics)
+    tosave = {
+        'points_tracked_und': points_tracked_und,
+        'tracked_scores': tracked_scores,
+        'extrinsics': extrinsics,
+        'intrinsics': intrinsics
+    }
+    np.savez_compressed('test.npz', **tosave)
+    extrinsics = adjust_extrinsics(extrinsics, points_tracked_und, tracked_scores)
+
+    extrinsics_out = {}
+    for k, v in extrinsics.items():
+        extrinsics_out[k] = v.tolist()
+    extrinsics_out['error'] = float(error)
+    extrinsics_out['adjusted'] = True
+
+    with open(outname, 'w') as f:
+        toml.dump(extrinsics_out, f)
 
 
 calibrate_extrinsics_all = make_process_fun(process_session)

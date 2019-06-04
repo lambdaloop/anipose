@@ -164,57 +164,13 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
 
     return all_points_3d_adj
 
-def triangulate(config,
-                calib_folder, video_folder, pose_folder,
-                fname_dict, output_fname):
-
-    ## TODO: make the recorder.toml file configurable
-    record_fname = os.path.join(video_folder, 'recorder.toml')
-
-    if os.path.exists(record_fname):
-        record_dict = toml.load(record_fname)
-    else:
-        record_dict = None
-        # if 'cameras' not in config:
-        # ## TODO: more detailed error?
-        #     print("-- no crop windows found")
-        #     return
-
+def load_pose2d_fnames(fname_dict, offsets_dict):
     cam_names, pose_names = list(zip(*sorted(fname_dict.items())))
-
-    intrinsics = load_intrinsics(calib_folder, cam_names)
-    extrinsics = load_extrinsics(calib_folder)
-
-    offsets_dict = dict()
-    for cname in cam_names:
-        if record_dict is None:
-            if 'cameras' not in config or cname not in config['cameras']:
-                # print("W: no crop window found for camera {}, assuming no crop".format(cname))
-                offsets_dict[cname] = [0, 0]
-            else:
-                offsets_dict[cname] = config['cameras'][cname]['offset']
-        else:
-            offsets_dict[cname] = record_dict['cameras'][cname]['video']['ROIPosition']
-
-    offsets = []
-    cam_mats = []
-    cam_mats_dist = []
-
-    for cname in cam_names:
-        mat = arr(extrinsics[cname])
-        left = arr(intrinsics[cname]['camera_mat'])
-        cam_mats.append(mat)
-        cam_mats_dist.append(left)
-        offsets.append(offsets_dict[cname])
-
-    offsets = arr(offsets)
-    cam_mats = arr(cam_mats)
-    cam_mats_dist = arr(cam_mats_dist)
 
     maxlen = 0
     for pose_name in pose_names:
         dd = pd.read_hdf(pose_name)
-        length = len(dd.index)
+        length = max(dd.index)+1
         maxlen = max(maxlen, length)
 
     length = maxlen
@@ -226,28 +182,100 @@ def triangulate(config,
 
     # frame, camera, bodypart, xy
     all_points_raw = np.zeros((length, len(cam_names), len(bodyparts), 2))
-    all_points_und = np.zeros((length, len(cam_names), len(bodyparts), 2))
     all_scores = np.zeros((length, len(cam_names), len(bodyparts)))
 
-    for ix_cam, (cam_name, pose_name, offset) in \
-        enumerate(zip(cam_names, pose_names, offsets)):
+    for ix_cam, (cam_name, pose_name) in \
+            enumerate(zip(cam_names, pose_names)):
         dd = pd.read_hdf(pose_name)
         scorer = dd.columns.levels[0][0]
         dd = dd[scorer]
-
+        offset = offsets_dict[cam_name]
         index = arr(dd.index)
         for ix_bp, bp in enumerate(bodyparts):
             X = arr(dd[bp])
             all_points_raw[index, ix_cam, ix_bp, :] = X[:, :2] + [offset[0], offset[1]]
             all_scores[index, ix_cam, ix_bp] = X[:, 2]
 
+    return {
+        'cam_names': cam_names,
+        'points': all_points_raw,
+        'scores': all_scores,
+        'bodyparts': bodyparts
+    }
+
+def load_offsets_dict(config, cam_names, video_folder):
+    ## TODO: make the recorder.toml file configurable
+    # record_fname = os.path.join(video_folder, 'recorder.toml')
+
+    # if os.path.exists(record_fname):
+    #     record_dict = toml.load(record_fname)
+    # else:
+    #     record_dict = None
+    #     # if 'cameras' not in config:
+    #     # ## TODO: more detailed error?
+    #     #     print("-- no crop windows found")
+    #     #     return
+
+    offsets_dict = dict()
+    for cname in cam_names:
+        # if record_dict is None:
+        if 'cameras' not in config or cname not in config['cameras']:
+            # print("W: no crop window found for camera {}, assuming no crop".format(cname))
+            offsets_dict[cname] = [0, 0]
+        else:
+            offsets_dict[cname] = config['cameras'][cname]['offset']
+        # else:
+        #     offsets_dict[cname] = record_dict['cameras'][cname]['video']['ROIPosition']
+
+    return offsets_dict
+
+
+def undistort_points(all_points_raw, cam_names, intrinsics):
+    all_points_und = np.zeros(all_points_raw.shape)
+
+    for ix_cam, cam_name in enumerate(cam_names):
         calib = intrinsics[cam_name]
         points = all_points_raw[:, ix_cam].reshape(-1, 1, 2)
         points_new = cv2.undistortPoints(
             points, arr(calib['camera_mat']), arr(calib['dist_coeff']))
-        all_points_und[:, ix_cam] = points_new.reshape(all_points_raw[:, ix_cam].shape)
+        all_points_und[:, ix_cam] = points_new.reshape(
+            all_points_raw[:, ix_cam].shape)
+
+    return all_points_und
 
 
+def triangulate(config,
+                calib_folder, video_folder, pose_folder,
+                fname_dict, output_fname):
+
+    cam_names = sorted(fname_dict.keys())
+
+    intrinsics = load_intrinsics(calib_folder, cam_names)
+    extrinsics = load_extrinsics(calib_folder)
+
+    offsets_dict = load_offsets_dict(config, cam_names, video_folder)
+
+    cam_mats = []
+    cam_mats_dist = []
+
+    for cname in cam_names:
+        mat = arr(extrinsics[cname])
+        left = arr(intrinsics[cname]['camera_mat'])
+        cam_mats.append(mat)
+        cam_mats_dist.append(left)
+
+    cam_mats = arr(cam_mats)
+    cam_mats_dist = arr(cam_mats_dist)
+
+    out = load_pose2d_fnames(fname_dict)
+    all_points_raw = out['points']
+    all_scores = out['scores']
+    bodyparts = out['bodyparts']
+
+    # frame, camera, bodypart, xy
+    all_points_und = undistort_points(all_points_raw, cam_names, intrinsics)
+
+    length = all_points_raw.shape[0]
     shape = all_points_raw.shape
 
     all_points_3d = np.zeros((shape[0], shape[2], 3))
@@ -326,14 +354,12 @@ def process_session(config, session_path):
 
     if len(vid_names) > 0:
         os.makedirs(output_folder, exist_ok=True)
-    
-    fname_dicts = []
+
     for name in vid_names:
         print(name)
         fnames = cam_videos[name]
         cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
-        fname_dicts.append(fname_dict)
 
         output_fname = os.path.join(output_folder, name + '.csv')
 
