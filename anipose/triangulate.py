@@ -267,7 +267,7 @@ def triangulate(config,
     cam_mats = arr(cam_mats)
     cam_mats_dist = arr(cam_mats_dist)
 
-    out = load_pose2d_fnames(fname_dict)
+    out = load_pose2d_fnames(fname_dict, offsets_dict)
     all_points_raw = out['points']
     all_scores = out['scores']
     bodyparts = out['bodyparts']
