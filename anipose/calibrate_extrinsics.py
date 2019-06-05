@@ -747,13 +747,6 @@ def process_session(config, session_path):
         extrinsics, error = get_extrinsics(fname_dicts, intrinsics, cam_align, board)
 
     points_tracked_und, tracked_scores = load_2d_data(config, calibration_path, intrinsics)
-    tosave = {
-        'points_tracked_und': points_tracked_und,
-        'tracked_scores': tracked_scores,
-        'extrinsics': extrinsics,
-        'intrinsics': intrinsics
-    }
-    np.savez_compressed('test.npz', **tosave)
     extrinsics = adjust_extrinsics(extrinsics, points_tracked_und, tracked_scores)
 
     extrinsics_out = {}
