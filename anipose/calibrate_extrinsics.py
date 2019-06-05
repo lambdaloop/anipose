@@ -553,7 +553,7 @@ def bundle_adjust(all_points, cam_names, cam_mats, loss='linear'):
 
     opt = optimize.least_squares(error_fun, params_full,
                                  jac_sparsity=jac_sparse, f_scale=f_scale,
-                                 x_scale='jac', loss=loss, ftol=1e-5,
+                                 x_scale='jac', loss=loss, ftol=1e-6,
                                  method='trf', tr_solver='lsmr', verbose=2,
                                  max_nfev=200)
     best_params = opt.x
