@@ -100,14 +100,19 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     fig = mlab.figure(bgcolor=(1,1,1), size=(500,500))
     fig.scene.anti_aliasing_frames = 2
 
-    ## TODO: estimate scale_factor from the spead of points
+    std = np.std(points[good, 0])
+
+    low, high = np.percentile(points[good, 0], [10,90])
+    scale_factor = (high - low) / 10.0
+
     mlab.clf()
-    pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s,
-                        scale_mode='none', scale_factor=0.05)
+    pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s, scale_mode='none', scale_factor=scale_factor)
     lines = connect_all(points, scheme, bp_dict, cmap)
     mlab.orientation_axes()
 
     view = list(mlab.view())
+
+    mlab.view(focalpoint='auto', distance='auto')
 
     for framenum in trange(data.shape[0],ncols=70):
         fig.scene.disable_render = True
