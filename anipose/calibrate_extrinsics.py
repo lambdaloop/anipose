@@ -540,7 +540,7 @@ def bundle_adjust(all_points, cam_names, cam_mats, loss='linear'):
 
     n_cameras = len(cam_mats)
 
-    error_fun, points_sampled = make_error_fun(all_points, n_samples=int(100e3))
+    error_fun, points_sampled = make_error_fun(all_points, n_samples=int(300e3))
     p3ds_sampled, _ = triangulate_points(points_sampled, cam_mats)
 
     params_cams = mats_to_params(cam_mats)
