@@ -8,6 +8,9 @@ import click
 pass_config = click.make_pass_decorator(dict)
 
 DEFAULT_CONFIG = {
+    'calibration': {
+        'animal_calibration': False
+    },
     'pipeline': {
         'videos_raw': 'videos-raw',
         'pose_2d': 'pose-2d',

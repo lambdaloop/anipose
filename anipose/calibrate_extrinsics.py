@@ -722,7 +722,8 @@ def process_session(config, session_path):
 
     if os.path.exists(outname):
         extrinsics = toml.load(outname)
-        if 'adjusted' in extrinsics and extrinsics['adjusted']:
+        if (not config['calibration']['animal_calibration']) or \
+           ('adjusted' in extrinsics and extrinsics['adjusted']):
             return
         else:
             skip_calib = True
@@ -733,6 +734,7 @@ def process_session(config, session_path):
                 error = extrinsics['error']
             else:
                 error = -1
+
 
     board = get_calibration_board(config)
     cam_align = config['triangulation']['cam_align']
@@ -746,14 +748,18 @@ def process_session(config, session_path):
             fname_dicts.append(fname_dict)
         extrinsics, error = get_extrinsics(fname_dicts, intrinsics, cam_align, board)
 
-    points_tracked_und, tracked_scores = load_2d_data(config, calibration_path, intrinsics)
-    extrinsics = adjust_extrinsics(extrinsics, points_tracked_und, tracked_scores)
+    adjusted = False
+
+    if config['calibration']['animal_calibration']:
+        points_tracked_und, tracked_scores = load_2d_data(config, calibration_path, intrinsics)
+        extrinsics = adjust_extrinsics(extrinsics, points_tracked_und, tracked_scores)
+        adjusted = True
 
     extrinsics_out = {}
     for k, v in extrinsics.items():
         extrinsics_out[k] = v.tolist()
     extrinsics_out['error'] = float(error)
-    extrinsics_out['adjusted'] = True
+    extrinsics_out['adjusted'] = adjusted
 
     with open(outname, 'w') as f:
         toml.dump(extrinsics_out, f)

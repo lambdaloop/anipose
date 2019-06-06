@@ -26,6 +26,8 @@ board_marker_length = 0.375 # mm
 # If charuco or checkerboard, square side length
 board_square_side_length = 0.5 # mm
 
+animal_calibration = False
+
 [filter]
 enabled = true
 medfilt = 13
