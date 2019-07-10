@@ -27,7 +27,10 @@ def filter_pose(config, fname, outname):
 
     for bp in bodyparts:
 
-        x, y, score = arr(data[bp]).T
+        x = arr(data[bp, 'x'])
+        y = arr(data[bp, 'y'])
+        score = arr(data[bp, 'likelihood'])
+        # x, y, score = arr(data[bp]).T
 
         xmed = signal.medfilt(x, kernel_size=config['filter']['medfilt'])
         ymed = signal.medfilt(y, kernel_size=config['filter']['medfilt'])
@@ -87,7 +90,7 @@ def process_session(config, session_path):
         if os.path.exists(outpath):
             continue
 
-        print(fname)
+        print(outpath)
         filter_pose(config, fname, outpath)
 
 

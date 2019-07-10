@@ -555,7 +555,7 @@ def bundle_adjust(all_points, cam_names, cam_mats, loss='linear'):
                                  jac_sparsity=jac_sparse, f_scale=f_scale,
                                  x_scale='jac', loss=loss, ftol=1e-6,
                                  method='trf', tr_solver='lsmr', verbose=2,
-                                 max_nfev=200)
+                                 max_nfev=1000)
     best_params = opt.x
     mats_new = params_to_mats(best_params[:n_cameras*6])
 
@@ -613,6 +613,8 @@ def adjust_extrinsics(cam_extrinsics, points, scores):
     scores: array of same shap as points
     """
     cam_names = sorted(cam_extrinsics.keys())
+    cam_names = [c for c in cam_names
+                 if c not in ['adjusted', 'error']]
     cam_mats = np.array([cam_extrinsics[c] for c in cam_names])
 
     scores = scores.swapaxes(1,2).reshape(-1, len(cam_names))
@@ -622,7 +624,7 @@ def adjust_extrinsics(cam_extrinsics, points, scores):
     good = np.sum(~np.isnan(points_to_bundle[:, :, 0]), axis=1) >= 2
     points_to_bundle = points_to_bundle[good]
 
-    extrinsics_new = bundle_adjust(points_to_bundle, cam_names, cam_mats, loss='huber')
+    extrinsics_new = bundle_adjust(points_to_bundle, cam_names, cam_mats)
 
     return extrinsics_new
 
@@ -637,7 +639,8 @@ def get_pose2d_fnames(config, session_path):
 
 
 def load_2d_data(config, calibration_path, intrinsics):
-    start_path, _ = os.path.split(calibration_path)
+    # start_path, _ = os.path.split(calibration_path)
+    start_path = calibration_path
 
     nesting_path = len(split_full_path(config['path']))
     nesting_start = len(split_full_path(start_path))
@@ -646,13 +649,14 @@ def load_2d_data(config, calibration_path, intrinsics):
     new_config = dict(config)
     new_config['path'] = start_path
     new_config['nesting'] = new_nesting
-
-    pose_fnames = process_all(config, get_pose2d_fnames)
+    
+    pose_fnames = process_all(new_config, get_pose2d_fnames)
 
     cam_videos = defaultdict(list)
 
     for key, (session_path, fnames) in pose_fnames.items():
         for fname in fnames:
+            # print(fname)
             vidname = get_video_name(config, fname)
             k = (key, session_path, vidname)
             cam_videos[k].append(fname)

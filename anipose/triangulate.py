@@ -85,8 +85,8 @@ def optim_error_fun(points, camera_mats):
         p3d = np.array([x[0], x[1], x[2], 1])
         proj = np.dot(camera_mats, p3d)
         resid = points - proj[:, :2] / proj[:, 2, None]
-        # return resid.flatten()
-        return np.linalg.norm(resid, axis=1)
+        return resid.flatten()
+        # return np.linalg.norm(resid, axis=1)
     return fun
 
 
@@ -99,7 +99,7 @@ def triangulate_optim(points, camera_mats, max_error=20):
 
     fun = optim_error_fun(points, camera_mats)
     try:
-        res = optimize.least_squares(fun, p3d[:3])
+        res = optimize.least_squares(fun, p3d[:3], loss='huber', f_scale=1e-3)
         x = res.x
         p3d = np.array([x[0], x[1], x[2], 1])
     except ValueError:
@@ -291,7 +291,7 @@ def triangulate(config,
     num_cams.fill(np.nan)
 
     # TODO: configure this threshold
-    all_points_und[all_scores < 0.3] = np.nan
+    all_points_und[all_scores < 0.7] = np.nan
 
     for i in trange(all_points_und.shape[0], ncols=70):
         for j in range(all_points_und.shape[2]):
@@ -306,7 +306,10 @@ def triangulate(config,
                 num_cams[i,j] = np.sum(good)
                 scores_3d[i,j] = np.min(all_scores[i, :, j][good])
 
-    all_points_3d_adj = correct_coordinate_frame(config, all_points_3d, bodyparts)
+    if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
+        all_points_3d_adj = correct_coordinate_frame(config, all_points_3d, bodyparts)
+    else:
+        all_points_3d_adj = all_points_3d
 
     dout = pd.DataFrame()
     for bp_num, bp in enumerate(bodyparts):
