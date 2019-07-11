@@ -16,97 +16,7 @@ from .common import make_process_fun, find_calibration_folder, \
     get_video_name, get_cam_name, natural_keys, \
     load_intrinsics, load_extrinsics
 
-
-def expand_matrix(mtx):
-    z = np.zeros((4,4))
-    z[0:3,0:3] = mtx[0:3,0:3]
-    z[3,3] = 1
-    return z
-
-def reproject_points(p3d, points2d, camera_mats):
-    proj = np.dot(camera_mats, p3d)
-    proj = proj[:, :2] / proj[:, 2, None]
-    return proj
-
-
-def reprojection_error(p3d, points2d, camera_mats):
-    proj = np.dot(camera_mats, p3d)
-    proj = proj[:, :2] / proj[:, 2, None]
-    errors = np.linalg.norm(proj - points2d, axis=1)
-    return np.mean(errors)
-
-
-def distort_points_cams(points, camera_mats):
-    out = []
-    for i in range(len(points)):
-        point = np.append(points[i], 1)
-        mat = camera_mats[i]
-        new = mat.dot(point)[:2]
-        out.append(new)
-    return np.array(out)
-
-def reprojection_error_und(p3d, points2d, camera_mats, camera_mats_dist):
-    proj = np.dot(camera_mats, p3d)
-    proj = proj[:, :2] / proj[:, 2, None]
-    proj_d = distort_points_cams(proj, camera_mats_dist)
-    points2d_d = distort_points_cams(points2d, camera_mats_dist)
-    errors = np.linalg.norm(proj_d - points2d_d, axis=1)
-    return np.mean(errors)
-
-def triangulate_simple(points, camera_mats):
-    num_cams = len(camera_mats)
-    A = np.zeros((num_cams*2, 4))
-    for i in range(num_cams):
-        x, y = points[i]
-        mat = camera_mats[i]
-        A[(i*2):(i*2+1)] = x*mat[2]-mat[0]
-        A[(i*2+1):(i*2+2)] = y*mat[2]-mat[1]
-    u, s, vh = np.linalg.svd(A, full_matrices=True)
-    p3d = vh[-1]
-    p3d = p3d / p3d[3]
-    return p3d
-
-def triangulate_points(the_points, cam_mats):
-    p3ds = []
-    errors = []
-    for ptnum in range(the_points.shape[0]):
-        points = the_points[ptnum]
-        good = ~np.isnan(points[:, 0])
-        p3d = triangulate_simple(points[good], cam_mats[good])
-        err = reprojection_error(p3d, points[good], cam_mats[good])
-        p3ds.append(p3d)
-        errors.append(err)
-    p3ds = np.array(p3ds)
-    errors = np.array(errors)
-    return p3ds, errors
-
-def optim_error_fun(points, camera_mats):
-    def fun(x):
-        p3d = np.array([x[0], x[1], x[2], 1])
-        proj = np.dot(camera_mats, p3d)
-        resid = points - proj[:, :2] / proj[:, 2, None]
-        return resid.flatten()
-        # return np.linalg.norm(resid, axis=1)
-    return fun
-
-
-def triangulate_optim(points, camera_mats, max_error=20):
-    try:
-        p3d = triangulate_simple(points, camera_mats)
-        error = reprojection_error(p3d, points, camera_mats)
-    except np.linalg.linalg.LinAlgError:
-        return np.array([0,0,0,0])
-
-    fun = optim_error_fun(points, camera_mats)
-    try:
-        res = optimize.least_squares(fun, p3d[:3], loss='huber', f_scale=1e-3)
-        x = res.x
-        p3d = np.array([x[0], x[1], x[2], 1])
-    except ValueError:
-        pass
-
-    return p3d
-
+from camibrate.cameras import CameraGroup
 
 def proj(u, v):
     """Project u onto v"""
@@ -230,81 +140,54 @@ def load_offsets_dict(config, cam_names, video_folder):
     return offsets_dict
 
 
-def undistort_points(all_points_raw, cam_names, intrinsics):
-    all_points_und = np.zeros(all_points_raw.shape)
-
-    for ix_cam, cam_name in enumerate(cam_names):
-        calib = intrinsics[cam_name]
-        points = all_points_raw[:, ix_cam].reshape(-1, 1, 2)
-        points_new = cv2.undistortPoints(
-            points, arr(calib['camera_mat']), arr(calib['dist_coeff']))
-        all_points_und[:, ix_cam] = points_new.reshape(
-            all_points_raw[:, ix_cam].shape)
-
-    return all_points_und
-
-
 def triangulate(config,
                 calib_folder, video_folder, pose_folder,
                 fname_dict, output_fname):
 
     cam_names = sorted(fname_dict.keys())
 
-    intrinsics = load_intrinsics(calib_folder, cam_names)
-    extrinsics = load_extrinsics(calib_folder)
-
+    calib_fname = os.path.join(calib_folder, 'calibration.toml')
+    cgroup = CameraGroup.load(calib_fname)
+    
     offsets_dict = load_offsets_dict(config, cam_names, video_folder)
-
-    cam_mats = []
-    cam_mats_dist = []
-
-    for cname in cam_names:
-        mat = arr(extrinsics[cname])
-        left = arr(intrinsics[cname]['camera_mat'])
-        cam_mats.append(mat)
-        cam_mats_dist.append(left)
-
-    cam_mats = arr(cam_mats)
-    cam_mats_dist = arr(cam_mats_dist)
 
     out = load_pose2d_fnames(fname_dict, offsets_dict)
     all_points_raw = out['points']
     all_scores = out['scores']
     bodyparts = out['bodyparts']
 
-    # frame, camera, bodypart, xy
-    all_points_und = undistort_points(all_points_raw, cam_names, intrinsics)
-
     length = all_points_raw.shape[0]
-    shape = all_points_raw.shape
+    n_frames, n_cams, n_joints, _ = all_points_raw.shape
 
-    all_points_3d = np.zeros((shape[0], shape[2], 3))
+    all_points_3d = np.zeros((n_frames, n_joints, 3))
     all_points_3d.fill(np.nan)
 
-    errors = np.zeros((shape[0], shape[2]))
+    errors = np.zeros((n_frames, n_joints))
     errors.fill(np.nan)
 
-    scores_3d = np.zeros((shape[0], shape[2]))
+    scores_3d = np.zeros((n_frames, n_joints))
     scores_3d.fill(np.nan)
 
-    num_cams = np.zeros((shape[0], shape[2]))
+    num_cams = np.zeros((n_frames, n_joints))
     num_cams.fill(np.nan)
 
     # TODO: configure this threshold
-    all_points_und[all_scores < 0.7] = np.nan
+    all_points_raw[all_scores < 0.7] = np.nan
 
-    for i in trange(all_points_und.shape[0], ncols=70):
-        for j in range(all_points_und.shape[2]):
-            pts = all_points_und[i, :, j, :]
-            good = ~np.isnan(pts[:, 0])
-            if np.sum(good) >= 2:
-                # TODO: make triangulation type configurable
-                # p3d = triangulate_optim(pts[good], cam_mats[good])
-                p3d = triangulate_simple(pts[good], cam_mats[good])
-                all_points_3d[i, j] = p3d[:3]
-                errors[i,j] = reprojection_error_und(p3d, pts[good], cam_mats[good], cam_mats_dist[good])
-                num_cams[i,j] = np.sum(good)
-                scores_3d[i,j] = np.min(all_scores[i, :, j][good])
+    points_2d = all_points_raw.swapaxes(0, 1).reshape(n_cams, n_frames*n_joints, 2)
+    points_3d = cgroup.triangulate(points_2d)
+    errors = cgroup.reprojection_error(points_3d, points_2d, mean=True)
+
+    all_points_3d = points_3d.reshape(n_frames, n_joints, 3)
+    all_errors = errors.reshape(n_frames, n_joints)
+
+    good_points = ~np.isnan(all_points_raw[:, :, :, 0])
+    all_scores[~good_points] = 2
+    scores_3d = np.min(all_scores, axis=1)
+    num_cams = np.sum(good_points, axis=1)
+
+    scores_3d[num_cams < 2] = np.nan
+    num_cams[num_cams < 2] = np.nan
 
     if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
         all_points_3d_adj = correct_coordinate_frame(config, all_points_3d, bodyparts)

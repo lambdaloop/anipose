@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
 import cv2
-from cv2 import aruco
 import re
-import os, os.path
+import os
 from collections import deque
 from glob import glob
 import skvideo.io
@@ -11,6 +10,8 @@ from subprocess import check_output
 import toml
 import numpy as np
 import pandas as pd
+
+from camibrate.boards import CharucoBoard, Checkerboard
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -168,101 +169,44 @@ def find_calibration_folder(config, session_path):
     pipeline_calibration_videos = config['pipeline']['calibration_videos']
     nesting = config['nesting']
 
+    # TODO: fix this for nesting = -1
     level = nesting
     curpath = session_path
 
     while level >= 0:
         checkpath = os.path.join(curpath, pipeline_calibration_videos)
-        print(checkpath)
-        videos = glob(os.path.join(checkpath, '*.avi'))
-        intrinsics = glob(os.path.join(checkpath, 'intrinsics*.toml'))
-        extrinsics = glob(os.path.join(checkpath, 'extrinsics.toml'))
-
-        if len(videos) > 0 or \
-           (len(intrinsics) > 0 and len(extrinsics) > 0):
+        if os.path.isdir(checkpath):
             return curpath
+
+        # videos = glob(os.path.join(checkpath, '*.avi'))
+        # extrinsics = glob(os.path.join(checkpath, 'calibration.toml'))
+
+        # if len(videos) > 0 or len(extrinsics) > 0:
+        #     return curpath
 
         curpath = os.path.dirname(curpath)
         level -= 1
 
-def load_intrinsics(folder, cam_names):
-    intrinsics = {}
-    for cname in cam_names:
-        fname = os.path.join(folder, 'intrinsics_{}.toml'.format(cname))
-        intrinsics[cname] = toml.load(fname)
-    return intrinsics
 
-def load_extrinsics(folder):
-    extrinsics = toml.load(os.path.join(folder, 'extrinsics.toml'))
-    return extrinsics
-
-ARUCO_DICTS = {
-    (4, 50): aruco.DICT_4X4_50,
-    (5, 50): aruco.DICT_5X5_50,
-    (6, 50): aruco.DICT_6X6_50,
-    (7, 50): aruco.DICT_7X7_50,
-
-    (4, 100): aruco.DICT_4X4_100,
-    (5, 100): aruco.DICT_5X5_100,
-    (6, 100): aruco.DICT_6X6_100,
-    (7, 100): aruco.DICT_7X7_100,
-
-    (4, 250): aruco.DICT_4X4_250,
-    (5, 250): aruco.DICT_5X5_250,
-    (6, 250): aruco.DICT_6X6_250,
-    (7, 250): aruco.DICT_7X7_250,
-
-    (4, 1000): aruco.DICT_4X4_1000,
-    (5, 1000): aruco.DICT_5X5_1000,
-    (6, 1000): aruco.DICT_6X6_1000,
-    (7, 1000): aruco.DICT_7X7_1000
-}
-
-class Checkerboard:
-    def __init__(self, squaresX, squaresY, squareLength):
-        self.squaresX = squaresX
-        self.squaresY = squaresY
-        self.squareLength = squareLength
-
-        objp = np.zeros((squaresX * squaresY, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:squaresY, 0:squaresX].T.reshape(-1, 2)
-        objp *= squareLength
-        self.chessboardCorners = objp
-        self.objPoints = objp
-
-    def getChessboardSize(self):
-        size = (self.squaresX, self.squaresY)
-        return size
-
-    def getGridSize(self):
-        return self.getChessboardSize()
-
-    def getSquareLength(self):
-        return self.squareLength
 
 def get_calibration_board(config):
-    board_size = config['calibration']['board_size']
-    board_type = config['calibration']['board_type'].lower()
+    calib = config['calibration']
 
-    if board_type in ['aruco', 'charuco']:
-        dkey = (config['calibration']['board_marker_bits'],
-                config['calibration']['board_marker_dict_number'])
-        dictionary = aruco.getPredefinedDictionary(ARUCO_DICTS[dkey])
-        if board_type == 'aruco':
-            board = aruco.GridBoard_create(
-                board_size[0], board_size[1],
-                config['calibration']['board_marker_length'],
-                config['calibration']['board_marker_separation_length'],
-                dictionary)
-        elif board_type == 'charuco':
-            board = aruco.CharucoBoard_create(
-                board_size[0], board_size[1],
-                config['calibration']['board_square_side_length'],
-                config['calibration']['board_marker_length'],
-                dictionary)
+    board_size = calib['board_size']
+    board_type = calib['board_type'].lower()
+
+    if board_type == 'aruco':
+        raise NotImplementedError("aruco board is not implemented with the current pipeline")
+    elif board_type == 'charuco':
+        board = CharucoBoard(
+            board_size[0], board_size[1],
+            calib['board_square_side_length'],
+            calib['board_marker_length'],
+            calib['board_marker_bits'],
+            calib['board_marker_dict_number'])
     elif board_type == 'checkerboard':
         board = Checkerboard(board_size[0], board_size[1],
-                             config['calibration']['board_square_side_length'])
+                             calib['board_square_side_length'])
     else:
         raise ValueError("board_type should be one of "
                          "'aruco', 'charuco', or 'checkerboard' not '{}'".format(
@@ -271,36 +215,10 @@ def get_calibration_board(config):
     return board
 
 
-def get_board_type(board):
-    if isinstance(board, cv2.aruco_GridBoard):
-        return 'aruco'
-    elif isinstance(board, cv2.aruco_CharucoBoard):
-        return 'charuco'
-    elif isinstance(board, Checkerboard):
-        return 'checkerboard'
-    else:
-        return None
-
-def get_board_size(board):
-    board_type = get_board_type(board)
-    if board_type == 'charuco':
-        return board.getChessboardSize()
-    else:
-        return board.getGridSize()
-
-def get_expected_corners(board):
-    board_size = get_board_size(board)
-    board_type = get_board_type(board)
-    if board_type == 'charuco':
-        return (board_size[0]-1)*(board_size[1]-1)
-    else:
-        return board_size[0]*board_size[1]
-
-
 ## TODO: support checkerboard drawing
 def get_calibration_board_image(config):
     board = get_calibration_board(config)
-    numx, numy = get_board_size(board)
+    numx, numy = board.get_size()
     size = numx*200, numy*200
     img = board.draw(size)
     return img
