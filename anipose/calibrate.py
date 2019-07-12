@@ -9,10 +9,11 @@ from collections import defaultdict
 from .common import \
     find_calibration_folder, make_process_fun, process_all, \
     get_cam_name, get_video_name, \
-    get_calibration_board, split_full_path
+    get_calibration_board, split_full_path, get_video_params
 
 from .triangulate import load_pose2d_fnames, load_offsets_dict
 
+import pickle
 from camibrate.cameras import CameraGroup
 
 def get_pose2d_fnames(config, session_path):
@@ -90,6 +91,12 @@ def process_points_for_calibration(all_points, all_scores):
     good = num_good >= 2
     points = points[:, good]
 
+    max_size = int(50e3)
+
+    if points.shape[1] > max_size:
+        sample_ixs = np.random.choice(points.shape[1], size=max_size, replace=False)
+        points = points[:, sample_ixs]
+
     return points
 
 def process_session(config, session_path):
@@ -109,9 +116,9 @@ def process_session(config, session_path):
     cam_videos = defaultdict(list)
     cam_names = set()
     for vid in videos:
-        name = get_video_name(config, vid)
+        name = get_cam_name(config, vid)
         cam_videos[name].append(vid)
-        cam_names.add(get_cam_name(config, vid))
+        cam_names.add(name)
 
     cam_names = sorted(cam_names)
 
@@ -140,8 +147,24 @@ def process_session(config, session_path):
 
     board = get_calibration_board(config)
 
+    
     if not skip_calib:
-        error = cgroup.calibrate_videos(video_list, board)
+        rows_fname = os.path.join(outdir, 'detections.pickle')
+        if os.path.exists(rows_fname):
+            with open(rows_fname, 'rb') as f:
+                all_rows = pickle.load(f)
+
+            for cam, cam_videos in zip(cgroup.cameras, video_list):
+                for vnum, vidname in enumerate(cam_videos):
+                    params = get_video_params(vidname)
+                    size = (params['width'], params['height'])
+                    cam.set_size(size)
+
+            error = cgroup.calibrate_rows(all_rows, board)
+        else:
+            error, all_rows = cgroup.calibrate_videos(video_list, board)
+            with open(rows_fname, 'wb') as f:
+                pickle.dump(all_rows, f)
 
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)

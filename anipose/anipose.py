@@ -193,14 +193,12 @@ def draw_calibration(config):
 @cli.command()
 @pass_config
 def run_data(config):
-    from .calibrate_intrinsics import calibrate_intrinsics_all
-    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate import calibrate_all
     from .pose_videos import pose_videos_all
     from .triangulate import triangulate_all
 
     click.echo('Calibrating...')
-    calibrate_intrinsics_all(config)
-    calibrate_extrinsics_all(config)
+    calibrate_all(config)
 
     click.echo('Analyzing videos...')
     pose_videos_all(config)
@@ -229,15 +227,13 @@ def run_viz(config):
 @cli.command()
 @pass_config
 def run_all(config):
-    from .calibrate_intrinsics import calibrate_intrinsics_all
-    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate import calibrate_all
     from .pose_videos import pose_videos_all
     from .triangulate import triangulate_all
     from .compute_angles import compute_angles_all
 
     click.echo('Calibrating...')
-    calibrate_intrinsics_all(config)
-    calibrate_extrinsics_all(config)
+    calibrate_all(config)
 
     click.echo('Analyzing videos...')
     pose_videos_all(config)

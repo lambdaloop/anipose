@@ -17,6 +17,7 @@ from matplotlib.pyplot import get_cmap
 
 from .common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length, natural_keys
 
+
 def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]
     return mlab.plot3d(points[ixs, 0], -points[ixs, 1], points[ixs, 2],
@@ -51,7 +52,7 @@ def get_points(dx, bodyparts):
     ## TODO: make error thresholds configurable
     errors[np.isnan(errors)] = 10000
     ncams[np.isnan(ncams)] = 0
-    good = (errors < 250) #&  (ncams >= 3)
+    good = (errors < 10) #&  (ncams >= 3)
 
     points = np.array(points)
     points[~good] = np.nan
@@ -87,7 +88,7 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     }, outputdict={
         '-vcodec': 'h264', '-qp': '30'
     })
-
+    
     cmap = get_cmap('tab10')
 
 

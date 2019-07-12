@@ -13,8 +13,7 @@ from scipy import optimize
 import cv2
 
 from .common import make_process_fun, find_calibration_folder, \
-    get_video_name, get_cam_name, natural_keys, \
-    load_intrinsics, load_extrinsics
+    get_video_name, get_cam_name, natural_keys
 
 from camibrate.cameras import CameraGroup
 
@@ -159,34 +158,33 @@ def triangulate(config,
     length = all_points_raw.shape[0]
     n_frames, n_cams, n_joints, _ = all_points_raw.shape
 
-    all_points_3d = np.zeros((n_frames, n_joints, 3))
-    all_points_3d.fill(np.nan)
-
-    errors = np.zeros((n_frames, n_joints))
-    errors.fill(np.nan)
-
-    scores_3d = np.zeros((n_frames, n_joints))
-    scores_3d.fill(np.nan)
-
-    num_cams = np.zeros((n_frames, n_joints))
-    num_cams.fill(np.nan)
-
     # TODO: configure this threshold
     all_points_raw[all_scores < 0.7] = np.nan
 
+    # TODO: make ransac a configurable option
     points_2d = all_points_raw.swapaxes(0, 1).reshape(n_cams, n_frames*n_joints, 2)
-    points_3d = cgroup.triangulate(points_2d)
-    errors = cgroup.reprojection_error(points_3d, points_2d, mean=True)
+    # points_3d = cgroup.triangulate(points_2d)
+    # errors = cgroup.reprojection_error(points_3d, points_2d, mean=True)
 
+    points_3d, picked, p2ds, errors = cgroup.triangulate_ransac(points_2d, progress=True)
+
+    num_cams = np.sum(np.sum(picked, axis=0), axis=1)\
+                 .reshape(n_frames, n_joints)\
+                 .astype('float')
+
+    all_points_picked = p2ds.reshape(n_cams, n_frames, n_joints, 2) \
+                            .swapaxes(0, 1)
+    
     all_points_3d = points_3d.reshape(n_frames, n_joints, 3)
     all_errors = errors.reshape(n_frames, n_joints)
-
-    good_points = ~np.isnan(all_points_raw[:, :, :, 0])
+    
+    good_points = ~np.isnan(all_points_picked[:, :, :, 0])
     all_scores[~good_points] = 2
     scores_3d = np.min(all_scores, axis=1)
-    num_cams = np.sum(good_points, axis=1)
+    # num_cams = np.sum(good_points, axis=1).astype('float')
 
     scores_3d[num_cams < 2] = np.nan
+    all_errors[num_cams < 2] = np.nan
     num_cams[num_cams < 2] = np.nan
 
     if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
@@ -198,7 +196,7 @@ def triangulate(config,
     for bp_num, bp in enumerate(bodyparts):
         for ax_num, axis in enumerate(['x','y','z']):
             dout[bp + '_' + axis] = all_points_3d_adj[:, bp_num, ax_num]
-        dout[bp + '_error'] = errors[:, bp_num]
+        dout[bp + '_error'] = all_errors[:, bp_num]
         dout[bp + '_ncams'] = num_cams[:, bp_num]
         dout[bp + '_score'] = scores_3d[:, bp_num]
 
