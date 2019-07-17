@@ -91,7 +91,7 @@ def process_points_for_calibration(all_points, all_scores):
     good = num_good >= 2
     points = points[:, good]
 
-    max_size = int(50e3)
+    max_size = int(100e3)
 
     if points.shape[1] > max_size:
         sample_ixs = np.random.choice(points.shape[1], size=max_size, replace=False)
@@ -169,7 +169,8 @@ def process_session(config, session_path):
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)
         imgp = process_points_for_calibration(all_points, all_scores)
-        error = cgroup.bundle_adjust_iter(imgp)
+        error = cgroup.bundle_adjust(imgp, threshold=100,
+                                     ftol=1e-4, loss='huber')
         cgroup.metadata['adjusted'] = True
     else:
         cgroup.metadata['adjusted'] = False
