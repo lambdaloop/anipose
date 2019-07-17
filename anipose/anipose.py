@@ -11,6 +11,9 @@ DEFAULT_CONFIG = {
     'calibration': {
         'animal_calibration': False
     },
+    'triangulation': {
+        'ransac': False
+    },
     'pipeline': {
         'videos_raw': 'videos-raw',
         'pose_2d': 'pose-2d',

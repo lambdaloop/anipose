@@ -147,7 +147,7 @@ def triangulate(config,
 
     calib_fname = os.path.join(calib_folder, 'calibration.toml')
     cgroup = CameraGroup.load(calib_fname)
-    
+
     offsets_dict = load_offsets_dict(config, cam_names, video_folder)
 
     out = load_pose2d_fnames(fname_dict, offsets_dict)
@@ -163,25 +163,29 @@ def triangulate(config,
 
     # TODO: make ransac a configurable option
     points_2d = all_points_raw.swapaxes(0, 1).reshape(n_cams, n_frames*n_joints, 2)
-    # points_3d = cgroup.triangulate(points_2d)
-    # errors = cgroup.reprojection_error(points_3d, points_2d, mean=True)
 
-    points_3d, picked, p2ds, errors = cgroup.triangulate_ransac(points_2d, progress=True)
+    if config['triangulation']['ransac']:
+        points_3d, picked, p2ds, errors = cgroup.triangulate_ransac(points_2d, progress=True)
 
-    num_cams = np.sum(np.sum(picked, axis=0), axis=1)\
-                 .reshape(n_frames, n_joints)\
-                 .astype('float')
+        all_points_picked = p2ds.reshape(n_cams, n_frames, n_joints, 2) \
+                                .swapaxes(0, 1)
 
-    all_points_picked = p2ds.reshape(n_cams, n_frames, n_joints, 2) \
-                            .swapaxes(0, 1)
-    
+        good_points = ~np.isnan(all_points_picked[:, :, :, 0])
+
+        num_cams = np.sum(np.sum(picked, axis=0), axis=1)\
+                     .reshape(n_frames, n_joints)\
+                     .astype('float')
+    else:
+        points_3d = cgroup.triangulate(points_2d, progress=True)
+        errors = cgroup.reprojection_error(points_3d, points_2d, mean=True)
+        good_points = ~np.isnan(all_points_raw[:, :, :, 0])
+        num_cams = np.sum(good_points, axis=1).astype('float')
+
     all_points_3d = points_3d.reshape(n_frames, n_joints, 3)
     all_errors = errors.reshape(n_frames, n_joints)
-    
-    good_points = ~np.isnan(all_points_picked[:, :, :, 0])
+
     all_scores[~good_points] = 2
     scores_3d = np.min(all_scores, axis=1)
-    # num_cams = np.sum(good_points, axis=1).astype('float')
 
     scores_3d[num_cams < 2] = np.nan
     all_errors[num_cams < 2] = np.nan
