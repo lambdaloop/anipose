@@ -19,11 +19,13 @@ DEFAULT_CONFIG = {
         'pose_2d': 'pose-2d',
         'pose_2d_filter': 'pose-2d-filtered',
         'pose_3d': 'pose-3d',
+        'pose_3d_filter': 'pose-3d-filtered',
         'videos_labeled_2d': 'videos-labeled',
         'videos_labeled_2d_filter': 'videos-labeled-filtered',
         'calibration_videos': 'calibration',
         'calibration_results': 'calibration',
         'videos_labeled_3d': 'videos-3d',
+        'videos_labeled_3d_filter': 'videos-3d-filtered',
         'angles': 'angles',
         'summaries': 'summaries',
         'videos_combined': 'videos-combined',
@@ -112,6 +114,13 @@ def filter(config):
 
 @cli.command()
 @pass_config
+def filter_3d(config):
+    from .filter_3d import filter_pose_3d_all
+    click.echo('Filtering tracked points...')
+    filter_pose_3d_all(config)
+    
+@cli.command()
+@pass_config
 def triangulate(config):
     from .triangulate import triangulate_all
     click.echo('Triangulating points...')
@@ -176,6 +185,13 @@ def label_3d(config):
     click.echo('Labeling videos in 3D...')
     label_videos_3d_all(config)
 
+@cli.command()
+@pass_config
+def label_3d_filter(config):
+    from .label_videos_3d import label_videos_3d_filtered_all
+    click.echo('Labeling videos in 3D...')
+    label_videos_3d_filtered_all(config)
+    
 @cli.command()
 @pass_config
 def label_combined(config):

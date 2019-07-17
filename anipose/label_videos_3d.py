@@ -52,7 +52,7 @@ def get_points(dx, bodyparts):
     ## TODO: make error thresholds configurable
     errors[np.isnan(errors)] = 10000
     ncams[np.isnan(ncams)] = 0
-    good = (errors < 10) #&  (ncams >= 3)
+    good = (errors < 300) #&  (ncams >= 3)
 
     points = np.array(points)
     points[~good] = np.nan
@@ -146,10 +146,15 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
 
 
-def process_session(config, session_path):
+def process_session(config, session_path, filtered=False):
     pipeline_videos_raw = config['pipeline']['videos_raw']
-    pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
-    pipeline_3d = config['pipeline']['pose_3d']
+
+    if filtered:
+        pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d_filter']
+        pipeline_3d = config['pipeline']['pose_3d_filter']
+    else:
+        pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
+        pipeline_3d = config['pipeline']['pose_3d']
 
 
     vid_fnames = glob(os.path.join(session_path,
@@ -186,4 +191,5 @@ def process_session(config, session_path):
         visualize_labels(config, fname, out_fname, params['fps'])
 
 
-label_videos_3d_all = make_process_fun(process_session)
+label_videos_3d_all = make_process_fun(process_session, filtered=False)
+label_videos_3d_filtered_all = make_process_fun(process_session, filtered=True)
