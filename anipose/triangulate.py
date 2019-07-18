@@ -165,7 +165,8 @@ def triangulate(config,
     points_2d = all_points_raw.swapaxes(0, 1).reshape(n_cams, n_frames*n_joints, 2)
 
     if config['triangulation']['ransac']:
-        points_3d, picked, p2ds, errors = cgroup.triangulate_ransac(points_2d, progress=True)
+        points_3d, picked, p2ds, errors = cgroup.triangulate_ransac(
+            points_2d, min_cams=3, progress=True)
 
         all_points_picked = p2ds.reshape(n_cams, n_frames, n_joints, 2) \
                                 .swapaxes(0, 1)

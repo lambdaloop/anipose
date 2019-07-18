@@ -36,6 +36,9 @@ DEFAULT_CONFIG = {
         'offset_threshold': 25,
         'score_threshold': 0.8,
         'spline': True
+    },
+    'filter3d': {
+        'enabled': False
     }
 }
 
@@ -118,7 +121,7 @@ def filter_3d(config):
     from .filter_3d import filter_pose_3d_all
     click.echo('Filtering tracked points...')
     filter_pose_3d_all(config)
-    
+
 @cli.command()
 @pass_config
 def triangulate(config):
@@ -137,12 +140,17 @@ def angles(config):
 @cli.command()
 @pass_config
 def summarize_3d(config):
-    from .summarize import summarize_angles, summarize_pose3d
+    from .summarize import summarize_angles, summarize_pose3d, summarize_pose3d_filtered
     click.echo('Summarizing angles...')
     summarize_angles(config)
 
     click.echo('Summarizing 3D pose...')
     summarize_pose3d(config)
+
+    if config['filter3d']['enabled']:
+        click.echo('Summarizing 3D pose filtered...')
+        summarize_pose3d_filtered(config)
+
 
 @cli.command()
 @pass_config
@@ -191,7 +199,7 @@ def label_3d_filter(config):
     from .label_videos_3d import label_videos_3d_filtered_all
     click.echo('Labeling videos in 3D...')
     label_videos_3d_filtered_all(config)
-    
+
 @cli.command()
 @pass_config
 def label_combined(config):
