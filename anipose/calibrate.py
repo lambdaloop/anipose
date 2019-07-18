@@ -14,7 +14,7 @@ from .common import \
 from .triangulate import load_pose2d_fnames, load_offsets_dict
 
 import pickle
-from camibrate.cameras import CameraGroup
+from calligator.cameras import CameraGroup
 
 def get_pose2d_fnames(config, session_path):
     if config['filter']['enabled']:

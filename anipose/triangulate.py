@@ -15,7 +15,7 @@ import cv2
 from .common import make_process_fun, find_calibration_folder, \
     get_video_name, get_cam_name, natural_keys
 
-from camibrate.cameras import CameraGroup
+from calligator.cameras import CameraGroup
 
 def proj(u, v):
     """Project u onto v"""

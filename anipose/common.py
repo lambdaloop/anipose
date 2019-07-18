@@ -11,7 +11,7 @@ import toml
 import numpy as np
 import pandas as pd
 
-from camibrate.boards import CharucoBoard, Checkerboard
+from calligator.boards import CharucoBoard, Checkerboard
 
 def atoi(text):
     return int(text) if text.isdigit() else text
