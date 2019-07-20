@@ -12,7 +12,10 @@ DEFAULT_CONFIG = {
         'animal_calibration': False
     },
     'triangulation': {
-        'ransac': False
+        'ransac': False,
+        'optim': False,
+        'scale_smooth': 2,
+        'scale_length': 2
     },
     'pipeline': {
         'videos_raw': 'videos-raw',
