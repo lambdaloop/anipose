@@ -15,7 +15,9 @@ DEFAULT_CONFIG = {
         'ransac': False,
         'optim': False,
         'scale_smooth': 2,
-        'scale_length': 2
+        'scale_length': 2,
+        'reproj_error_threshold': 15,
+        'score_threshold': 0.8
     },
     'pipeline': {
         'videos_raw': 'videos-raw',

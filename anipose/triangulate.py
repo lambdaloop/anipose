@@ -174,7 +174,8 @@ def triangulate(config,
     n_cams, n_frames, n_joints, _ = all_points_raw.shape
 
     # TODO: configure this threshold
-    all_points_raw[all_scores < 0.7] = np.nan
+    bad = all_scores < config['triangulation']['score_threshold']
+    all_points_raw[bad] = np.nan
 
     if config['triangulation']['optim']:
         constraints = load_constraints(config, bodyparts)
@@ -182,11 +183,11 @@ def triangulate(config,
         points_2d = all_points_raw
         scores_2d = all_scores
 
-        ## TODO: configure parameters for scales
         points_3d = cgroup.triangulate_optim(
             points_2d, constraints, scores=scores_2d,
             scale_smooth=config['triangulation']['scale_smooth'],
             scale_length=config['triangulation']['scale_length'],
+            reproj_error_threshold=config['triangulation']['reproj_error_threshold'],
             init_progress=True, verbose=False)
 
         points_2d_flat = points_2d.reshape(n_cams, -1, 2)
