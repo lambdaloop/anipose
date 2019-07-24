@@ -124,6 +124,8 @@ def process_session(config, session_path, filtered=False):
         pipeline_videos_labeled = config['pipeline']['videos_labeled_2d']
         pipeline_pose = config['pipeline']['pose_2d']
 
+    video_ext = config['video_extension']
+
     print(session_path)
 
     labels_fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
@@ -139,7 +141,7 @@ def process_session(config, session_path, filtered=False):
         basename = os.path.splitext(basename)[0]
 
         out_fname = os.path.join(outdir, basename+'.avi')
-        vidname = os.path.join(session_path, pipeline_videos_raw, basename+'.avi')
+        vidname = os.path.join(session_path, pipeline_videos_raw, basename+'.'+video_ext)
 
         if os.path.exists(vidname):
             if os.path.exists(out_fname) and \
