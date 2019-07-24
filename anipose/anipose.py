@@ -8,6 +8,7 @@ import click
 pass_config = click.make_pass_decorator(dict)
 
 DEFAULT_CONFIG = {
+    'video_extension': 'avi',
     'calibration': {
         'animal_calibration': False
     },

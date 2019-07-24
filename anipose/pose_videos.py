@@ -23,13 +23,14 @@ def rename_dlc_files(folder, base):
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_pose = config['pipeline']['pose_2d']
+    video_ext = config['video_extension']
 
     config_name = os.path.join(config['model_folder'], 'config.yaml')
 
     source_folder = os.path.join(session_path, pipeline_videos_raw)
     outdir = os.path.join(session_path, pipeline_pose)
 
-    videos = glob(os.path.join(source_folder, '*.avi'))
+    videos = glob(os.path.join(source_folder, '*.'+video_ext))
     videos = sorted(videos, key=natural_keys)
 
     if len(videos) > 0:

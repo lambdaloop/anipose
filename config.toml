@@ -4,6 +4,8 @@ model_folder = "/home/tuthill/pierre/flypose-test-Pierre-2018-12-10"
 
 nesting = 1
 
+video_extension = 'avi'
+
 [calibration]
 # checkerboard / charuco / aruco
 board_type = "charuco"
