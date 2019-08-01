@@ -17,8 +17,10 @@ DEFAULT_CONFIG = {
         'optim': False,
         'scale_smooth': 2,
         'scale_length': 2,
-        'reproj_error_threshold': 15,
-        'score_threshold': 0.8
+        'scale_length_weak': 1,
+        'reproj_error_threshold': 5,
+        'score_threshold': 0.8,
+        'n_deriv_smooth': 3
     },
     'pipeline': {
         'videos_raw': 'videos-raw',

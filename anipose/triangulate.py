@@ -143,8 +143,8 @@ def load_offsets_dict(config, cam_names, video_folder):
 
     return offsets_dict
 
-def load_constraints(config, bodyparts):
-    constraints_names = config['triangulation'].get('constraints', [])
+def load_constraints(config, bodyparts, key='constraints'):
+    constraints_names = config['triangulation'].get(key, [])
     bp_index = dict(zip(bodyparts, range(len(bodyparts))))
     constraints = []
     for a, b in constraints_names:
@@ -179,16 +179,20 @@ def triangulate(config,
 
     if config['triangulation']['optim']:
         constraints = load_constraints(config, bodyparts)
+        constraints_weak = load_constraints(config, bodyparts, 'constraints_weak')
 
         points_2d = all_points_raw
         scores_2d = all_scores
 
         points_3d = cgroup.triangulate_optim(
-            points_2d, constraints, scores=scores_2d,
+            points_2d, constraints, constraints_weak,
+            scores=scores_2d,
             scale_smooth=config['triangulation']['scale_smooth'],
             scale_length=config['triangulation']['scale_length'],
+            scale_length_weak=config['triangulation']['scale_length_weak'],
+            n_deriv_smooth=config['triangulation']['n_deriv_smooth'],
             reproj_error_threshold=config['triangulation']['reproj_error_threshold'],
-            init_progress=True, verbose=False)
+            init_progress=True, verbose=True)
 
         points_2d_flat = points_2d.reshape(n_cams, -1, 2)
         points_3d_flat = points_3d.reshape(-1, 3)
