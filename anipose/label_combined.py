@@ -259,10 +259,14 @@ def draw_data(start_img, frames_2d, frame_3d, all_angles, pp):
 
 
 def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
-    angles = pd.read_csv(angle_fname)
+    if angle_fname is not None:
+        angles = pd.read_csv(angle_fname)
 
-    bad_cols = ['fnum']
-    ang_names = [col for col in angles.columns if col not in bad_cols]
+        bad_cols = ['fnum']
+        ang_names = [col for col in angles.columns if col not in bad_cols]
+    else:
+        ang_names = []
+        angles = None
 
     ang_values = dict()
 
@@ -296,7 +300,7 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
         ang_values_padded[name] = np.pad(angles, pad_size,
                                          mode='constant', constant_values=np.nan)
 
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     writer = cv2.VideoWriter(out_fname, fourcc, fps,
                              (pp['width_total'], pp['height_total']))
 
@@ -332,11 +336,15 @@ def process_session(config, session_path):
     else:
         pipeline_videos_labeled_2d = config['pipeline']['videos_labeled_2d']
     pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
+    pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_angles = config['pipeline']['angles']
     pipeline_videos_combined = config['pipeline']['videos_combined']
 
     vid_fnames_2d = glob(os.path.join(session_path,
-                                      pipeline_videos_labeled_2d, "*.avi"))
+                                      pipeline_videos_raw, "*.avi"))
+
+    # vid_fnames_2d = glob(os.path.join(session_path,
+    #                                   pipeline_videos_labeled_2d, "*.avi"))
 
     vid_fnames_3d = glob(os.path.join(session_path,
                                       pipeline_videos_labeled_3d, "*.avi"))
@@ -379,10 +387,11 @@ def process_session(config, session_path):
 
         fname_3d_current = fnames_3d[basename][0]
         fnames_2d_current = fnames_2d[basename]
-
+        fnames_2d_current = sorted(fnames_2d_current, key=natural_keys)
+        
         print(out_fname)
 
-        visualize_combined(config, angle_fname,
+        visualize_combined(config, None,
                            fnames_2d_current, fname_3d_current, out_fname)
 
 

@@ -10,17 +10,7 @@ from tqdm import trange
 
 from matplotlib.pyplot import get_cmap
 
-from .common import make_process_fun, natural_keys
-
-def get_duration(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    duration = float(metadata['video']['@duration'])
-    return duration
-
-def get_nframes(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    length = int(metadata['video']['@nb_frames'])
-    return length
+from .common import make_process_fun, natural_keys, get_nframes
 
 def connect(img, points, bps, bodyparts, col=(0,255,0,255)):
     try:
