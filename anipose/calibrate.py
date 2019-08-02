@@ -130,6 +130,7 @@ def process_session(config, session_path):
 
     print(outname)
     skip_calib = False
+    init_extrinsics = True
 
     if os.path.exists(outname):
         cgroup = CameraGroup.load(outname)
@@ -142,6 +143,10 @@ def process_session(config, session_path):
                 error = cgroup.metadata['error']
             else:
                 error = None
+    elif config['calibration']['calibration_init'] is not None:
+        calib_path = os.path.join(config['path'], config['calibration']['calibration_init'])
+        cgroup = CameraGroup.load(calib_path)
+        init_extrinsics = False
     else:
         cgroup = CameraGroup.from_names(cam_names)
 
@@ -160,9 +165,9 @@ def process_session(config, session_path):
                     size = (params['width'], params['height'])
                     cam.set_size(size)
 
-            error = cgroup.calibrate_rows(all_rows, board)
+            error = cgroup.calibrate_rows(all_rows, board, init_extrinsics=init_extrinsics)
         else:
-            error, all_rows = cgroup.calibrate_videos(video_list, board)
+            error, all_rows = cgroup.calibrate_videos(video_list, board, init_extrinsics=init_extrinsics)
             with open(rows_fname, 'wb') as f:
                 pickle.dump(all_rows, f)
 

@@ -30,6 +30,8 @@ board_square_side_length = 0.5 # mm
 
 animal_calibration = False
 
+calibration_init = 'calibration_init.toml'
+
 [filter]
 enabled = true
 medfilt = 13
