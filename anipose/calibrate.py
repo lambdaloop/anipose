@@ -102,6 +102,7 @@ def process_points_for_calibration(all_points, all_scores):
 def process_session(config, session_path):
     pipeline_calibration_videos = config['pipeline']['calibration_videos']
     pipeline_calibration_results = config['pipeline']['calibration_results']
+    video_ext = config['video_extension']
 
     calibration_path = find_calibration_folder(config, session_path)
 
@@ -110,8 +111,12 @@ def process_session(config, session_path):
 
     videos = glob(os.path.join(calibration_path,
                                pipeline_calibration_videos,
-                               '*.avi'))
+                               '*.'+video_ext))
     videos = sorted(videos)
+
+    if len(videos) == 0:
+        print('no videos found, continuing...')
+        return
 
     cam_videos = defaultdict(list)
     cam_names = set()
@@ -153,7 +158,7 @@ def process_session(config, session_path):
 
     board = get_calibration_board(config)
 
-    
+
     if not skip_calib:
         rows_fname = os.path.join(outdir, 'detections.pickle')
         if os.path.exists(rows_fname):
