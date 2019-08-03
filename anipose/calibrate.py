@@ -122,7 +122,7 @@ def process_session(config, session_path):
 
     cam_names = sorted(cam_names)
 
-    video_list = [cam_videos[cname] for cname in cam_names]
+    video_list = [sorted(cam_videos[cname]) for cname in cam_names]
 
     outname_base = 'calibration.toml'
     outdir = os.path.join(calibration_path, pipeline_calibration_results)
