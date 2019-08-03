@@ -145,10 +145,11 @@ def process_session(config, session_path):
                 error = None
     elif config['calibration']['calibration_init'] is not None:
         calib_path = os.path.join(config['path'], config['calibration']['calibration_init'])
+        print('loading calibration from: {}'.format(calib_path))
         cgroup = CameraGroup.load(calib_path)
         init_extrinsics = False
     else:
-        cgroup = CameraGroup.from_names(cam_names)
+        cgroup = CameraGroup.from_names(cam_names, config['calibration']['fisheye'])
 
     board = get_calibration_board(config)
 

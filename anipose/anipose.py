@@ -11,7 +11,8 @@ DEFAULT_CONFIG = {
     'video_extension': 'avi',
     'calibration': {
         'animal_calibration': False,
-        'calibration_init': None
+        'calibration_init': None,
+        'fisheye': False
     },
     'triangulation': {
         'ransac': False,
