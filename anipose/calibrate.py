@@ -176,14 +176,14 @@ def process_session(config, session_path):
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)
         imgp = process_points_for_calibration(all_points, all_scores)
-        error = cgroup.bundle_adjust(imgp, threshold=100,
+        error = cgroup.bundle_adjust(imgp, threshold=10,
                                      ftol=1e-4, loss='huber')
         cgroup.metadata['adjusted'] = True
     else:
         cgroup.metadata['adjusted'] = False
 
     if error is not None:
-        cgroup.metadata['error'] = error
+        cgroup.metadata['error'] = float(error)
 
     cgroup.dump(outname)
 
