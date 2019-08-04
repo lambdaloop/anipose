@@ -164,18 +164,14 @@ def process_session(config, session_path):
         if os.path.exists(rows_fname):
             with open(rows_fname, 'rb') as f:
                 all_rows = pickle.load(f)
-
-            for cam, cam_videos in zip(cgroup.cameras, video_list):
-                for vnum, vidname in enumerate(cam_videos):
-                    params = get_video_params(vidname)
-                    size = (params['width'], params['height'])
-                    cam.set_size(size)
-
-            error = cgroup.calibrate_rows(all_rows, board, init_extrinsics=init_extrinsics)
         else:
-            error, all_rows = cgroup.calibrate_videos(video_list, board, init_extrinsics=init_extrinsics)
+            all_rows = cgroup.get_rows_videos(video_list, board)
             with open(rows_fname, 'wb') as f:
                 pickle.dump(all_rows, f)
+
+        cgroup.set_camera_sizes_videos(video_list)
+        error = cgroup.calibrate_rows(all_rows, board,
+                                      init_extrinsics=init_extrinsics)
 
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)
