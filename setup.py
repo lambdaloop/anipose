@@ -25,8 +25,8 @@ setuptools.setup(
     },
     install_requires=[
         'deeplabcut>=2.0.4.1',
+        'calligator>=0.2.0',
         'opencv-python',
-        'opencv-contrib-python',
         'toml',
         'numpy',
         'scipy',
@@ -34,7 +34,6 @@ setuptools.setup(
         'tqdm',
         'click',
         'scikit-video',
-        'checkerboard'
     ],
     extras_require={
         'viz':  ["mayavi"]
