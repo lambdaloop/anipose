@@ -304,7 +304,7 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
     writer = cv2.VideoWriter(out_fname, fourcc, fps,
                              (pp['width_total'], pp['height_total']))
 
-    q = queue.Queue()
+    q = queue.Queue(maxsize=50)
 
     thread = threading.Thread(target=write_frame_thread,
                               args=(writer, q))
@@ -323,9 +323,9 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
             all_angles.append(angles)
 
         imout = draw_data(start_img, frames_2d, frame_3d, all_angles, pp)
-        q.put_nowait(imout)
+        q.put(imout)
 
-    q.put_nowait(None)
+    q.put(None)
     thread.join()
     writer.release()
 
@@ -340,14 +340,15 @@ def process_session(config, session_path):
     pipeline_angles = config['pipeline']['angles']
     pipeline_videos_combined = config['pipeline']['videos_combined']
 
-    vid_fnames_2d = glob(os.path.join(session_path,
-                                      pipeline_videos_raw, "*.avi"))
-
     # vid_fnames_2d = glob(os.path.join(session_path,
-    #                                   pipeline_videos_labeled_2d, "*.avi"))
+    #                                   pipeline_videos_raw, "*.avi"))
+
+    vid_fnames_2d = glob(os.path.join(session_path,
+                                      pipeline_videos_labeled_2d, "*.avi"))
 
     vid_fnames_3d = glob(os.path.join(session_path,
                                       pipeline_videos_labeled_3d, "*.avi"))
+    vid_fnames_3d = sorted(vid_fnames_3d, key=natural_keys)
 
     fnames_2d = defaultdict(list)
     for vid in vid_fnames_2d:
@@ -365,16 +366,16 @@ def process_session(config, session_path):
 
     outdir = os.path.join(session_path, pipeline_videos_combined)
 
-    if len(angle_fnames) > 0:
+    if len(vid_fnames_3d) > 0:
         os.makedirs(outdir, exist_ok=True)
 
-    for angle_fname in angle_fnames:
-        basename = true_basename(angle_fname)
+    for vid_fname in vid_fnames_3d:
+        basename = true_basename(vid_fname)
 
         out_fname = os.path.join(outdir, basename+'.avi')
 
         if os.path.exists(out_fname) and \
-           abs(get_nframes(out_fname) - get_data_length(angle_fname)) < 100:
+           abs(get_nframes(out_fname) - get_nframes(vid_fname)) < 100:
             continue
 
         if len(fnames_2d[basename]) == 0:
