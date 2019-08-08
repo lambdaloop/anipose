@@ -52,7 +52,7 @@ def get_points(dx, bodyparts):
     ## TODO: make error thresholds configurable
     errors[np.isnan(errors)] = 10000
     ncams[np.isnan(ncams)] = 0
-    good = (errors < 300) #&  (ncams >= 3)
+    good = (errors < 30) #&  (ncams >= 3)
 
     points = np.array(points)
     points[~good] = np.nan
@@ -78,8 +78,24 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
     bp_dict = dict(zip(bodyparts, range(len(bodyparts))))
 
+    all_points = np.array([np.array(data.loc[:, (bp+'_x', bp+'_y', bp+'_z')])
+                           for bp in bodyparts])
+
+    all_errors = np.array([np.array(data.loc[:, bp+'_error'])
+                           for bp in bodyparts])
+
+    all_scores = np.array([np.array(data.loc[:, bp+'_score'])
+                           for bp in bodyparts])
+
+    all_errors[np.isnan(all_errors)] = 10000
+    good = (all_errors < 30)
+    all_points[~good] = np.nan
+
+    all_points_flat = all_points.reshape(-1, 3)
+    check = ~np.isnan(all_points_flat[:, 0])
+    low, high = np.percentile(all_points_flat[check], [5, 95], axis=0)
+
     nparts = len(bodyparts)
-    framenums = np.array(data['fnum'])
     framedict = dict(zip(data['fnum'], data.index))
 
     writer = skvideo.io.FFmpegWriter(outname, inputdict={
@@ -88,12 +104,13 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     }, outputdict={
         '-vcodec': 'h264', '-qp': '30'
     })
-    
+
     cmap = get_cmap('tab10')
 
 
-    dx = data.iloc[20]
-    points = get_points(dx, bodyparts)
+    points = all_points[:, 20]
+    points[0] = low
+    points[1] = high
 
     s = np.arange(points.shape[0])
     good = ~np.isnan(points[:, 0])
@@ -101,13 +118,12 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     fig = mlab.figure(bgcolor=(1,1,1), size=(500,500))
     fig.scene.anti_aliasing_frames = 2
 
-    std = np.std(points[good, 0])
-
     low, high = np.percentile(points[good, 0], [10,90])
     scale_factor = (high - low) / 10.0
 
     mlab.clf()
-    pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s, scale_mode='none', scale_factor=scale_factor)
+    pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s,
+                        scale_mode='none', scale_factor=scale_factor)
     lines = connect_all(points, scheme, bp_dict, cmap)
     mlab.orientation_axes()
 
@@ -115,13 +131,11 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
     mlab.view(focalpoint='auto', distance='auto')
 
-    for framenum in trange(data.shape[0],ncols=70):
+    for framenum in trange(data.shape[0], ncols=70):
         fig.scene.disable_render = True
 
         if framenum in framedict:
-            ix = framedict[framenum]
-            dx = data.iloc[ix]
-            points = get_points(dx, bodyparts)
+            points = all_points[:, framenum]
         else:
             points = np.ones((nparts, 3))*np.nan
 
@@ -136,7 +150,6 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
         img = mlab.screenshot()
 
-        view[0] += -0.2
         mlab.view(*view, reset_roll=False)
 
         writer.writeFrame(img)
