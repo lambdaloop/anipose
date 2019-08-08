@@ -106,8 +106,8 @@ def load_pose2d_fnames(fname_dict, offsets_dict):
 
     for cam_ix, dlabs in enumerate(datas):
         for joint_ix, joint_name in enumerate(joint_names):
-            points[cam_ix, :, joint_ix] = dlabs.loc[:, (joint_name, ('x', 'y'))]
-            scores[cam_ix, :, joint_ix] = dlabs.loc[:, (joint_name, ('likelihood'))]
+            points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames]
+            scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
 
     return {
         'cam_names': cam_names,

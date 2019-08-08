@@ -156,9 +156,10 @@ def process_session(config, session_path, filtered=False):
         pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
         pipeline_3d = config['pipeline']['pose_3d']
 
+    video_ext = config['video_extension']
 
     vid_fnames = glob(os.path.join(session_path,
-                                   pipeline_videos_raw, "*.avi"))
+                                   pipeline_videos_raw, "*."+video_ext))
     orig_fnames = defaultdict(list)
     for vid in vid_fnames:
         vidname = get_video_name(config, vid)
