@@ -135,7 +135,7 @@ def process_session(config, session_path):
 
     print(outname)
     skip_calib = False
-    init_extrinsics = True
+    init_stuff = True
 
     if os.path.exists(outname):
         cgroup = CameraGroup.load(outname)
@@ -148,11 +148,12 @@ def process_session(config, session_path):
                 error = cgroup.metadata['error']
             else:
                 error = None
+        init_stuff = False
     elif config['calibration']['calibration_init'] is not None:
         calib_path = os.path.join(config['path'], config['calibration']['calibration_init'])
         print('loading calibration from: {}'.format(calib_path))
         cgroup = CameraGroup.load(calib_path)
-        init_extrinsics = False
+        init_stuff = False
     else:
         cgroup = CameraGroup.from_names(cam_names, config['calibration']['fisheye'])
 
@@ -171,7 +172,8 @@ def process_session(config, session_path):
 
         cgroup.set_camera_sizes_videos(video_list)
         error = cgroup.calibrate_rows(all_rows, board,
-                                      init_extrinsics=init_extrinsics)
+                                      init_intrinsics=init_stuff,
+                                      init_extrinsics=init_stuff)
 
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)
