@@ -25,7 +25,7 @@ setuptools.setup(
     },
     install_requires=[
         'deeplabcut>=2.0.4.1',
-        'calligator>=0.2.0',
+        'calligator>=0.2.4',
         'opencv-python',
         'toml',
         'numpy',
