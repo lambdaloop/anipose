@@ -67,11 +67,11 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
 
     center = get_median(all_points_3d, bp_index[ref_point])
 
-    all_points_3d_adj = (all_points_3d - center).dot(M.T)
+    all_points_3d_adj = all_points_3d.dot(M.T)
     center_new = get_median(all_points_3d_adj, bp_index[ref_point])
     all_points_3d_adj = all_points_3d_adj - center_new
 
-    return all_points_3d_adj
+    return all_points_3d_adj, M, center_new
 
 
 def load_pose2d_fnames(fname_dict, offsets_dict):
@@ -240,9 +240,11 @@ def triangulate(config,
         num_cams[num_cams < 2] = np.nan
 
     if 'reference_point' in config['triangulation'] and 'axes' in config['triangulation']:
-        all_points_3d_adj = correct_coordinate_frame(config, all_points_3d, bodyparts)
+        all_points_3d_adj, M, center = correct_coordinate_frame(config, all_points_3d, bodyparts)
     else:
         all_points_3d_adj = all_points_3d
+        M = np.identity(3)
+        center = np.zeros(3)
 
     dout = pd.DataFrame()
     for bp_num, bp in enumerate(bodyparts):
@@ -251,6 +253,13 @@ def triangulate(config,
         dout[bp + '_error'] = all_errors[:, bp_num]
         dout[bp + '_ncams'] = num_cams[:, bp_num]
         dout[bp + '_score'] = scores_3d[:, bp_num]
+
+    for i in range(3):
+        for j in range(3):
+            dout['M_{}{}'.format(i, j)] = M[i, j]
+
+    for i in range(3):
+        dout['center_{}'.format(i)] = center[i]
 
     dout['fnum'] = np.arange(n_frames)
 

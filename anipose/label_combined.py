@@ -278,6 +278,13 @@ def get_projected_points(config, pose_fname, cgroup, offsets_dict):
     else:
         bodyparts = sorted(set([x for dx in scheme for x in dx]))
 
+    M = np.identity(3)
+    center = np.zeros(3)
+    for i in range(3):
+        center[i] = np.mean(pose_data['center_{}'.format(i)])
+        for j in range(3):
+            M[i, j] = np.mean(pose_data['M_{}{}'.format(i, j)])
+
     bp_dict = dict(zip(bodyparts, range(len(bodyparts))))
 
     all_points = np.array([np.array(pose_data.loc[:, (bp+'_x', bp+'_y', bp+'_z')])
@@ -297,8 +304,9 @@ def get_projected_points(config, pose_fname, cgroup, offsets_dict):
     n_cams = len(cgroup.cameras)
 
     all_points_flat = all_points.reshape(-1, 3)
+    all_points_flat_t = (all_points_flat + center).dot(np.linalg.inv(M.T))
 
-    points_2d_proj_flat = cgroup.project(all_points_flat)
+    points_2d_proj_flat = cgroup.project(all_points_flat_t)
     points_2d_proj = points_2d_proj_flat.reshape(n_cams, n_joints, n_frames, 2)
 
     cam_names = cgroup.get_names()
@@ -315,8 +323,10 @@ def draw_projected_points(frames_2d, scheme, bodyparts, points):
     n_cams, n_joints, _ = points.shape
     out = []
     for cix, frame in enumerate(frames_2d):
-        frame_out = label_frame(frame, points[cix], scheme, bodyparts)
-        out.append(frame_out)
+        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_out = label_frame(img, points[cix], scheme, bodyparts)
+        img_out = cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
+        out.append(img_out)
     return out
 
 def visualize_combined(config, pose_fname, cgroup, offsets_dict,
@@ -442,7 +452,6 @@ def process_session(config, session_path):
         calib_fname = os.path.join(calib_folder,
                                    config['pipeline']['calibration_results'],
                                    'calibration.toml')
-        print(calib_fname)
         if os.path.exists(calib_fname):
             cgroup = CameraGroup.load(calib_fname)
 
@@ -484,9 +493,9 @@ def process_session(config, session_path):
         video_folder = os.path.join(session_path, pipeline_videos_raw)
         offsets_dict = load_offsets_dict(config, cam_names, video_folder)
 
-        cgroup = cgroup.subset_cameras_names(cam_names)
+        cgroup_subset = cgroup.subset_cameras_names(cam_names)
 
-        visualize_combined(config, pose_fname, cgroup, offsets_dict,
+        visualize_combined(config, pose_fname, cgroup_subset, offsets_dict,
                            fnames_2d_current, fname_3d_current, out_fname)
 
 
