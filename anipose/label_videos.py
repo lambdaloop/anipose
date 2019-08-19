@@ -33,6 +33,23 @@ def connect_all(img, points, scheme, bodyparts):
         connect(img, points, bps, bodyparts, col)
 
 
+def label_frame(img, points, scheme, bodyparts, cmap='tab10'):
+    n_joints, _ = points.shape
+
+    cmap_c = get_cmap(cmap)
+    connect_all(img, points, scheme, bodyparts)
+
+    for lnum, (x, y) in enumerate(points):
+        if np.isnan(x) or np.isnan(y):
+            continue
+        x = int(round(x))
+        y = int(round(y))
+        col = cmap_c(lnum % 10, bytes=True)
+        col = [int(c) for c in col]
+        cv2.circle(img,(x,y), 7, col[:3], -1)
+
+    return img
+
 def visualize_labels(config, labels_fname, vid_fname, outname):
 
     try:
@@ -82,21 +99,8 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
             break
 
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        labels = dlabs.iloc[ix]
-
         points = all_points[:, :, ix]
-
-        connect_all(img, points, scheme, bodyparts)
-
-        for lnum, (x, y) in enumerate(points):
-            if np.isnan(x) or np.isnan(y):
-                continue
-            x = int(round(x))
-            y = int(round(y))
-            col = cmap(lnum % 10, bytes=True)
-            col = [int(c) for c in col]
-            cv2.circle(img,(x,y), 7, col[:3], -1)
+        img = label_frame(img, points, scheme, bodyparts)
 
         writer.writeFrame(img)
 
