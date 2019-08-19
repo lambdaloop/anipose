@@ -41,24 +41,6 @@ def update_all_lines(lines, points, scheme, bp_dict):
     for line, bps in zip(lines, scheme):
         update_line(line, points, bps, bp_dict)
 
-def get_points(dx, bodyparts):
-    points = [(dx[bp+'_x'], dx[bp+'_y'], dx[bp+'_z']) for bp in bodyparts]
-    # scores = [dx[bp+'_score'] for bp in bodyparts]
-    errors = np.array([dx[bp+'_error'] for bp in bodyparts])
-    ncams = np.array([dx[bp+'_ncams'] for bp in bodyparts])
-    # good = (np.array(scores) > 0.1) & (np.array(errors) < 35)
-
-    ## TODO: add checking on scores here
-    ## TODO: make error thresholds configurable
-    errors[np.isnan(errors)] = 10000
-    ncams[np.isnan(ncams)] = 0
-    good = (errors < 30) #&  (ncams >= 3)
-
-    points = np.array(points)
-    points[~good] = np.nan
-
-    return points
-
 
 
 def visualize_labels(config, labels_fname, outname, fps=300):
@@ -87,8 +69,12 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     all_scores = np.array([np.array(data.loc[:, bp+'_score'])
                            for bp in bodyparts])
 
-    all_errors[np.isnan(all_errors)] = 10000
-    good = (all_errors < 30)
+
+    if config['triangulation']['optim']:
+        all_errors[np.isnan(all_errors)] = 0
+    else:
+        all_errors[np.isnan(all_errors)] = 10000
+    good = (all_errors < 100)
     all_points[~good] = np.nan
 
     all_points_flat = all_points.reshape(-1, 3)
