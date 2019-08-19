@@ -177,6 +177,7 @@ def process_session(config, session_path):
         error = cgroup.calibrate_rows(all_rows, board,
                                       init_intrinsics=init_stuff,
                                       init_extrinsics=init_stuff,
+                                      ftol=1e-4, max_nfev=500, 
                                       n_iters=10, error_threshold=3, end_mu=1,
                                       n_samp_iter=100, n_samp_full=2000)
 
