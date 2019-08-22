@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="anipose",
-    version="0.5.2",
+    version="0.5.3",
     author="Pierre Karashchuk",
     author_email="krchtchk@gmail.com",
     description="Framework for scalable DeepLabCut based analysis including 3D tracking",
