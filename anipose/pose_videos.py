@@ -48,7 +48,7 @@ def process_session(config, session_path):
             trap = io.StringIO()
             with redirect_stdout(trap):
                 deeplabcut.analyze_videos(config_name, [video], videotype=ext,
-                                          save_as_csv=True, destfolder=outdir)
+                                          save_as_csv=False, destfolder=outdir)
             rename_dlc_files(outdir, basename)
 
 
