@@ -185,7 +185,9 @@ def triangulate(config,
         scores_2d = all_scores
 
         points_3d = cgroup.triangulate_optim(
-            points_2d, constraints, constraints_weak,
+            points_2d,
+            constraints=constraints,
+            constraints_weak=constraints_weak,
             # scores=scores_2d,
             scale_smooth=config['triangulation']['scale_smooth'],
             scale_length=config['triangulation']['scale_length'],
