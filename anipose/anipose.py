@@ -42,9 +42,10 @@ DEFAULT_CONFIG = {
     },
     'filter': {
         'enabled': False,
+        'type': 'medfilt',
         'medfilt': 13,
         'offset_threshold': 25,
-        'score_threshold': 0.8,
+        'score_threshold': 0.15,
         'spline': True
     },
     'filter3d': {
