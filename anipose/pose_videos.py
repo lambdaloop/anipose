@@ -39,7 +39,7 @@ def process_session(config, session_path):
     for video in videos:
         basename = os.path.basename(video)
         basename, ext = os.path.splitext(basename)
-        
+
         dataname = os.path.join(outdir, basename + '.h5')
         print(dataname)
         if os.path.exists(dataname):
