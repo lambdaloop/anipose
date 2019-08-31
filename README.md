@@ -21,12 +21,18 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 ## Demos
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/tracking_3cams_full_slower5.gif" width="50%" >
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/tracking_3cams_full_slower5.gif" width="70%" >
 </p>
 <p align="center">
 Videos of flies by Evyn Dickinson (slowed 5x), <a href=http://faculty.washington.edu/tuthill/>Tuthill Lab</a>
 </p>
 
+<p align="center">
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/hand-demo.gif" width="70%" >
+</p>
+<p align="center">
+Videos of hand by Katie Rupp
+</p>
 
 ## Why this project?
 
