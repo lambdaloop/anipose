@@ -7,7 +7,6 @@ import os
 from glob import glob
 import io
 from contextlib import redirect_stdout
-import deeplabcut
 
 from .common import natural_keys, make_process_fun
 
@@ -21,6 +20,7 @@ def rename_dlc_files(folder, base):
 
 
 def process_session(config, session_path):
+    import deeplabcut
     pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_pose = config['pipeline']['pose_2d']
     video_ext = config['video_extension']
