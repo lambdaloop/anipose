@@ -11,6 +11,8 @@ from scipy.interpolate import splev, splrep
 from scipy.spatial.distance import cdist
 from scipy.spatial import cKDTree
 from collections import Counter
+from multiprocessing import cpu_count
+from multiprocessing import Pool
 
 from .common import make_process_fun, natural_keys
 
@@ -112,6 +114,11 @@ def find_best_path(points, scores, max_offset=64, thres_dist=20):
 
     return points_picked, scores_picked
 
+def find_best_path_wrapper(args):
+    jix, pts, scs, max_offset, thres_dist = args
+    pts_new, scs_new = find_best_path(pts, scs, max_offset, thres_dist)
+    return jix, pts_new, scs_new
+
 def filter_pose_clusters(config, fname, outname):
     data_orig = pd.read_hdf(fname)
     scorer = data_orig.columns.levels[0][0]
@@ -134,10 +141,19 @@ def filter_pose_clusters(config, fname, outname):
     points = np.full((n_frames, n_joints, 2), np.nan, dtype='float64')
     scores = np.empty((n_frames, n_joints), dtype='float64')
 
-    for jix in trange(n_joints, ncols=70):
-        pts = points_full[:, jix, :]
-        scs = scores_full[:, jix]
-        pts_new, scs_new = find_best_path(pts, scs)
+    n_proc = max(min(cpu_count() // 2, n_joints), 1)
+    pool = Pool(n_proc)
+
+    max_offset = config['filter']['max_offset']
+    thres_dist = config['filter']['threshold_distance']
+
+    iterable = [ (jix, points_full[:, jix, :], scores_full[:, jix],
+                  max_offset, thres_dist)
+                 for jix in range(n_joints) ]
+
+    results = pool.imap_unordered(find_best_path_wrapper, iterable)
+
+    for jix, pts_new, scs_new in tqdm(results, ncols=70):
         points[:, jix] = pts_new
         scores[:, jix] = scs_new
 
@@ -152,7 +168,7 @@ def filter_pose_clusters(config, fname, outname):
     dout.loc[:, (scorer, bodyparts, 'likelihood')] = scores
 
     dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
-    
+
 
 def filter_pose_medfilt(config, fname, outname):
     data_orig = pd.read_hdf(fname)
@@ -233,7 +249,7 @@ def process_session(config, session_path):
             continue
 
         print(outpath)
-        
+
         if config['filter']['type'] == 'medfilt':
             filter_pose_medfilt(config, fname, outpath)
         elif config['filter']['type'] == 'clusters':
