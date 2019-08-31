@@ -119,7 +119,7 @@ def filter_pose_clusters(config, fname, outname):
 
     bp_index = data.columns.names.index('bodyparts')
     coord_index = data.columns.names.index('coords')
-    bodyparts = np.array(data.columns.levels[bp_index])
+    bodyparts = list(data.columns.levels[bp_index])
     n_possible = len(data.columns.levels[coord_index])//3
 
     n_frames = len(data)
@@ -134,7 +134,7 @@ def filter_pose_clusters(config, fname, outname):
     points = np.full((n_frames, n_joints, 2), np.nan, dtype='float64')
     scores = np.empty((n_frames, n_joints), dtype='float64')
 
-    for jix in range(n_joints):
+    for jix in trange(n_joints, ncols=70):
         pts = points_full[:, jix, :]
         scs = scores_full[:, jix]
         pts_new, scs_new = find_best_path(pts, scs)
@@ -236,6 +236,8 @@ def process_session(config, session_path):
         
         if config['filter']['type'] == 'medfilt':
             filter_pose_medfilt(config, fname, outpath)
+        elif config['filter']['type'] == 'clusters':
+            filter_pose_clusters(config, fname, outpath)
 
 
 filter_pose_all = make_process_fun(process_session)
