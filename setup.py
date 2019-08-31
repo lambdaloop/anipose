@@ -34,6 +34,7 @@ setuptools.setup(
         'tqdm',
         'click',
         'scikit-video',
+        'lapsolver>=1.0.2'
     ],
     extras_require={
         'viz':  ["mayavi"]
