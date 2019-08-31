@@ -4,12 +4,7 @@ import cv2
 import re
 import os
 from collections import deque
-from glob import glob
-import skvideo.io
 from subprocess import check_output
-import toml
-import numpy as np
-import pandas as pd
 
 from calligator.boards import CharucoBoard, Checkerboard
 
@@ -29,6 +24,7 @@ def wc(filename):
     return int(num)
 
 def get_data_length(fname):
+    import pandas as pd
     try:
         numlines = wc(fname) - 1
     except:
@@ -80,11 +76,13 @@ def get_video_name(config, fname):
     return vidname.strip()
 
 def get_duration(vidname):
+    import skvideo.io
     metadata = skvideo.io.ffprobe(vidname)
     duration = float(metadata['video']['@duration'])
     return duration
 
 def get_nframes(vidname):
+    import skvideo.io
     try:
         metadata = skvideo.io.ffprobe(vidname)
         length = int(metadata['video']['@nb_frames'])
@@ -177,12 +175,6 @@ def find_calibration_folder(config, session_path):
         checkpath = os.path.join(curpath, pipeline_calibration_videos)
         if os.path.isdir(checkpath):
             return curpath
-
-        # videos = glob(os.path.join(checkpath, '*.avi'))
-        # extrinsics = glob(os.path.join(checkpath, 'calibration.toml'))
-
-        # if len(videos) > 0 or len(extrinsics) > 0:
-        #     return curpath
 
         curpath = os.path.dirname(curpath)
         level -= 1
