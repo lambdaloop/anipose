@@ -126,7 +126,7 @@ def filter_pose_clusters(config, fname, outname):
 
     bp_index = data.columns.names.index('bodyparts')
     coord_index = data.columns.names.index('coords')
-    bodyparts = list(data.columns.levels[bp_index])
+    bodyparts = list(data.columns.get_level_values(bp_index).unique())
     n_possible = len(data.columns.levels[coord_index])//3
 
     n_frames = len(data)
