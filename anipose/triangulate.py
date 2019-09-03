@@ -74,9 +74,12 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
     return all_points_3d_adj, M, center_new
 
 
-def load_pose2d_fnames(fname_dict, offsets_dict):
+def load_pose2d_fnames(fname_dict, offsets_dict=None):
     cam_names = sorted(fname_dict.keys())
     pose_names = [fname_dict[cname] for cname in cam_names]
+
+    if offsets_dict is None:
+        offsets_dict = dict([(cname, (0,0)) for cname in cam_names])
 
     datas = []
     for ix_cam, (cam_name, pose_name) in \
@@ -86,7 +89,8 @@ def load_pose2d_fnames(fname_dict, offsets_dict):
             scorer = dlabs.columns.levels[0][0]
             dlabs = dlabs.loc[:, scorer]
 
-        joint_names = np.array(dlabs.columns.levels[0])
+        bp_index = dlabs.columns.names.index('bodyparts')
+        joint_names = list(dlabs.columns.get_level_values(bp_index).unique())
         dx = offsets_dict[cam_name][0]
         dy = offsets_dict[cam_name][1]
 
@@ -135,9 +139,9 @@ def load_offsets_dict(config, cam_names, video_folder):
         # if record_dict is None:
         if 'cameras' not in config or cname not in config['cameras']:
             # print("W: no crop window found for camera {}, assuming no crop".format(cname))
-            offsets_dict[cname] = [0, 0]
+            offsets_dict[cname] = (0, 0)
         else:
-            offsets_dict[cname] = config['cameras'][cname]['offset']
+            offsets_dict[cname] = tuple(config['cameras'][cname]['offset'])
         # else:
         #     offsets_dict[cname] = record_dict['cameras'][cname]['video']['ROIPosition']
 
