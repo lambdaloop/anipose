@@ -187,6 +187,14 @@ def summarize_errors(config):
 
 @cli.command()
 @pass_config
+def extract_frames_bad(config, num_frames=200):
+    from .extract_frames import extract_frames_bad
+    click.echo('Extracting frames...')
+    extract_frames_bad(config, num_frames)
+
+
+@cli.command()
+@pass_config
 def label_2d(config):
     from .label_videos import label_videos_all
     click.echo('Labeling videos in 2D...')

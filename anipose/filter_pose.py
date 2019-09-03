@@ -70,7 +70,7 @@ def assign_clusters(pts, max_offset=64, thres_dist=10):
     return clusters
 
 
-def remove_dups(pts, thres=4):
+def remove_dups(pts, thres=3):
     tindex = np.repeat(np.arange(pts.shape[0])[:, None], pts.shape[1], axis=1)*100
     pts_ix = np.dstack([pts, tindex])
     tree = cKDTree(pts_ix.reshape(-1, 3))

@@ -408,6 +408,10 @@ def visualize_combined(config, pose_fname, cgroup, offsets_dict,
         imout = draw_data(start_img, frames_2d, frame_3d, all_angles, pp)
         q.put(imout)
 
+    for cap in caps_2d:
+        cap.release()
+    cap_3d.release()
+
     q.put(None)
     thread.join()
     writer.release()

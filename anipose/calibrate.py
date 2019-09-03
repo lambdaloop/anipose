@@ -5,6 +5,7 @@ import numpy as np
 import os
 from glob import glob
 from collections import defaultdict
+import pickle
 
 from .common import \
     find_calibration_folder, make_process_fun, process_all, \
@@ -13,7 +14,6 @@ from .common import \
 
 from .triangulate import load_pose2d_fnames, load_offsets_dict
 
-import pickle
 from calligator.cameras import CameraGroup
 
 def get_pose2d_fnames(config, session_path):
@@ -54,8 +54,8 @@ def load_2d_data(config, calibration_path):
 
     for name in tqdm(vid_names, desc='load points', ncols=80):
         (key, session_path, vidname) = name
-        fnames = cam_videos[name]
-        cam_names = sorted([get_cam_name(config, f) for f in fnames])
+        fnames = sorted(cam_videos[name])
+        cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
         video_folder = os.path.join(session_path, config['pipeline']['videos_raw'])
         offsets_dict = load_offsets_dict(config, cam_names, video_folder)
