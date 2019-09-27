@@ -201,7 +201,7 @@ def extract_frames_bad(config, num_frames_pick=250):
         b = start + num_frames
 
         errors_cur = np.linalg.norm(proj[vnum] - points[vnum], axis=3)
-        errors_mean = np.max(np.mean(errors_cur, axis=2), axis=0)
+        errors_mean = np.mean(np.mean(errors_cur, axis=2), axis=0)
 
         vidnums[a:b] = vnum
         framenums[a:b] = np.arange(num_frames)
