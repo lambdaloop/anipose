@@ -5,11 +5,15 @@ import re
 import os
 from collections import deque
 from subprocess import check_output
+import numpy as np
 
 from calligator.boards import CharucoBoard, Checkerboard
 
 def atoi(text):
     return int(text) if text.isdigit() else text
+
+def nan_helper(y):
+    return np.isnan(y), lambda z: z.nonzero()[0]
 
 def natural_keys(text):
     '''

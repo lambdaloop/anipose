@@ -39,6 +39,7 @@ DEFAULT_CONFIG = {
         'angles': 'angles',
         'summaries': 'summaries',
         'videos_combined': 'videos-combined',
+        'videos_compare': 'videos-compare',
     },
     'filter': {
         'enabled': False,
@@ -230,6 +231,13 @@ def label_combined(config):
 
 @cli.command()
 @pass_config
+def label_filter_compare(config):
+    from .label_filter_compare import label_filter_compare_all
+    click.echo('Labeling videos to compare filtered vs raw tracking...')
+    label_filter_compare_all(config)
+    
+@cli.command()
+@pass_config
 def draw_calibration(config):
     from .common import get_calibration_board_image
     import cv2
@@ -299,14 +307,19 @@ def run_all(config):
 
     from .label_videos import label_videos_filtered_all, label_videos_all
     from .label_videos_3d import label_videos_3d_all
+    from .label_combined import label_combined_all
 
     click.echo('Labeling videos in 2D...')
     if config['filter']['enabled']:
         label_videos_filtered_all(config)
     else:
         label_videos_all(config)
+
     click.echo('Labeling videos in 3D...')
     label_videos_3d_all(config)
+
+    click.echo('Labeling combined videos...')
+    label_combined_all(config)
 
 if __name__ == '__main__':
     cli()
