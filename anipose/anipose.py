@@ -46,10 +46,10 @@ DEFAULT_CONFIG = {
         'type': 'medfilt',
         'medfilt': 13,
         'offset_threshold': 25,
-        'score_threshold': 0.15,
+        'score_threshold': 0.05,
         'spline': True,
-        'max_offset': 64,
-        'threshold_distance': 25
+        'max_offset': 5,
+        'threshold_distance': 20
     },
     'filter3d': {
         'enabled': False

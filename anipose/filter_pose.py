@@ -53,7 +53,8 @@ def assign_clusters(pts, max_offset=64, thres_dist=10):
 
     for offset in offsets:
         step = max(int(offset / 2), 1)
-        for i in range(0, n_frames-offset, step):
+        start = int(offset / 3)
+        for i in range(start, n_frames-offset, step):
             kp_a = pts[i]
             kp_b = pts[i+offset]
             ix_a = np.where(~np.isnan(kp_a[:,0]))[0]
@@ -65,12 +66,15 @@ def assign_clusters(pts, max_offset=64, thres_dist=10):
             for prev, new in zip(ix_a[prev_ind], ix_b[new_ind]):
                 cval = clusters[i+offset, new]
                 nval = clusters[i, prev]
-                clusters[clusters == cval] = nval
+                c1 = np.any(clusters == cval, axis=1)
+                c2 = np.any(clusters == nval, axis=1)
+                if np.sum(c1 & c2) < 5:
+                    clusters[clusters == cval] = nval
 
     return clusters
 
 
-def remove_dups(pts, thres=3):
+def remove_dups(pts, thres=5):
     tindex = np.repeat(np.arange(pts.shape[0])[:, None], pts.shape[1], axis=1)*100
     pts_ix = np.dstack([pts, tindex])
     tree = cKDTree(pts_ix.reshape(-1, 3))
@@ -88,7 +92,7 @@ def remove_dups(pts, thres=3):
 
     return pts_out
 
-def find_best_path(points, scores, max_offset=64, thres_dist=20):
+def find_best_path(points, scores, max_offset=5, thres_dist=20):
     """takes in a set of points of shape NxPx2 and an array of scores of shape NxP where
     N: number of frames
     P: number of possible values
@@ -100,10 +104,21 @@ def find_best_path(points, scores, max_offset=64, thres_dist=20):
     clusters = assign_clusters(points, max_offset, thres_dist)
 
     score_clusters = np.zeros(clusters.shape)
-    most_common = Counter(clusters.ravel()).most_common(n=20)
+    most_common = Counter(clusters.ravel()).most_common()
+    most_common = sorted(most_common,
+                         key=lambda x: -np.sum(clusters == x[0]))
+    
+    picked = []
     for cnum, count in most_common:
         if count < 5: break
+        overlap = 0
         check = clusters == cnum
+        c1 = np.any(clusters == cnum, axis=1)
+        for p in picked:
+            c2 = np.any(clusters == p, axis=1)
+            overlap += np.sum(c1 & c2)
+        if overlap > 20: continue
+        picked.append(cnum)
         score = np.sum(scores[check])
         score_clusters[check] = score
 
@@ -112,6 +127,9 @@ def find_best_path(points, scores, max_offset=64, thres_dist=20):
     points_picked = points[ixs, ixs_picked]
     scores_picked = scores[ixs, ixs_picked]
 
+    scs = score_clusters[ixs, ixs_picked]
+    points_picked[scs == 0] = np.nan
+    
     return points_picked, scores_picked
 
 def find_best_path_wrapper(args):
