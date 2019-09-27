@@ -74,7 +74,7 @@ def assign_clusters(pts, max_offset=64, thres_dist=10):
     return clusters
 
 
-def remove_dups(pts, thres=5):
+def remove_dups(pts, thres=7):
     tindex = np.repeat(np.arange(pts.shape[0])[:, None], pts.shape[1], axis=1)*100
     pts_ix = np.dstack([pts, tindex])
     tree = cKDTree(pts_ix.reshape(-1, 3))
@@ -92,7 +92,7 @@ def remove_dups(pts, thres=5):
 
     return pts_out
 
-def find_best_path(points, scores, max_offset=5, thres_dist=20):
+def find_best_path(points, scores, max_offset=5, thres_dist=40):
     """takes in a set of points of shape NxPx2 and an array of scores of shape NxP where
     N: number of frames
     P: number of possible values
@@ -106,7 +106,7 @@ def find_best_path(points, scores, max_offset=5, thres_dist=20):
     score_clusters = np.zeros(clusters.shape)
     most_common = Counter(clusters.ravel()).most_common()
     most_common = sorted(most_common,
-                         key=lambda x: -np.sum(clusters == x[0]))
+                         key=lambda x: -np.mean(clusters == x[0]))
     
     picked = []
     for cnum, count in most_common:
@@ -129,6 +129,7 @@ def find_best_path(points, scores, max_offset=5, thres_dist=20):
 
     scs = score_clusters[ixs, ixs_picked]
     points_picked[scs == 0] = np.nan
+    scores_picked[scs == 0] = 0
     
     return points_picked, scores_picked
 
