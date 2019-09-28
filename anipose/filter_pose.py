@@ -195,15 +195,27 @@ def filter_pose_medfilt(config, fname, outname):
     data = data_orig[scorer]
 
     bp_index = data.columns.names.index('bodyparts')
-    bodyparts = list(data.columns.levels[bp_index])
+    coord_index = data.columns.names.index('coords')
+    bodyparts = list(data.columns.get_level_values(bp_index).unique())
+    n_possible = len(data.columns.levels[coord_index])//3
+
+    n_frames = len(data)
+    n_joints = len(bodyparts)
+    test = np.array(data).reshape(n_frames, n_joints, n_possible, 3)
+
+    points_full = test[:, :, :, :2]
+    scores_full = test[:, :, :, 2]
 
     dout = data_orig.copy()
 
-    for bp in bodyparts:
-
-        x = arr(data[bp, 'x'])
-        y = arr(data[bp, 'y'])
-        score = arr(data[bp, 'likelihood'])
+    for bp_ix, bp in enumerate(bodyparts):
+        x = points_full[:, bp_ix, 0, 0]
+        y = points_full[:, bp_ix, 0, 1]
+        score = scores_full[:, bp_ix, 0]
+        
+        # x = arr(data[bp, 'x'])
+        # y = arr(data[bp, 'y'])
+        # score = arr(data[bp, 'likelihood'])
         # x, y, score = arr(data[bp]).T
 
         xmed = signal.medfilt(x, kernel_size=config['filter']['medfilt'])
