@@ -6,10 +6,11 @@ import numpy as np
 import pandas as pd
 from numpy import array as arr
 from glob import glob
-from scipy import signal
+from scipy import signal, stats
 from scipy.interpolate import splev, splrep
 from scipy.spatial.distance import cdist
 from scipy.spatial import cKDTree
+from scipy.special import logsumexp
 from collections import Counter
 from multiprocessing import cpu_count
 from multiprocessing import Pool
@@ -107,7 +108,7 @@ def find_best_path(points, scores, max_offset=5, thres_dist=40):
     most_common = Counter(clusters.ravel()).most_common()
     most_common = sorted(most_common,
                          key=lambda x: -np.mean(clusters == x[0]))
-    
+
     picked = []
     for cnum, count in most_common:
         if count < 5: break
@@ -130,7 +131,7 @@ def find_best_path(points, scores, max_offset=5, thres_dist=40):
     scs = score_clusters[ixs, ixs_picked]
     points_picked[scs == 0] = np.nan
     scores_picked[scs == 0] = 0
-    
+
     return points_picked, scores_picked
 
 def find_best_path_wrapper(args):
@@ -163,14 +164,145 @@ def filter_pose_clusters(config, fname, outname):
     n_proc = max(min(cpu_count() // 2, n_joints), 1)
     pool = Pool(n_proc)
 
-    max_offset = config['filter']['max_offset']
-    thres_dist = config['filter']['threshold_distance']
+    max_offset = config['filter']['n_back']
+    thres_dist = config['filter']['offset_threshold']
 
     iterable = [ (jix, points_full[:, jix, :], scores_full[:, jix],
                   max_offset, thres_dist)
                  for jix in range(n_joints) ]
 
     results = pool.imap_unordered(find_best_path_wrapper, iterable)
+
+    for jix, pts_new, scs_new in tqdm(results, ncols=70):
+        points[:, jix] = pts_new
+        scores[:, jix] = scs_new
+
+    columns = pd.MultiIndex.from_product(
+        [[scorer], bodyparts, ['x', 'y', 'likelihood']],
+        names=['scorer', 'bodyparts', 'coords'])
+
+    dout = pd.DataFrame(columns=columns, index=data.index)
+
+    dout.loc[:, (scorer, bodyparts, 'x')] = points[:, :, 0]
+    dout.loc[:, (scorer, bodyparts, 'y')] = points[:, :, 1]
+    dout.loc[:, (scorer, bodyparts, 'likelihood')] = scores
+
+    dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
+
+def viterbi_path(points, scores, n_back=3, thres_dist=30):
+    n_frames = points.shape[0]
+
+    points_nans = remove_dups(points, thres=5)
+    points_nans[scores < 0.01] = np.nan
+
+    num_points = np.sum(~np.isnan(points_nans[:, :, 0]), axis=1)
+    num_max = np.max(num_points)
+
+    particles = np.zeros((n_frames, num_max * n_back + 1, 3), dtype='float64')
+    valid = np.zeros(n_frames, dtype='int64')
+    for i in range(n_frames):
+        s = 0
+        for j in range(n_back):
+            if i-j < 0:
+                break
+            ixs = np.where(~np.isnan(points_nans[i-j, :, 0]))[0]
+            n_valid = len(ixs)
+            particles[i, s:s+n_valid, :2] = points[i-j, ixs]
+            particles[i, s:s+n_valid, 2] = scores[i-j, ixs] * np.power(2.0, -j)
+            s += n_valid
+        if s == 0:
+            particles[i, 0] = [-1, -1, 0.001] # missing point
+            s = 1
+        valid[i] = s
+
+    ## viterbi algorithm
+    n_particles = np.max(valid)
+
+    T_logprob = np.zeros((n_frames, n_particles), dtype='float64')
+    T_logprob[:] = -np.inf
+    T_back = np.zeros((n_frames, n_particles), dtype='int64')
+
+    T_logprob[0, :valid[0]] = np.log(particles[0, :valid[0], 2])
+    T_back[0, :] = -1
+
+    for i in range(1, n_frames):
+        va, vb = valid[i-1], valid[i]
+        pa = particles[i-1, :va, :2]
+        pb = particles[i, :vb, :2]
+
+        dists = cdist(pa, pb)
+        cdf_high = stats.norm.logcdf(dists + 2, scale=thres_dist)
+        cdf_low = stats.norm.logcdf(dists - 2, scale=thres_dist)
+        cdfs = np.array([cdf_high, cdf_low])
+        P_trans = logsumexp(cdfs.T, b=[1,-1], axis=2)
+
+        P_trans[P_trans < -100] = -100
+
+        # take care of missing transitions
+        P_trans[pb[:, 0] == -1, :] = np.log(0.001)
+        P_trans[:, pa[:, 0] == -1] = np.log(0.001)
+
+        pflat = particles[i, :vb, 2]
+        possible = T_logprob[i-1, :va] + P_trans
+
+        T_logprob[i, :vb] = np.max(possible, axis=1) + np.log(pflat)*0.1
+        T_back[i, :vb] = np.argmax(possible, axis=1)
+
+    out = np.zeros(n_frames, dtype='int')
+    out[-1] = np.argmax(T_logprob[-1])
+
+    for i in range(n_frames-1, 0, -1):
+        out[i-1] = T_back[i, out[i]]
+
+    trace = [particles[i, out[i]] for i in range(n_frames)]
+    trace = np.array(trace)
+
+    points_new = trace[:, :2]
+    scores_new = trace[:, 2]
+    scores_new[out >= num_points] = 0
+
+    return points_new, scores_new
+
+
+def viterbi_path_wrapper(args):
+    jix, pts, scs, max_offset, thres_dist = args
+    pts_new, scs_new = viterbi_path(pts, scs, max_offset, thres_dist)
+    return jix, pts_new, scs_new
+
+
+def filter_pose_viterbi(config, fname, outname):
+    data_orig = pd.read_hdf(fname)
+    scorer = data_orig.columns.levels[0][0]
+    data = data_orig.loc[:, scorer]
+
+    bp_index = data.columns.names.index('bodyparts')
+    coord_index = data.columns.names.index('coords')
+    bodyparts = list(data.columns.get_level_values(bp_index).unique())
+    n_possible = len(data.columns.levels[coord_index])//3
+
+    n_frames = len(data)
+    n_joints = len(bodyparts)
+    test = np.array(data).reshape(n_frames, n_joints, n_possible, 3)
+
+    points_full = test[:, :, :, :2]
+    scores_full = test[:, :, :, 2]
+
+    points_full[scores_full < config['filter']['score_threshold']] = np.nan
+
+    points = np.full((n_frames, n_joints, 2), np.nan, dtype='float64')
+    scores = np.empty((n_frames, n_joints), dtype='float64')
+
+    n_proc = max(min(cpu_count() // 2, n_joints), 1)
+    pool = Pool(n_proc)
+
+    max_offset = config['filter']['n_back']
+    thres_dist = config['filter']['offset_threshold']
+
+    iterable = [ (jix, points_full[:, jix, :], scores_full[:, jix],
+                  max_offset, thres_dist)
+                 for jix in range(n_joints) ]
+
+    results = pool.imap_unordered(viterbi_path_wrapper, iterable)
 
     for jix, pts_new, scs_new in tqdm(results, ncols=70):
         points[:, jix] = pts_new
@@ -212,11 +344,6 @@ def filter_pose_medfilt(config, fname, outname):
         x = points_full[:, bp_ix, 0, 0]
         y = points_full[:, bp_ix, 0, 1]
         score = scores_full[:, bp_ix, 0]
-        
-        # x = arr(data[bp, 'x'])
-        # y = arr(data[bp, 'y'])
-        # score = arr(data[bp, 'likelihood'])
-        # x, y, score = arr(data[bp]).T
 
         xmed = signal.medfilt(x, kernel_size=config['filter']['medfilt'])
         ymed = signal.medfilt(y, kernel_size=config['filter']['medfilt'])
@@ -258,8 +385,8 @@ def process_session(config, session_path):
     pipeline_pose_filter = config['pipeline']['pose_2d_filter']
     filter_type = config['filter']['type']
 
-    assert filter_type in ['medfilt', 'clusters'], \
-        "Invalid filter type, should be 'medfilt' or 'clusters', but found {}".format(filter_type)
+    assert filter_type in ['medfilt', 'clusters', 'viterbi'], \
+        "Invalid filter type, should be 'medfilt', 'viterbi', or 'clusters', but found {}".format(filter_type)
 
     pose_folder = os.path.join(session_path, pipeline_pose)
     output_folder = os.path.join(session_path, pipeline_pose_filter)
@@ -285,6 +412,8 @@ def process_session(config, session_path):
             filter_pose_medfilt(config, fname, outpath)
         elif config['filter']['type'] == 'clusters':
             filter_pose_clusters(config, fname, outpath)
+        elif config['filter']['type'] == 'viterbi':
+            filter_pose_viterbi(config, fname, outpath)
 
 
 filter_pose_all = make_process_fun(process_session)
