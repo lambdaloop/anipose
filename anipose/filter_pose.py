@@ -385,8 +385,7 @@ def filter_pose_autoencoder(config, all_points, bodyparts):
     with open(fname_model, 'rb') as f:
         mlp = pickle.load(f)
 
-    scores_pred = mlp.predict(scores_test)
-    scores_pred = np.clip(scores_pred, 0, 1)
+    scores_pred = mlp.predict_proba(scores_test)
     scores_pred_rep = np.repeat(scores_pred, n_possible, axis=1).reshape(scores_full.shape)
 
     scores_fixed = np.min([scores_pred_rep, scores_full], axis=0)
