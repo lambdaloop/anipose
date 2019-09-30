@@ -424,7 +424,7 @@ def process_session(config, session_path):
     #     pipeline_videos_labeled_2d = config['pipeline']['videos_labeled_2d']
     pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
     pipeline_videos_raw = config['pipeline']['videos_raw']
-    pipeline_angles = config['pipeline']['angles']
+    # pipeline_angles = config['pipeline']['angles']
     pipeline_pose_3d = config['pipeline']['pose_3d']
     pipeline_videos_combined = config['pipeline']['videos_combined']
 
@@ -476,6 +476,10 @@ def process_session(config, session_path):
 
         if os.path.exists(out_fname) and \
            abs(get_nframes(out_fname) - get_nframes(vid_fname)) < 100:
+            continue
+
+        if not os.path.exists(pose_fname):
+            print(out_fname, 'missing 3d data')
             continue
 
         if len(fnames_2d[basename]) == 0:
