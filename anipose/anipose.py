@@ -48,8 +48,7 @@ DEFAULT_CONFIG = {
         'offset_threshold': 25,
         'score_threshold': 0.05,
         'spline': True,
-        'max_offset': 5,
-        'threshold_distance': 20
+        'n_back': 5,
     },
     'filter3d': {
         'enabled': False
@@ -235,7 +234,7 @@ def label_filter_compare(config):
     from .label_filter_compare import label_filter_compare_all
     click.echo('Labeling videos to compare filtered vs raw tracking...')
     label_filter_compare_all(config)
-    
+
 @cli.command()
 @pass_config
 def draw_calibration(config):
