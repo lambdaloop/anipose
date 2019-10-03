@@ -186,11 +186,12 @@ def summarize_errors(config):
 
 
 @cli.command()
+@click.option('--nframes', default=200, type=int, show_default=True)
 @pass_config
-def extract_frames_bad(config, num_frames=200):
+def extract_frames_bad(config, nframes=200):
     from .extract_frames import extract_frames_bad
     click.echo('Extracting frames...')
-    extract_frames_bad(config, num_frames)
+    extract_frames_bad(config, nframes)
 
 
 @cli.command()
@@ -251,17 +252,24 @@ def run_data(config):
     from .calibrate import calibrate_all
     from .pose_videos import pose_videos_all
     from .triangulate import triangulate_all
-
-    click.echo('Calibrating...')
-    calibrate_all(config)
+    from .compute_angles import compute_angles_all
 
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
+    if config['filter']['enabled']:
+        from .filter_pose import filter_pose_all
+        click.echo('Filtering tracked points...')
+        filter_pose_all(config)
+
+    click.echo('Calibrating...')
+    calibrate_all(config)
+
     click.echo('Triangulating points...')
     triangulate_all(config)
 
-    click.echo('Running data processing')
+    click.echo('Computing angles...')
+    compute_angles_all(config)
 
 
 @cli.command()
@@ -287,9 +295,6 @@ def run_all(config):
     from .triangulate import triangulate_all
     from .compute_angles import compute_angles_all
 
-    click.echo('Calibrating...')
-    calibrate_all(config)
-
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
@@ -297,6 +302,9 @@ def run_all(config):
         from .filter_pose import filter_pose_all
         click.echo('Filtering tracked points...')
         filter_pose_all(config)
+
+    click.echo('Calibrating...')
+    calibrate_all(config)
 
     click.echo('Triangulating points...')
     triangulate_all(config)
