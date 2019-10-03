@@ -63,8 +63,8 @@ def load_2d_data(config, calibration_path):
         points_raw = out['points']
         scores = out['scores']
 
-        print(points_raw.shape)
-        print(scores.shape)
+        # print(points_raw.shape)
+        # print(scores.shape)
 
         all_points.append(points_raw)
         all_scores.append(scores)
@@ -178,15 +178,15 @@ def process_session(config, session_path):
                                       init_intrinsics=init_stuff,
                                       init_extrinsics=init_stuff,
                                       ftol=1e-4, max_nfev=500, 
-                                      n_iters=10, error_threshold=3, end_mu=1,
+                                      n_iters=10, error_threshold=1, end_mu=1,
                                       n_samp_iter=100, n_samp_full=2000)
 
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)
         imgp = process_points_for_calibration(all_points, all_scores)
         # error = cgroup.bundle_adjust(imgp, threshold=10, ftol=1e-4, loss='huber')
-        error = cgroup.bundle_adjust_iter(imgp, ftol=1e-4, n_iters=5,
-                                          n_samp_iter=100, n_samp_full=1000,
+        error = cgroup.bundle_adjust_iter(imgp, ftol=1e-4, n_iters=10,
+                                          n_samp_iter=300, n_samp_full=1000,
                                           max_nfev=500,
                                           verbose=True)
         cgroup.metadata['adjusted'] = True
