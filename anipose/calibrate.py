@@ -181,6 +181,11 @@ def process_session(config, session_path):
                                       n_iters=10, error_threshold=1, end_mu=1,
                                       n_samp_iter=100, n_samp_full=2000)
 
+    cgroup.metadata['adjusted'] = False
+    if error is not None:
+        cgroup.metadata['error'] = float(error)
+    cgroup.dump(outname)
+        
     if config['calibration']['animal_calibration']:
         all_points, all_scores = load_2d_data(config, calibration_path)
         imgp = process_points_for_calibration(all_points, all_scores)
@@ -190,10 +195,6 @@ def process_session(config, session_path):
                                           max_nfev=500,
                                           verbose=True)
         cgroup.metadata['adjusted'] = True
-    else:
-        cgroup.metadata['adjusted'] = False
-
-    if error is not None:
         cgroup.metadata['error'] = float(error)
 
     cgroup.dump(outname)
