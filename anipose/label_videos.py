@@ -43,7 +43,7 @@ def label_frame(img, points, scheme, bodyparts, cmap='tab10'):
         if np.isnan(x) or np.isnan(y):
             continue
         x = np.clip(int(round(x)), 1, img.shape[1]-1)
-        y = np.clip(int(round(y)), 1, img.shape[2]-1)
+        y = np.clip(int(round(y)), 1, img.shape[0]-1)
         col = cmap_c(lnum % 10, bytes=True)
         col = [int(c) for c in col]
         cv2.circle(img,(x,y), 7, col[:3], -1)
