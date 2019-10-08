@@ -94,7 +94,7 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     cmap = get_cmap('tab10')
 
 
-    points = all_points[:, 20]
+    points = np.copy(all_points[:, 20])
     points[0] = low
     points[1] = high
 
