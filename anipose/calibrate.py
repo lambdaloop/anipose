@@ -117,9 +117,6 @@ def process_session(config, session_path):
                                '*.'+video_ext))
     videos = sorted(videos)
 
-    if len(videos) == 0:
-        print('no videos found, continuing...')
-        return
 
     cam_videos = defaultdict(list)
     cam_names = set()
@@ -157,7 +154,11 @@ def process_session(config, session_path):
         print('loading calibration from: {}'.format(calib_path))
         cgroup = CameraGroup.load(calib_path)
         init_stuff = False
+        skip_calib = len(videos) == 0
     else:
+        if len(videos) == 0:
+            print('no videos or calibration file found, continuing...')
+            return
         cgroup = CameraGroup.from_names(cam_names, config['calibration']['fisheye'])
 
     board = get_calibration_board(config)
