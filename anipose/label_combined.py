@@ -380,7 +380,7 @@ def visualize_combined(config, pose_fname, cgroup, offsets_dict,
                                          mode='constant', constant_values=np.nan)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    writer = cv2.VideoWriter(out_fname, fourcc, fps,
+    writer = cv2.VideoWriter(out_fname, fourcc, round(fps, ndigits=2),
                              (pp['width_total'], pp['height_total']))
 
     q = queue.Queue(maxsize=50)
