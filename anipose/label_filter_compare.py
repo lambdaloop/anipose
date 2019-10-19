@@ -156,7 +156,7 @@ def process_session(config, session_path):
 
     video_ext = config['video_extension']
 
-    vid_fnames = glob(os.path.join(session_path, pipeline_videos_raw, "*.avi"))
+    vid_fnames = glob(os.path.join(session_path, pipeline_videos_raw, "*." + video_ext))
 
     fnames_raw = defaultdict(list)
     for vid in vid_fnames:
@@ -179,12 +179,12 @@ def process_session(config, session_path):
             continue
 
         vids_2d = [os.path.join(session_path, pipeline_videos_labeled_2d,
-                                os.path.basename(f))
+                                true_basename(f) + '.avi')
                    for f in vids_raw]
 
         vids_2d_filtered = [os.path.join(session_path,
                                          pipeline_videos_labeled_2d_filter,
-                                         os.path.basename(f))
+                                         true_basename(f) + '.avi')
                             for f in vids_raw]
         
         if not all([os.path.exists(f) for f in vids_2d]):
