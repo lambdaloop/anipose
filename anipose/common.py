@@ -79,6 +79,7 @@ def get_video_name(config, fname):
     vidname = re.sub(cam_regex, '', basename)
     return vidname.strip()
 
+# TODO: get rid of skvideo dependency
 def get_duration(vidname):
     import skvideo.io
     metadata = skvideo.io.ffprobe(vidname)
