@@ -187,12 +187,17 @@ def summarize_errors(config):
 
 @cli.command()
 @click.option('--nframes', default=200, type=int, show_default=True)
+@click.option('--mode', default='bad', type=str, show_default=True)
+@click.option('--no-pred', is_flag=True)
 @pass_config
-def extract_frames_bad(config, nframes=200):
-    from .extract_frames import extract_frames_bad
+def extract_frames(config, nframes=200, mode='bad', no_pred=False):
+    from .extract_frames import extract_frames_picked, extract_frames_random
     click.echo('Extracting frames...')
-    extract_frames_bad(config, nframes)
-
+    if no_pred:
+        mode = 'random'
+        extract_frames_random(config, nframes)
+    else:
+        extract_frames_picked(config, mode, nframes)
 
 @cli.command()
 @pass_config
