@@ -46,6 +46,9 @@ def compute_angles(config, labels_fname, outname):
 
 
 def process_session(config, session_path):
+    if 'angles' not in config: # don't process anything if no angles in config
+        return
+    
     if config['filter3d']['enabled']:
         pipeline_3d = config['pipeline']['pose_3d_filter']
     else:
