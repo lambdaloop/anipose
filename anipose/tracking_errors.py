@@ -125,9 +125,12 @@ def get_tracking_errors(config):
 
     datas = []
     for group, ffs in group_folders.items():
+        print(group)
         dd = get_errors_group(config, ffs)
         datas.append(dd)
     data = pd.concat(datas)
 
     data.to_csv(os.path.join('summaries', 'tracking_errors.csv'),
                 index=False)
+
+    print('Errors saved in {}'.format(os.path.join('summaries', 'tracking_errors.py')))
