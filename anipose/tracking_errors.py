@@ -26,7 +26,7 @@ def get_transform(row):
 
 def get_errors_group(config, group):
     pipeline_pose_3d = config['pipeline']['pose_3d']
-    
+
     metadatas = dict()
     fnames_dict = dict()
     cam_names = []
@@ -49,15 +49,16 @@ def get_errors_group(config, group):
     bodyparts = out['bodyparts']
 
     metadata = metadatas[cam_names[0]]
-    
+
     n_frames = len(metadata)
     n_joints = len(bodyparts)
-    
+
     calib_fnames = np.array(metadata['calib'])
     points_3d_pred = np.full((n_frames, n_joints, 3), np.nan, 'float')
     points_3d_labeled = np.full((n_frames, n_joints, 3), np.nan, 'float')
 
     # get predicted 3D points
+    paths_3d = []
     curr_path = None
     curr_pose = None
     curr_fnum = None
@@ -68,6 +69,7 @@ def get_errors_group(config, group):
         prefix = os.path.dirname(os.path.dirname(fname))
         vidname = get_video_name(config, fname)
         pose_path = os.path.join(prefix, pipeline_pose_3d, vidname + '.csv')
+        paths_3d.append(pose_path)
         if curr_path != pose_path:
             curr_pose = pd.read_csv(pose_path)
             curr_fnum = np.array(curr_pose['fnum'])
@@ -94,8 +96,24 @@ def get_errors_group(config, group):
         pts = points_labeled[:, i]
         points_3d_labeled[i] = curr_cgroup.triangulate(pts)
 
-    print(points_3d_labeled - points_3d_pred)
-        
+    errors = np.linalg.norm(points_3d_labeled - points_3d_pred, axis=2)
+
+    out = pd.DataFrame()
+    out['pose_path'] = paths_3d
+    out['framenum'] = metadata['framenum']
+    out['calib'] = metadata['calib']
+    for bp_ix, bp in enumerate(bodyparts):
+        # print(points_3d_labeled - points_3d_pred)
+        out[bp + '_x_lab'] = points_3d_labeled[:, bp_ix, 0]
+        out[bp + '_y_lab'] = points_3d_labeled[:, bp_ix, 1]
+        out[bp + '_z_lab'] = points_3d_labeled[:, bp_ix, 2]
+        out[bp + '_x_pred'] = points_3d_pred[:, bp_ix, 0]
+        out[bp + '_y_pred'] = points_3d_pred[:, bp_ix, 1]
+        out[bp + '_z_pred'] = points_3d_pred[:, bp_ix, 2]
+        out[bp + '_error'] = errors[:, bp_ix]
+
+    return out
+
 def get_tracking_errors(config):
     # pipeline_videos_raw = config['pipeline']['videos_raw']
     group_folders = defaultdict(list)
@@ -105,5 +123,11 @@ def get_tracking_errors(config):
         group, _, cname = folder.rpartition('--')
         group_folders[group].append( (cname, folder) )
 
+    datas = []
     for group, ffs in group_folders.items():
         dd = get_errors_group(config, ffs)
+        datas.append(dd)
+    data = pd.concat(datas)
+
+    data.to_csv(os.path.join('summaries', 'tracking_errors.csv'),
+                index=False)
