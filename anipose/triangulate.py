@@ -111,7 +111,10 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None):
     for cam_ix, dlabs in enumerate(datas):
         for joint_ix, joint_name in enumerate(joint_names):
             points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames]
-            scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
+            try:
+                scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
+            except KeyError:
+                pass
 
     return {
         'cam_names': cam_names,
@@ -121,7 +124,7 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None):
     }
 
 
-def load_offsets_dict(config, cam_names, video_folder):
+def load_offsets_dict(config, cam_names, video_folder=None):
     ## TODO: make the recorder.toml file configurable
     # record_fname = os.path.join(video_folder, 'recorder.toml')
 

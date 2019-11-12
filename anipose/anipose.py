@@ -116,6 +116,13 @@ def calibration_errors(config):
 
 @cli.command()
 @pass_config
+def tracking_errors(config):
+    from .tracking_errors import get_tracking_errors
+    click.echo('Comparing tracking to labeled data...')
+    get_tracking_errors(config)
+    
+@cli.command()
+@pass_config
 def analyze(config):
     from .pose_videos import pose_videos_all
     click.echo('Analyzing videos...')
