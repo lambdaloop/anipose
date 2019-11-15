@@ -10,6 +10,19 @@ from collections import defaultdict
 
 from .common import make_process_fun, get_data_length, natural_keys
 
+def get_angles_vecs(vecs, angles):
+    out = dict()
+    angle_names = angles.keys()
+    for ang_name in angle_names:
+        a,b,c = angles[ang_name]
+        v1 = vecs[a] - vecs[b]
+        v2 = vecs[c] - vecs[b]
+        v1 = v1 / np.linalg.norm(v1, axis=1)[:, None]
+        v2 = v2 / np.linalg.norm(v2, axis=1)[:, None]
+        ang_rad = np.arccos(np.sum(v1 * v2, axis=1))
+        ang_deg = np.rad2deg(ang_rad)
+        out[ang_name] = ang_deg
+    return out
 
 def compute_angles(config, labels_fname, outname):
     data = pd.read_csv(labels_fname)
@@ -24,22 +37,8 @@ def compute_angles(config, labels_fname, outname):
 
     angle_names = config['angles'].keys()
 
-    outdict = dict()
+    outdict = get_angles_vecs(vecs, config['angles'])
     outdict['fnum'] = data['fnum']
-
-    for ang_name in angle_names:
-        a,b,c = config['angles'][ang_name]
-
-        v1 = vecs[a] - vecs[b]
-        v2 = vecs[c] - vecs[b]
-
-        v1 = v1 / np.linalg.norm(v1, axis=1)[:, None]
-        v2 = v2 / np.linalg.norm(v2, axis=1)[:, None]
-
-        ang_rad = np.arccos(np.sum(v1 * v2, axis=1))
-        ang_deg = np.rad2deg(ang_rad)
-
-        outdict[ang_name] = ang_deg
 
     dout = pd.DataFrame(outdict)
     dout.to_csv(outname, index=False)

@@ -136,6 +136,7 @@ def process_session(config, session_path):
     print(outname)
     skip_calib = False
     init_stuff = True
+    error = None
 
     if os.path.exists(outname):
         cgroup = CameraGroup.load(outname)

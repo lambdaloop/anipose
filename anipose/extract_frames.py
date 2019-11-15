@@ -204,15 +204,14 @@ def get_all_videos_fnames(config):
             if os.path.exists(calib_fname):
                 cgroup = CameraGroup.load(calib_fname)
 
-        pose_fname = os.path.join(session_path, config['pipeline']['pose_3d'],
-                                  vidname+'.csv')
+        # pose_fname = os.path.join(session_path, config['pipeline']['pose_3d'],
+        #                           vidname+'.csv')
 
-        if cgroup is None or not os.path.exists(pose_fname):
+        if cgroup is None: # or not os.path.exists(pose_fname):
             continue
 
         calib_fnames.append(calib_fname)
         all_fnames.append(fnames)
-
 
     out = {
         'fnames': all_fnames,
@@ -278,20 +277,22 @@ def extract_frames_random(config, num_frames_pick=250):
     img_format = 'img{:0' + str(nd) +'d}.png'
     images = [img_format.format(i) for i in range(num_frames_pick)]
 
-    folder_base = datetime.now().strftime('%Y-%m-%d--%H-%M')
+    folder_base = '{}_{}_random'.format(
+        config['project'], datetime.now().strftime('%Y-%m-%d_%H-%M'))
 
     folders = []
     metas = []
     indexes = []
     for cnum in range(n_cams):
-        folder = folder_base + '--' + cam_names[cnum]
+        folder = folder_base + '_' + cam_names[cnum]
         images_cur = [os.path.join('labeled-data', folder, img) for img in images]
         indexes.append(images_cur)
 
         meta = pd.DataFrame(columns=['img', 'calib', 'video', 'framenum'])
         metas.append(meta)
 
-        full_folder = os.path.join(model_folder, 'labeled-data', folder)
+        # full_folder = os.path.join(model_folder, 'labeled-data', folder)
+        full_folder = os.path.join('labeled-data', folder)
         os.makedirs(full_folder)
         folders.append(full_folder)
 
@@ -332,7 +333,7 @@ def extract_frames_random(config, num_frames_pick=250):
             metas[cnum].loc[rowcount, 'video'] = all_fnames[vidnum][cnum]
             metas[cnum].loc[rowcount, 'framenum'] = framenum
 
-            cv2.imwrite(os.path.join(model_folder, row), frames[cnum])
+            cv2.imwrite(row, frames[cnum])
             height, width, _  = frames[cnum].shape
             max_height[cnum] = max(max_height[cnum], height)
             max_width[cnum] = max(max_width[cnum], width)
@@ -439,14 +440,16 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
     img_format = 'img{:0' + str(nd) +'d}.png'
     images = [img_format.format(i) for i in range(num_frames_pick)]
 
-    folder_base = datetime.now().strftime('%Y-%m-%d--%H-%M')
+    # folder_base = datetime.now().strftime('%Y-%m-%d--%H-%M')
+    folder_base = '{}_{}_{}'.format(
+        config['project'], datetime.now().strftime('%Y-%m-%d_%H-%M'), mode)
 
     folders = []
     douts = []
     metas = []
     indexes = []
     for cnum in range(n_cams):
-        folder = folder_base + '--' + cam_names[cnum]
+        folder = folder_base + '_' + cam_names[cnum]
         images_cur = [os.path.join('labeled-data', folder, img) for img in images]
         indexes.append(images_cur)
 
@@ -457,7 +460,8 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
         meta = pd.DataFrame(columns=['img', 'calib', 'video', 'framenum'])
         metas.append(meta)
 
-        full_folder = os.path.join(model_folder, 'labeled-data', folder)
+        # full_folder = os.path.join(model_folder, 'labeled-data', folder)
+        full_folder = os.path.join('labeled-data', folder)
         os.makedirs(full_folder)
         folders.append(full_folder)
 
@@ -504,7 +508,7 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
             metas[cnum].loc[rowcount, 'video'] = fnames[vidnum][cnum]
             metas[cnum].loc[rowcount, 'framenum'] = framenum
 
-            cv2.imwrite(os.path.join(model_folder, row), frames[cnum])
+            cv2.imwrite(row, frames[cnum])
             height, width, _  = frames[cnum].shape
             max_height[cnum] = max(max_height[cnum], height)
             max_width[cnum] = max(max_width[cnum], width)
