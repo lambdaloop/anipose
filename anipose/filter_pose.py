@@ -303,8 +303,8 @@ def filter_pose_viterbi(config, all_points, bodyparts):
 
 
 def write_pose_2d(all_points, metadata, outname):
-    points = all_points[:, :, 0, :2]
-    scores = all_points[:, :, 0, 2]
+    points = all_points[:, :, :2]
+    scores = all_points[:, :, 2]
 
     scorer = metadata['scorer']
     bodyparts = metadata['bodyparts']
@@ -452,7 +452,7 @@ def process_session(config, session_path):
             points, scores = filter_fun(config, all_points, metadata['bodyparts'])
             all_points = wrap_points(points, scores)
 
-        write_pose_2d(all_points, metadata, outpath)
+        write_pose_2d(all_points[:, :, 0], metadata, outpath)
 
 
 filter_pose_all = make_process_fun(process_session)

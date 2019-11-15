@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
         'videos_raw': 'videos-raw',
         'pose_2d': 'pose-2d',
         'pose_2d_filter': 'pose-2d-filtered',
+        'pose_2d_projected': 'pose-2d-proj',
         'pose_3d': 'pose-3d',
         'pose_3d_filter': 'pose-3d-filtered',
         'videos_labeled_2d': 'videos-labeled',
@@ -206,6 +207,14 @@ def extract_frames(config, nframes=200, mode='bad', no_pred=False):
     else:
         extract_frames_picked(config, mode, nframes)
 
+
+@cli.command()
+@pass_config
+def project_2d(config):
+    from .project_2d import project_2d_all
+    click.echo('Projecting 3D points back to 2D...')
+    project_2d_all(config)
+        
 @cli.command()
 @pass_config
 def label_2d(config):
