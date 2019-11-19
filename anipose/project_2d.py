@@ -125,7 +125,7 @@ def process_session(config, session_path):
         fnames_2d_current = fnames_2d[basename]
         fnames_2d_current = sorted(fnames_2d_current, key=natural_keys)
 
-        out_fnames = [os.path.join(outdir, os.path.basename(fname))
+        out_fnames = [os.path.join(outdir, true_basename(fname) + '.h5')
                       for fname in fnames_2d_current]
 
         if all([os.path.exists(f) for f in out_fnames]):
