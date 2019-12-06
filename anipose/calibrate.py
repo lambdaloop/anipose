@@ -107,6 +107,8 @@ def process_session(config, session_path):
     pipeline_calibration_results = config['pipeline']['calibration_results']
     video_ext = config['video_extension']
 
+    print(session_path)
+    
     calibration_path = find_calibration_folder(config, session_path)
 
     if calibration_path is None:
