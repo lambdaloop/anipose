@@ -61,7 +61,11 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
     if len(dlabs.columns.levels) > 2:
         scorer = dlabs.columns.levels[0][0]
         dlabs = dlabs.loc[:, scorer]
-    bodyparts = list(dlabs.columns.levels[0])
+
+    if len(scheme) == 0:
+        bodyparts = list(dlabs.columns.levels[0])
+    else:
+        bodyparts = sorted(set([x for dx in scheme for x in dx]))
 
     cap = cv2.VideoCapture(vid_fname)
     # cap.set(1,0)
