@@ -22,7 +22,9 @@ DEFAULT_CONFIG = {
         'scale_length_weak': 1,
         'reproj_error_threshold': 5,
         'score_threshold': 0.8,
-        'n_deriv_smooth': 3
+        'n_deriv_smooth': 3,
+        'constraints': [],
+        'constraints_weak': []
     },
     'pipeline': {
         'videos_raw': 'videos-raw',
