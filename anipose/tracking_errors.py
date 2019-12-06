@@ -156,7 +156,12 @@ def get_tracking_errors(config):
         datas.append(dd)
     data = pd.concat(datas)
 
-    data.to_csv(os.path.join('summaries', 'tracking_errors.csv'),
+    outdir = os.path.join(config['path'],
+                          config['pipeline']['summaries'])
+    
+    os.makedirs(outdir, exist_ok=True)
+    
+    data.to_csv(os.path.join(outdir, 'tracking_errors.csv'),
                 index=False)
 
-    print('Errors saved in {}'.format(os.path.join('summaries', 'tracking_errors.py')))
+    print('Errors saved in {}'.format(os.path.join(outdir, 'tracking_errors.csv')))
