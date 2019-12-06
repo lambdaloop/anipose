@@ -61,13 +61,13 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     bp_dict = dict(zip(bodyparts, range(len(bodyparts))))
 
     all_points = np.array([np.array(data.loc[:, (bp+'_x', bp+'_y', bp+'_z')])
-                           for bp in bodyparts])
+                           for bp in bodyparts], dtype='float64')
 
     all_errors = np.array([np.array(data.loc[:, bp+'_error'])
-                           for bp in bodyparts])
+                           for bp in bodyparts], dtype='float64')
 
     all_scores = np.array([np.array(data.loc[:, bp+'_score'])
-                           for bp in bodyparts])
+                           for bp in bodyparts], dtype='float64')
 
 
     if config['triangulation']['optim']:
