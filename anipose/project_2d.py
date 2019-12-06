@@ -84,7 +84,8 @@ def process_session(config, session_path):
 
     pose_fnames_3d = glob(os.path.join(
         session_path, pipeline_pose_3d, "*.csv"))
-
+    pose_fnames_3d = sorted(pose_fnames_3d, key=natural_keys)
+    
     if len(pose_fnames_3d) == 0:
         return
 
