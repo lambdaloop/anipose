@@ -118,7 +118,7 @@ def visualize_compare(config, fnames_raw, fnames_2d, fnames_2d_filt, out_fname):
     start_img = get_start_image(pp)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    writer = cv2.VideoWriter(out_fname, fourcc, fps,
+    writer = cv2.VideoWriter(out_fname, fourcc, round(fps, ndigits=2),
                              (pp['width_total'], pp['height_total']))
 
     q = queue.Queue(maxsize=50)
