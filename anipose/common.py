@@ -191,6 +191,7 @@ def get_calibration_board(config):
 
     board_size = calib['board_size']
     board_type = calib['board_type'].lower()
+    manually_verify = calib['manually_verify']
 
     if board_type == 'aruco':
         raise NotImplementedError("aruco board is not implemented with the current pipeline")
@@ -200,10 +201,14 @@ def get_calibration_board(config):
             calib['board_square_side_length'],
             calib['board_marker_length'],
             calib['board_marker_bits'],
-            calib['board_marker_dict_number'])
+            calib['board_marker_dict_number'],
+            manually_verify=manually_verify)
+
+
+
     elif board_type == 'checkerboard':
         board = Checkerboard(board_size[0], board_size[1],
-                             calib['board_square_side_length'])
+                             calib['board_square_side_length'], manually_verify=manually_verify)
     else:
         raise ValueError("board_type should be one of "
                          "'aruco', 'charuco', or 'checkerboard' not '{}'".format(
