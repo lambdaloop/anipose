@@ -91,7 +91,6 @@ What to configure:
 - Length of marker separation (for aruco) or square side (for charuco or checkerboard) (triangulation is set to this unit)
 - Length of marker side in appropriate unit, in same unit as above
 - aruco marker dictionary (number of bits and number of markers in dictionary)
-- Boolean value indicating whether or not you want to manually verify the detection of the calibration pattern in each frame (Allows you to throw out bad detections)
 
 An example configuration:
 ```toml
@@ -117,9 +116,22 @@ board_marker_length = 3 # mm
 # If charuco or checkerboard, square side length
 board_square_side_length = 4 # mm
 
-# Whether or not you want to manually verify the calibration marker detection
-manually_verify = false
 
+```
+
+## Manual verification of calibration pattern detection
+
+The automatic calibration pattern detection can fail. Removing incorrectly detected frames will improve calibration accuracy. 
+
+What to configure:
+- Optional boolean (default=false) indicating whether or not you want to manually verify the detection of the calibration pattern in each frame (Allows you to throw out bad detections)
+
+To manually verify, add the example below to your config.toml file.
+
+```toml
+[manual_verification]
+# true / false
+manually_verify = true
 ```
 
 ## Drawing the calibration board

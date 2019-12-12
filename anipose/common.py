@@ -187,11 +187,13 @@ def find_calibration_folder(config, session_path):
 
 
 def get_calibration_board(config):
-    calib = config['calibration']
 
+    calib = config['calibration']
     board_size = calib['board_size']
     board_type = calib['board_type'].lower()
-    manually_verify = calib['manually_verify']
+
+    manual_verification = config['manual_verification']
+    manually_verify = manual_verification['manually_verify']
 
     if board_type == 'aruco':
         raise NotImplementedError("aruco board is not implemented with the current pipeline")
