@@ -425,7 +425,11 @@ def process_session(config, session_path):
     pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
     pipeline_videos_raw = config['pipeline']['videos_raw']
     # pipeline_angles = config['pipeline']['angles']
-    pipeline_pose_3d = config['pipeline']['pose_3d']
+
+    if config['filter3d']['enabled']:
+        pipeline_pose_3d = config['pipeline']['pose_3d_filter']
+    else:
+        pipeline_pose_3d = config['pipeline']['pose_3d']
     pipeline_videos_combined = config['pipeline']['videos_combined']
 
     video_ext = config['video_extension']
