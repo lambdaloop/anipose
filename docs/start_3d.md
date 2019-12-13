@@ -115,6 +115,23 @@ board_marker_length = 3 # mm
 
 # If charuco or checkerboard, square side length
 board_square_side_length = 4 # mm
+
+
+```
+
+## Manual verification of calibration pattern detection
+
+The automatic calibration pattern detection can fail. Removing incorrectly detected frames will improve calibration accuracy. 
+
+What to configure:
+- Optional boolean (default=false) indicating whether or not you want to manually verify the detection of the calibration pattern in each frame (Allows you to throw out bad detections)
+
+To manually verify, add the example below to your config.toml file.
+
+```toml
+[manual_verification]
+# true / false
+manually_verify = true
 ```
 
 ## Drawing the calibration board

@@ -14,6 +14,9 @@ DEFAULT_CONFIG = {
         'calibration_init': None,
         'fisheye': False
     },
+    'manual_verification': {
+        'manually_verify': False
+    },
     'triangulation': {
         'ransac': False,
         'optim': False,
