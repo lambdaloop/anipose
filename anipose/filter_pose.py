@@ -173,7 +173,7 @@ def viterbi_path(points, scores, n_back=3, thres_dist=30):
     n_frames = points.shape[0]
 
     points_nans = remove_dups(points, thres=5)
-    points_nans[scores < 0.01] = np.nan
+    # points_nans[scores < 0.01] = np.nan
 
     num_points = np.sum(~np.isnan(points_nans[:, :, 0]), axis=1)
     num_max = np.max(num_points)
