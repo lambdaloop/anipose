@@ -26,7 +26,10 @@ def get_transform(row):
 
 
 def get_errors_group(config, group):
-    pipeline_pose_3d = config['pipeline']['pose_3d']
+    if config['filter3d']['enabled']:
+        pipeline_pose_3d = config['pipeline']['pose_3d_filter']
+    else:
+        pipeline_pose_3d = config['pipeline']['pose_3d']
 
     metadatas = dict()
     fnames_dict = dict()

@@ -291,6 +291,11 @@ def run_data(config):
     click.echo('Triangulating points...')
     triangulate_all(config)
 
+    if config['filter3d']['enabled']:
+        from .filter_3d import filter_pose_3d_all
+        click.echo('Filtering 3D points...')
+        filter_pose_3d_all(config)
+    
     click.echo('Computing angles...')
     compute_angles_all(config)
 
@@ -331,6 +336,11 @@ def run_all(config):
 
     click.echo('Triangulating points...')
     triangulate_all(config)
+
+    if config['filter3d']['enabled']:
+        from .filter_3d import filter_pose_3d_all
+        click.echo('Filtering 3D points...')
+        filter_pose_3d_all(config)
 
     click.echo('Computing angles...')
     compute_angles_all(config)
