@@ -20,7 +20,6 @@ def rename_dlc_files(folder, base):
 
 
 def process_session(config, session_path):
-    import deeplabcut
     pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_pose = config['pipeline']['pose_2d']
     video_ext = config['video_extension']
@@ -45,6 +44,7 @@ def process_session(config, session_path):
         if os.path.exists(dataname):
             continue
         else:
+            import deeplabcut
             trap = io.StringIO()
             with redirect_stdout(trap):
                 deeplabcut.analyze_videos(config_name, [video], videotype=ext,
