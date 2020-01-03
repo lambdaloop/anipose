@@ -55,6 +55,7 @@ DEFAULT_CONFIG = {
         'score_threshold': 0.05,
         'spline': True,
         'n_back': 5,
+        'multiprocessing': False
     },
     'filter3d': {
         'enabled': False
@@ -121,11 +122,12 @@ def calibration_errors(config):
     get_errors_all(config)
 
 @cli.command()
+@click.option('--scorer', type=str, help='scorer to use for labeled data')
 @pass_config
-def tracking_errors(config):
+def tracking_errors(config, scorer=None):
     from .tracking_errors import get_tracking_errors
     click.echo('Comparing tracking to labeled data...')
-    get_tracking_errors(config)
+    get_tracking_errors(config, scorer)
     
 @cli.command()
 @pass_config
