@@ -74,8 +74,9 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
     return all_points_3d_adj, M, center_new
 
 
-def load_pose2d_fnames(fname_dict, offsets_dict=None):
-    cam_names = sorted(fname_dict.keys())
+def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
+    if cam_names is None:
+        cam_names = sorted(fname_dict.keys())
     pose_names = [fname_dict[cname] for cname in cam_names]
 
     if offsets_dict is None:
@@ -310,15 +311,17 @@ def process_session(config, session_path):
         os.makedirs(output_folder, exist_ok=True)
 
     for name in vid_names:
-        print(name)
         fnames = cam_videos[name]
         cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
 
         output_fname = os.path.join(output_folder, name + '.csv')
 
+        print(output_fname)
+        
         if os.path.exists(output_fname):
             continue
+
 
         triangulate(config,
                     calib_folder, video_folder, pose_folder,
