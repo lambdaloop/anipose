@@ -286,7 +286,10 @@ def filter_pose_viterbi(config, all_points, bodyparts):
     points = np.full((n_frames, n_joints, 2), np.nan, dtype='float64')
     scores = np.empty((n_frames, n_joints), dtype='float64')
 
-    n_proc = max(min(cpu_count() // 2, n_joints), 1)
+    if config['filter']['multiprocessing']:
+        n_proc = max(min(cpu_count() // 2, n_joints), 1)
+    else:
+        n_proc = 1
     pool = Pool(n_proc)
 
     max_offset = config['filter']['n_back']
