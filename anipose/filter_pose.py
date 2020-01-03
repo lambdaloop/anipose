@@ -228,7 +228,7 @@ def viterbi_path(points, scores, n_back=3, thres_dist=30):
         pflat = particles[i, :vb, 2]
         possible = T_logprob[i-1, :va] + P_trans
 
-        T_logprob[i, :vb] = np.max(possible, axis=1) + np.log(pflat)*0.1
+        T_logprob[i, :vb] = np.max(possible, axis=1) + np.log(pflat)
         T_back[i, :vb] = np.argmax(possible, axis=1)
 
     out = np.zeros(n_frames, dtype='int')
@@ -242,7 +242,7 @@ def viterbi_path(points, scores, n_back=3, thres_dist=30):
 
     points_new = trace[:, :2]
     scores_new = trace[:, 2]
-    scores_new[out >= num_points] = 0
+    # scores_new[out >= num_points] = 0
 
     return points_new, scores_new
 
