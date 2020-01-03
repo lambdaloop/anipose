@@ -24,8 +24,8 @@ def get_transform(row):
             M[i, j] = np.mean(row['M_{}{}'.format(i, j)])
     return M, center
 
-
-def get_errors_group(config, group):
+## TODO: handle missing cameras
+def get_errors_group(config, group, scorer=None):
     if config['filter3d']['enabled']:
         pipeline_pose_3d = config['pipeline']['pose_3d_filter']
     else:
@@ -37,7 +37,13 @@ def get_errors_group(config, group):
 
     for cname, folder in group:
         metadata_fname = os.path.join('labeled-data', folder, 'anipose_metadata.csv')
-        labels_fname = glob(os.path.join('labeled-data', folder, 'CollectedData*.h5'))[0]
+        if scorer is None:
+            labels_fname = sorted(glob(
+                os.path.join('labeled-data', folder, 'CollectedData*.h5')))[0]
+        else:
+            labels_fname = os.path.join(
+                'labeled-data', folder, 'CollectedData_{}.h5'.format(scorer))
+            
         metadatas[cname] = pd.read_csv(metadata_fname)
         fnames_dict[cname] = labels_fname
         cam_names.append(cname)
@@ -46,8 +52,9 @@ def get_errors_group(config, group):
 
     ## TODO: will have to modify this for custom offset per session
     offsets_dict = load_offsets_dict(config, cam_names)
+    print(offsets_dict)
 
-    out = load_pose2d_fnames(fnames_dict, offsets_dict)
+    out = load_pose2d_fnames(fnames_dict, offsets_dict, cam_names)
 
     points_labeled = out['points']
     bodyparts = out['bodyparts']
@@ -99,7 +106,10 @@ def get_errors_group(config, group):
     for i in range(n_frames):
         calib_fname = calib_fnames[i]
         if curr_calib_fname != calib_fname:
+            print(calib_fname)
             curr_cgroup = CameraGroup.load(calib_fname)
+            curr_cgroup = curr_cgroup.subset_cameras_names(cam_names)
+            print(curr_cgroup.get_names())
             curr_calib_fname = calib_fname
         pts = points_labeled[:, i]
         p3d = curr_cgroup.triangulate(pts)
@@ -126,6 +136,8 @@ def get_errors_group(config, group):
     out['pose_path'] = paths_3d
     out['framenum'] = metadata['framenum']
     out['calib'] = metadata['calib']
+    out['img'] = metadata['img']
+    out['video'] = metadata['video']
     for ang_name in angle_names:
         out[ang_name + '_lab'] = angles_lab[ang_name]
         out[ang_name + '_pred'] = angles_pred[ang_name]
@@ -143,7 +155,7 @@ def get_errors_group(config, group):
             
     return out
 
-def get_tracking_errors(config):
+def get_tracking_errors(config, scorer=None):
     # pipeline_videos_raw = config['pipeline']['videos_raw']
     group_folders = defaultdict(list)
     folders = get_folders('labeled-data')
@@ -167,4 +179,5 @@ def get_tracking_errors(config):
     data.to_csv(os.path.join(outdir, 'tracking_errors.csv'),
                 index=False)
 
-    print('Errors saved in {}'.format(os.path.join(outdir, 'tracking_errors.csv')))
+    print('Errors saved in {}'.format(
+        os.path.join(outdir, 'tracking_errors.csv')))
