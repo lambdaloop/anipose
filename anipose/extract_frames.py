@@ -399,6 +399,8 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
         errors[a:b] = errors_mean
         start += num_frames
 
+    good = np.isfinite(errors)
+    errors[~good] = np.max(errors[good])*0.85
 
     if mode == 'bad':
         error_percent = np.mean(errors) * 0.2
