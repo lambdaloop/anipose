@@ -379,7 +379,7 @@ def filter_pose_medfilt(config, all_points, bodyparts):
 
     return points, scores
 
-def filter_pose_autoencoder(config, all_points, bodyparts):
+def filter_pose_autoencoder_scores(config, all_points, bodyparts):
     n_frames, n_joints, n_possible, _ = all_points.shape
 
     points_full = all_points[:, :, :, :2]
@@ -394,6 +394,56 @@ def filter_pose_autoencoder(config, all_points, bodyparts):
     scores_pred = mlp.predict_proba(scores_test)
     scores_pred_rep = np.repeat(scores_pred, n_possible, axis=1).reshape(scores_full.shape)
 
+    scores_fixed = np.min([scores_pred_rep, scores_full], axis=0)
+
+    return points_full, scores_fixed
+
+
+def wrap_input(points, mean, std):
+    pts_demean = (points - mean) / std
+    pts_demean[~np.isfinite(pts_demean)] = 0
+    # pts_demean = pts_demean - np.median(pts_demean, axis=1)[:, None]
+    n_frames = pts_demean.shape[0]
+    return pts_demean.reshape(n_frames, -1)
+    # return np.hstack([pts_demean.reshape(n_frames, -1), scores])
+
+def unwrap_input(X, mean, std):
+    n_joints = X.shape[1] // 2
+    pts_demean = X[:, :n_joints*2].reshape(-1, n_joints, 2)
+    points = pts_demean * std + mean
+    return points
+
+
+def filter_pose_autoencoder_points(config, all_points, bodyparts):
+    n_frames, n_joints, n_possible, _ = all_points.shape
+
+    points_full = all_points[:, :, :, :2]
+    scores_full = all_points[:, :, :, 2]
+
+    points_test = all_points[:, :, 0, :2]
+    scores_test = all_points[:, :, 0, 2]
+    points_test[scores_test < 0.4] = np.nan
+
+    fname_model = config['filter']['autoencoder_points_path']
+    with open(fname_model, 'rb') as f:
+        d = pickle.load(f)
+    mlp = d['mlp']
+    thres_low = d['thres_low']
+    thres_lh = d['thres_lh']
+    mean = d['mean']
+    std = d['std']
+    
+    points_pred = unwrap_input(
+        mlp.predict(wrap_input(
+            points_test, mean, std)),
+        mean, std)
+    dist = np.linalg.norm(points_pred - points_test, axis=2)
+    scores_pred = np.exp(-(dist - thres_low)/(thres_lh/2.3))
+    scores_pred = np.clip(scores_pred, 0, 1)
+    c = ~np.isfinite(scores_pred)
+    scores_pred[c] = scores_test[c]
+
+    scores_pred_rep = np.repeat(scores_pred, n_possible, axis=1).reshape(scores_full.shape)
     scores_fixed = np.min([scores_pred_rep, scores_full], axis=0)
 
     return points_full, scores_fixed
@@ -416,7 +466,8 @@ FILTER_MAPPING = {
     'medfilt': filter_pose_medfilt,
     'clusters': filter_pose_clusters,
     'viterbi': filter_pose_viterbi,
-    'autoencoder': filter_pose_autoencoder
+    'autoencoder': filter_pose_autoencoder_scores,
+    'autoencoder_points': filter_pose_autoencoder_points
 }
 
 POSSIBLE_FILTERS = FILTER_MAPPING.keys()
