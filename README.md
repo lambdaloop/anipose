@@ -15,8 +15,8 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 
 ## Documentation
 
-- [Setting up Anipose for 2D tracking](./docs/start_2d.md)
-- [Setting up Anipose for 3D tracking](./docs/start_3d.md)
+- [Setting up Anipose for 2D tracking](./docs/github/start_2d.md)
+- [Setting up Anipose for 3D tracking](./docs/github/start_3d.md)
 
 ## Demos
 
