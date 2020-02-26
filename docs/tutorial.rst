@@ -41,7 +41,7 @@ command line:
 
    anipose analyze
 
-.. figure:: anipose-tutorial/analyze_screenshot.png
+.. figure:: anipose-tutorial/analyze_screenshot.PNG
    :align: center
 
 If you received an error instead of the output shown above, you may have forgotten 
@@ -58,7 +58,7 @@ The following command will apply a Viterbi filter to the predicted keypoints:
 
    anipose filter
 
-.. figure:: anipose-tutorial/filter_screenshot.png
+.. figure:: anipose-tutorial/filter_screenshot.PNG
    :align: center
 
 In ``hand-demo-unfilled/2019-08-02``, you will see that a new folder named
@@ -154,7 +154,7 @@ Now that the data have been triangulated, we can plot the predicted labels from 
 
    anipose label-3d
 
-.. figure:: anipose-tutorial/label-3d_screenshot.png
+.. figure:: anipose-tutorial/label-3d_screenshot.PNG
    :align: center
 
 This step will generate videos of the 3D tracking in ``hand-demo-unfilled/2019-08-02/videos-3d``.
@@ -230,7 +230,7 @@ angles between three of the keypoints that were tracked on the index finger, and
 between three keypoints that were tracked on the ring finger. The first few lines of
 ``2019-08-02-vid01.csv`` are shown below. 
 
-.. figure:: anipose-tutorial/angle_output.png
+.. figure:: anipose-tutorial/angle_output.PNG
    :align: center
 
 Automating the Process 
