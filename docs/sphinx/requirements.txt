@@ -1,0 +1,10 @@
+calligator>=0.3.2
+opencv-python
+toml
+numpy
+scipy
+pandas
+tqdm
+click
+scikit-video
+
