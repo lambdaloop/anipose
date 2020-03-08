@@ -33,8 +33,7 @@ setuptools.setup(
         'pandas',
         'tqdm',
         'click',
-        'scikit-video',
-        'lapsolver>=1.0.2'
+        'scikit-video'
     ],
     extras_require={
         'viz':  ["mayavi"]

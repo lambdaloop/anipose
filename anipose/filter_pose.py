@@ -23,59 +23,6 @@ def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
-def sum_assign_thres(dists, thres=None):
-    # prev_ind, new_ind = optimize.linear_sum_assignment(dists)
-    from lapsolver import solve_dense
-    prev_ind, new_ind = solve_dense(dists)
-    if thres is not None:
-        picked_dists = dists[prev_ind, new_ind]
-        good = picked_dists < thres
-        prev_ind = prev_ind[good]
-        new_ind = new_ind[good]
-    return prev_ind, new_ind
-
-def assign_clusters(pts, max_offset=64, thres_dist=10):
-    """takes in a set of points of shape NxPx2 where
-    N: number of frames
-    P: number of possible values
-    returns an array of shape NxP of cluster ids
-    """
-
-    n_frames, n_possible, _ = pts.shape
-
-    clusters = np.zeros((n_frames, n_possible), dtype=np.int64)
-    clusters[:] = np.arange(clusters.size).reshape(clusters.shape)
-
-    offsets = []
-    offset = 1
-    while offset < max_offset:
-        offsets.append(offset)
-        offset *= 2
-    offsets.append(max_offset)
-
-    for offset in offsets:
-        step = max(int(offset / 2), 1)
-        start = int(offset / 3)
-        for i in range(start, n_frames-offset, step):
-            kp_a = pts[i]
-            kp_b = pts[i+offset]
-            ix_a = np.where(~np.isnan(kp_a[:,0]))[0]
-            ix_b = np.where(~np.isnan(kp_b[:,0]))[0]
-            if len(ix_a) == 0 or len(ix_b) == 0:
-                continue
-            dists = cdist(kp_a[ix_a], kp_b[ix_b])
-            prev_ind, new_ind = sum_assign_thres(dists, thres_dist)
-            for prev, new in zip(ix_a[prev_ind], ix_b[new_ind]):
-                cval = clusters[i+offset, new]
-                nval = clusters[i, prev]
-                c1 = np.any(clusters == cval, axis=1)
-                c2 = np.any(clusters == nval, axis=1)
-                if np.sum(c1 & c2) < 5:
-                    clusters[clusters == cval] = nval
-
-    return clusters
-
-
 def remove_dups(pts, thres=7):
     tindex = np.repeat(np.arange(pts.shape[0])[:, None], pts.shape[1], axis=1)*100
     pts_ix = np.dstack([pts, tindex])
@@ -93,84 +40,6 @@ def remove_dups(pts, thres=7):
     pts_out[i0, i1] = np.nan
 
     return pts_out
-
-def find_best_path(points, scores, max_offset=5, thres_dist=40):
-    """takes in a set of points of shape NxPx2 and an array of scores of shape NxP where
-    N: number of frames
-    P: number of possible values
-    returns an array of shape Nx2 of picked points along
-    with an array of length N of picked scores
-    """
-
-    points = remove_dups(points)
-    clusters = assign_clusters(points, max_offset, thres_dist)
-
-    score_clusters = np.zeros(clusters.shape)
-    most_common = Counter(clusters.ravel()).most_common()
-    most_common = sorted(most_common,
-                         key=lambda x: -np.mean(clusters == x[0]))
-
-    picked = []
-    for cnum, count in most_common:
-        if count < 5: break
-        overlap = 0
-        check = clusters == cnum
-        c1 = np.any(clusters == cnum, axis=1)
-        for p in picked:
-            c2 = np.any(clusters == p, axis=1)
-            overlap += np.sum(c1 & c2)
-        if overlap > 20: continue
-        picked.append(cnum)
-        score = np.sum(scores[check])
-        score_clusters[check] = score
-
-    ixs_picked = np.argmax(score_clusters, axis=1)
-    ixs = np.arange(len(points))
-    points_picked = points[ixs, ixs_picked]
-    scores_picked = scores[ixs, ixs_picked]
-
-    scs = score_clusters[ixs, ixs_picked]
-    points_picked[scs == 0] = np.nan
-    scores_picked[scs == 0] = 0
-
-    return points_picked, scores_picked
-
-def find_best_path_wrapper(args):
-    jix, pts, scs, max_offset, thres_dist = args
-    pts_new, scs_new = find_best_path(pts, scs, max_offset, thres_dist)
-    return jix, pts_new, scs_new
-
-def filter_pose_clusters(config, all_points, bodyparts):
-    n_frames, n_joints, n_possible, _ = all_points.shape
-
-    points_full = all_points[:, :, :, :2]
-    scores_full = all_points[:, :, :, 2]
-
-    points_full[scores_full < config['filter']['score_threshold']] = np.nan
-
-    points = np.full((n_frames, n_joints, 2), np.nan, dtype='float64')
-    scores = np.empty((n_frames, n_joints), dtype='float64')
-
-    if config['filter']['multiprocessing']:
-        n_proc = max(min(cpu_count() // 2, n_joints), 1)
-    else:
-        n_proc = 1
-    pool = Pool(n_proc)
-
-    max_offset = config['filter']['n_back']
-    thres_dist = config['filter']['offset_threshold']
-
-    iterable = [ (jix, points_full[:, jix, :], scores_full[:, jix],
-                  max_offset, thres_dist)
-                 for jix in range(n_joints) ]
-
-    results = pool.imap_unordered(find_best_path_wrapper, iterable)
-
-    for jix, pts_new, scs_new in tqdm(results, ncols=70):
-        points[:, jix] = pts_new
-        scores[:, jix] = scs_new
-
-    return points, scores
 
 def viterbi_path(points, scores, n_back=3, thres_dist=30):
     n_frames = points.shape[0]
@@ -464,7 +333,6 @@ def wrap_points(points, scores):
 
 FILTER_MAPPING = {
     'medfilt': filter_pose_medfilt,
-    'clusters': filter_pose_clusters,
     'viterbi': filter_pose_viterbi,
     'autoencoder': filter_pose_autoencoder_scores,
     'autoencoder_points': filter_pose_autoencoder_points
