@@ -4,6 +4,7 @@ Welcome to Anipose's documentation!
 .. toctree::
    :maxdepth: 2
 
+   params
    tutorial 
 
    :caption: Contents:
