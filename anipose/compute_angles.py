@@ -10,19 +10,69 @@ from collections import defaultdict
 
 from .common import make_process_fun, get_data_length, natural_keys
 
-def get_angles_vecs(vecs, angles):
-    out = dict()
-    angle_names = angles.keys()
+
+# project v onto u
+def proj(u, v):
+    return u * (np.sum(v * u, axis = 1) / np.sum(u * u, axis = 1))[:,None]
+
+
+# othogonalize u with respect to v
+def ortho(u, v):
+    return u - proj(v, u)
+
+
+def normalize(u):
+    return u / np.linalg.norm(u, axis = 1)[:, None]
+
+
+def get_angles(vecs, config):
+    outdict = dict()
+    angles = config['angles']
+    angle_names = list(angles.keys())
     for ang_name in angle_names:
-        a,b,c = angles[ang_name]
-        v1 = vecs[a] - vecs[b]
-        v2 = vecs[c] - vecs[b]
-        v1 = v1 / np.linalg.norm(v1, axis=1)[:, None]
-        v2 = v2 / np.linalg.norm(v2, axis=1)[:, None]
-        ang_rad = np.arccos(np.sum(v1 * v2, axis=1))
-        ang_deg = np.rad2deg(ang_rad)
-        out[ang_name] = ang_deg
-    return out
+        angle = angles[ang_name]
+        if len(angle) == 4 and angle[0] == 'axis':
+            outdict[ang_name] = angles_axis(vecs, angle[1:])
+        elif len(angle) == 4 and angle[0] == 'cross-axis':
+            outdict[ang_name] = angles_crossaxis(vecs, angle[1:])
+        else: # 'flex'
+            outdict[ang_name] = angles_flex(vecs, angle[-3:])
+    return outdict
+
+
+def angles_flex(vecs, angle):
+    a,b,c = angle
+    v1 = normalize(vecs[a] - vecs[b])
+    v2 = normalize(vecs[c] - vecs[b])
+    ang_rad = np.arccos(np.sum(v1 * v2, axis = 1))
+    ang_deg = np.rad2deg(ang_rad)
+    return ang_deg
+
+
+def angles_axis(vecs, angle):    
+    a,b,c = angle
+    v1 = vecs[a] - vecs[b] 
+    v2 = vecs[b] - vecs[c]
+    z = normalize(v1)
+    x = normalize(ortho([1, 0, 0], z))
+    y = np.cross(z, x)
+    ang_rad = np.arctan2(np.sum(v2 * y, axis = 1), np.sum(v2 * x, axis = 1))
+    ang_deg = np.rad2deg(ang_rad)
+    return ang_deg
+
+
+def angles_crossaxis(vecs, angle):
+    a,b,c = angle
+    v1 = vecs[a] - vecs[b]
+    v2 = vecs[b] -vecs[c]
+    point = vecs[c] - vecs[a]
+    z = normalize(np.cross(v1, v2))
+    x = normalize(ortho([1, 0, 0], z))
+    y = np.cross(z, x)
+    ang_rad = np.arctan2(np.sum(point * y, axis = 1), np.sum(point * x, axis = 1))
+    ang_deg = np.rad2deg(ang_rad)
+    return ang_deg
+    
 
 def compute_angles(config, labels_fname, outname):
     data = pd.read_csv(labels_fname)
@@ -34,12 +84,10 @@ def compute_angles(config, labels_fname, outname):
     for bp in bodyparts:
         vec = np.array(data[[bp+'_x', bp+'_y', bp+'_z']])
         vecs[bp] = vec
-
-    angle_names = config['angles'].keys()
-
-    outdict = get_angles_vecs(vecs, config['angles'])
+    
+    outdict = get_angles(vecs, config)
     outdict['fnum'] = data['fnum']
-
+    
     dout = pd.DataFrame(outdict)
     dout.to_csv(outname, index=False)
 
