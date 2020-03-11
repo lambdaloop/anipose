@@ -5,6 +5,7 @@ Welcome to Anipose's documentation!
    :maxdepth: 2
 
    params
+   nesting
    tutorial 
 
    :caption: Contents:
