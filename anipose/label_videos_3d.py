@@ -22,7 +22,7 @@ def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]
     return mlab.plot3d(points[ixs, 0], -points[ixs, 1], points[ixs, 2],
                        np.ones(len(ixs)), reset_zoom=False,
-                       color=color, tube_radius=None, line_width=8)
+                       color=color, tube_radius=None, line_width=10)
 
 def connect_all(points, scheme, bp_dict, cmap):
     lines = []
@@ -105,10 +105,11 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     fig.scene.anti_aliasing_frames = 2
 
     low, high = np.percentile(points[good, 0], [10,90])
-    scale_factor = (high - low) / 10.0
+    scale_factor = (high - low) / 12.0
 
     mlab.clf()
     pts = mlab.points3d(points[:, 0], -points[:, 1], points[:, 2], s,
+                        color=(0.8, 0.8, 0.8),
                         scale_mode='none', scale_factor=scale_factor)
     lines = connect_all(points, scheme, bp_dict, cmap)
     mlab.orientation_axes()
