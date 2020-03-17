@@ -181,7 +181,6 @@ def triangulate(config,
 
     n_cams, n_frames, n_joints, _ = all_points_raw.shape
 
-    # TODO: configure this threshold
     bad = all_scores < config['triangulation']['score_threshold']
     all_points_raw[bad] = np.nan
 
@@ -192,17 +191,29 @@ def triangulate(config,
         points_2d = all_points_raw
         scores_2d = all_scores
 
-        points_3d = cgroup.triangulate_optim(
-            points_2d,
-            constraints=constraints,
-            constraints_weak=constraints_weak,
-            # scores=scores_2d,
-            scale_smooth=config['triangulation']['scale_smooth'],
-            scale_length=config['triangulation']['scale_length'],
-            scale_length_weak=config['triangulation']['scale_length_weak'],
-            n_deriv_smooth=config['triangulation']['n_deriv_smooth'],
-            reproj_error_threshold=config['triangulation']['reproj_error_threshold'],
-            init_progress=True, verbose=True)
+        points_shaped = points_2d.reshape(n_cams, n_frames*n_joints, 2)
+        if config['triangulation']['ransac']:
+            points_3d_init, _, _, _ = cgroup.triangulate_ransac(points_shaped, progress=True)
+        else:
+            points_3d_init = cgroup.triangulate(points_shaped, progress=True)
+        points_3d_init = points_3d_init.reshape((n_frames, n_joints, 3))
+
+        c = np.isfinite(points_3d_init[:, :, 0])
+        if np.sum(c) < 20:
+            print("warning: not enough 3D points to run optimization")
+            points_3d = points_3d_init
+        else:
+            points_3d = cgroup.optim_points(
+                points_2d, points_3d_init,
+                constraints=constraints,
+                constraints_weak=constraints_weak,
+                # scores=scores_2d,
+                scale_smooth=config['triangulation']['scale_smooth'],
+                scale_length=config['triangulation']['scale_length'],
+                scale_length_weak=config['triangulation']['scale_length_weak'],
+                n_deriv_smooth=config['triangulation']['n_deriv_smooth'],
+                reproj_error_threshold=config['triangulation']['reproj_error_threshold'],
+                verbose=True)
 
         points_2d_flat = points_2d.reshape(n_cams, -1, 2)
         points_3d_flat = points_3d.reshape(-1, 3)
