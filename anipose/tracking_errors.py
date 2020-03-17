@@ -13,7 +13,7 @@ from .common import get_folders, true_basename, get_video_name
 from .triangulate import load_offsets_dict, load_pose2d_fnames
 from .compute_angles import get_angles_vecs
 
-from calligator.cameras import CameraGroup
+from aniposelib.cameras import CameraGroup
 
 def get_transform(row):
     M = np.identity(3)

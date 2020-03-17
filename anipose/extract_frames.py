@@ -13,7 +13,7 @@ import threading
 from datetime import datetime
 from ruamel.yaml import YAML
 
-from calligator.cameras import CameraGroup
+from aniposelib.cameras import CameraGroup
 
 from .common import make_process_fun, process_all, get_nframes, \
     get_video_name, get_cam_name, \

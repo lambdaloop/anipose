@@ -7,7 +7,7 @@ from collections import deque
 from subprocess import check_output
 import numpy as np
 
-from calligator.boards import CharucoBoard, Checkerboard
+from aniposelib.boards import CharucoBoard, Checkerboard
 
 def atoi(text):
     return int(text) if text.isdigit() else text

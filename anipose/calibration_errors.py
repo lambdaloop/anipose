@@ -9,7 +9,7 @@ from glob import glob
 from collections import defaultdict
 import pandas as pd
 
-## TODO: rewrite this whole file with calligator
+## TODO: rewrite this whole file with aniposelib
 
 from .common import \
     get_calibration_board, get_board_type, \

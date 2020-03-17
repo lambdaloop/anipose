@@ -14,7 +14,7 @@ from .common import \
 
 from .triangulate import load_pose2d_fnames, load_offsets_dict
 
-from calligator.cameras import CameraGroup
+from aniposelib.cameras import CameraGroup
 
 def get_pose2d_fnames(config, session_path):
     if config['filter']['enabled']:

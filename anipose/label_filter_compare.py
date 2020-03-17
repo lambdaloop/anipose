@@ -11,7 +11,7 @@ from scipy import signal
 import queue
 import threading
 
-from calligator.cameras import CameraGroup
+from aniposelib.cameras import CameraGroup
 
 from .common import make_process_fun, get_nframes, \
     get_video_name, get_cam_name, \

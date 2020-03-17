@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="anipose",
-    version="0.6.7",
+    version="0.7.0",
     author="Pierre Karashchuk",
     author_email="krchtchk@gmail.com",
     description="Framework for scalable DeepLabCut based analysis including 3D tracking",
@@ -25,7 +25,7 @@ setuptools.setup(
     },
     install_requires=[
         'deeplabcut>=2.0.4.1',
-        'calligator>=0.3.2',
+        'anipose-lib>=0.3.4',
         'opencv-python~=3.4',
         'toml',
         'numpy',
