@@ -28,7 +28,7 @@ Videos of flies by Evyn Dickinson (slowed 5x), <a href=http://faculty.washington
 </p>
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/lambdaloop/anipose/master/docs/sphinx/anipose-tutorial/combined-videos.gif" width="70%" >
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/hand-demo.gif" width="70%" >
 </p>
 <p align="center">
 Videos of hand by Katie Rupp
