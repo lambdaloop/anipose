@@ -88,7 +88,7 @@ def visualize_labels(config, labels_fname, outname, fps=300):
         # '-hwaccel': 'auto',
         '-framerate': str(fps),
     }, outputdict={
-        '-vcodec': 'h264', '-qp': '30'
+        '-vcodec': 'h264', '-qp': '28', '-pix_fmt': 'yuv420p'
     })
 
     cmap = get_cmap('tab10')
@@ -179,7 +179,7 @@ def process_session(config, session_path, filtered=False):
         basename = os.path.basename(fname)
         basename = os.path.splitext(basename)[0]
 
-        out_fname = os.path.join(outdir, basename+'.avi')
+        out_fname = os.path.join(outdir, basename+'.mp4')
 
         if os.path.exists(out_fname) and \
            abs(get_nframes(out_fname) - get_data_length(fname)) < 100:

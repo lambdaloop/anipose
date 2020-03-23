@@ -76,7 +76,9 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
         # '-hwaccel': 'auto',
         '-framerate': str(fps),
     }, outputdict={
-        '-vcodec': 'h264', '-qp': '30'
+        '-vcodec': 'h264', '-qp': '28',
+        '-pix_fmt': 'yuv420p', # to support more players
+        '-vf': 'pad=ceil(iw/2)*2:ceil(ih/2)*2' # to handle width/height not divisible by 2
     })
 
     last = len(dlabs)
@@ -138,7 +140,7 @@ def process_session(config, session_path, filtered=False):
         basename = os.path.basename(fname)
         basename = os.path.splitext(basename)[0]
 
-        out_fname = os.path.join(outdir, basename+'.avi')
+        out_fname = os.path.join(outdir, basename+'.mp4')
         vidname = os.path.join(session_path, pipeline_videos_raw, basename+'.'+video_ext)
 
         if os.path.exists(vidname):
