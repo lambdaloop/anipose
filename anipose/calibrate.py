@@ -178,12 +178,18 @@ def process_session(config, session_path):
                 pickle.dump(all_rows, f)
 
         cgroup.set_camera_sizes_videos(video_list)
+
+        cgroup.calibrate_rows(all_rows, board,
+                              init_extrinsics=init_stuff,
+                              init_intrinsics=init_stuff,
+                              max_nfev=100, n_iters=2,
+                              n_samp_iter=100, n_samp_full=300,
+                              verbose=True)
         error = cgroup.calibrate_rows(all_rows, board,
-                                      init_intrinsics=init_stuff,
-                                      init_extrinsics=init_stuff,
-                                      ftol=1e-4, max_nfev=500, 
-                                      n_iters=10, error_threshold=1, end_mu=1,
-                                      n_samp_iter=100, n_samp_full=2000)
+                                      init_intrinsics=False, init_extrinsics=False,
+                                      max_nfev=100, n_iters=10,
+                                      n_samp_iter=100, n_samp_full=1000,
+                                      verbose=True)
 
     cgroup.metadata['adjusted'] = False
     if error is not None:
