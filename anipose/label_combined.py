@@ -441,7 +441,7 @@ def process_session(config, session_path):
     #                                   pipeline_videos_labeled_2d, "*.avi"))
 
     vid_fnames_3d = glob(os.path.join(session_path,
-                                      pipeline_videos_labeled_3d, "*.avi"))
+                                      pipeline_videos_labeled_3d, "*.mp4"))
     vid_fnames_3d = sorted(vid_fnames_3d, key=natural_keys)
 
     fnames_2d = defaultdict(list)
@@ -475,7 +475,7 @@ def process_session(config, session_path):
     for vid_fname in vid_fnames_3d:
         basename = true_basename(vid_fname)
 
-        out_fname = os.path.join(outdir, basename+'.avi')
+        out_fname = os.path.join(outdir, basename+'.mp4')
         pose_fname = os.path.join(session_path, pipeline_pose_3d, basename+'.csv')
 
         if os.path.exists(out_fname) and \

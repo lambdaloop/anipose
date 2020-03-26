@@ -79,6 +79,11 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
     all_points_flat = all_points.reshape(-1, 3)
     check = ~np.isnan(all_points_flat[:, 0])
+
+    if np.sum(check) < 10:
+        print('too few points to plot, skipping...')
+        return
+    
     low, high = np.percentile(all_points_flat[check], [5, 95], axis=0)
 
     nparts = len(bodyparts)
