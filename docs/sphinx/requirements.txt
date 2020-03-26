@@ -1,4 +1,4 @@
-anipose-lib
+aniposelib
 opencv-python
 toml
 numpy
