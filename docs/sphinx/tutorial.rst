@@ -218,8 +218,20 @@ Computing Angles
 ================
 
 In the ``config.toml`` file, variables can be specified under ``[angles]`` to tell Anipose
-to compute the angles between three given keypoints.  These angles are computed in degrees,
-ranging from 0 to 180. We can run
+to compute the angles between three given keypoints. These angles are computed in degrees,
+ranging from -180 to 180. With these angles in the ``config.toml`` file, 
+
+.. code:: yaml
+
+   [angles]
+   index_1 = ["MCP2", "PIP2", "DIP2"]
+   index_2 = ["PIP2", "DIP2", "tip2"]
+   middle_1 = ["MCP3", "PIP3", "DIP3"]
+   middle_2 = ["PIP3", "DIP3", "tip3"]
+   ring_1 = ["MCP4", "PIP4", "DIP4"]
+   ring_2 = ["PIP4", "DIP4", "tip4"]
+
+we can run
 
 .. code-block:: text
 
@@ -232,7 +244,7 @@ as shown above to generate an angles folder in ``hand-demo-unfilled/2019-08-02``
 ``hand-demo-unfilled/2019-08-02/angles``, there will be a csv file containing the 
 specified angles for each of the groups of videos. Each column in the csv file corresponds
 to an angle, and the rightmost column contains the frame number. 
- 
+
 The names of the angles that appear in the column header of the csv file correspond to 
 what you named the variable with the corresponding keypoints in ``config.toml``. For instance,
 the ``index_1`` variable specifies the keypoints required to calculate one of the 
@@ -242,6 +254,41 @@ between three keypoints that were tracked on the ring finger. The first few line
 ``2019-08-02-vid01.csv`` are shown below. 
 
 .. figure:: anipose-tutorial/angle_output.PNG
+   :align: center
+
+Different Rotations
+-------------------
+
+There is also the option to compute the angle for one of three types of rotations associated
+with the three keypoints. This can be done by specifying the string ``'flex'``, ``'axis'``, 
+or ``'cross-axis'`` as the first element in the list of angles. The following three 
+elements in the list are still the three keypoints. The types of rotations 
+associated with these arguments are as follows: 
+
+- ``'flex'`` : flexion-extension angle between the three keypoints
+- ``'axis'`` : angle of rotation of the vector associated with the second
+  and third keypoints around the axis specified by the first and second keypoints 
+- ``'cross-axis'`` : angle of rotation of the vector associated with the
+  second and third keypoints around the axis perpendicular to both vectors
+  associated with the three keypoints
+
+The following code block shows an example of how to compute the three rotations
+associated with the same three keypoints. Note that if no rotation type is specified
+like the example shown above, the default rotation type is ``'flex'`` . Thus,
+``index1`` and ``index1_flex`` shown below are equivelant.
+
+.. code:: yaml
+
+   [angles]
+   index1 = ["MCP2", "PIP2", "DIP2"]
+   index1_flex = ["flex", "MCP2", "PIP2", "DIP2"]
+   index1_axis = ["axis", "MCP2", "PIP2", "DIP2"]
+   index1_crossaxis = ["cross-axis", "MCP2", "PIP2", "DIP2"]
+
+Here are the first few lines of ``2019-08-02-vid01.csv`` after running 
+``anipose angles`` with the angle variables shown above: 
+
+.. figure:: anipose-tutorial/angle_rotation_output.PNG
    :align: center
 
 Automating the Process
