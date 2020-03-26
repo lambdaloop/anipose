@@ -63,5 +63,9 @@ Parameters for Angle Calculation
 | **angle:** Specifies a list of three keypoints to compute the angle between. There can
   any number of ``angle`` parameters, and the variable name of each one should 
   correspond to the name of the angle (decided by you). When the angles are written to
-  a csv file, the column headers correspond to the names you specified for each list of three 
-  keypoints.
+  a ``csv`` file, the column headers correspond to the names you specified for each list of three 
+  keypoints. There is also the option to compute the angle for one of three types of rotations associated
+  with the three keypoints. This can be done by specifying the string ``'flex'``, ``'axis'``, 
+  or ``'cross-axis'`` as the first element in the list of angles. The following three 
+  elements in the list are still the three keypoints. If no rotation type is specified, the default
+  rotation type is ``'flex'``, the flexion-exension angle associated with the three keypoints.
