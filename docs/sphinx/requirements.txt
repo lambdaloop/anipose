@@ -7,4 +7,3 @@ pandas
 tqdm
 click
 scikit-video
-

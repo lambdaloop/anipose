@@ -14,6 +14,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+from aniposelib import cameras
+from aniposelib import boards
 
 # -- Project information -----------------------------------------------------
 

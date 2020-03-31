@@ -108,12 +108,14 @@ Calibration marker configuration
 Once you have figured out which calibration board you will use, you need
 to specify this to anipose.
 
-What to configure: - the type of board (aruco / charuco / checkerboard)
-- the size of the board (number squares in X and Y directions) - Length
-of marker separation (for aruco) or square side (for charuco or
-checkerboard) (triangulation is set to this unit) - Length of marker
-side in appropriate unit, in same unit as above - aruco marker
-dictionary (number of bits and number of markers in dictionary)
+What to configure: 
+
+- the type of board (aruco / charuco / checkerboard)
+- the size of the board (number squares in X and Y directions) 
+- length of marker separation (for aruco) or square side
+  (for charuco or checkerboard) (triangulation is set to this unit) 
+- length of marker side in appropriate unit, in same unit as above 
+- aruco marker dictionary (number of bits and number of markers in dictionary)
 
 An example configuration:
 
@@ -147,9 +149,11 @@ Manual verification of calibration pattern detection
 The automatic calibration pattern detection can fail. Removing
 incorrectly detected frames will improve calibration accuracy.
 
-What to configure: - Optional boolean (default=false) indicating whether
-or not you want to manually verify the detection of the calibration
-pattern in each frame (Allows you to throw out bad detections)
+What to configure:
+
+- Optional boolean (default = ``false`` ) indicating whether or
+  not you want to manually verify the detection of the calibration
+  pattern in each frame (allows you to throw out bad detections)
 
 To manually verify, add the example below to your config.toml file.
 
