@@ -212,6 +212,12 @@ def get_all_videos_fnames(config):
 
         calib_fnames.append(calib_fname)
         all_fnames.append(fnames)
+        
+    normal_count = max([len(x) for x in all_fnames])
+    bad_num = np.sum([len(x) != normal_count for x in all_fnames])
+    if bad_num > 0:
+        print('W: ignored {} sets of videos with inconsistent number of cameras'.format(bad_num))
+        all_fnames = [x for x in all_fnames if len(x) == normal_count]
 
     out = {
         'fnames': all_fnames,
@@ -284,7 +290,7 @@ def extract_frames_random(config, num_frames_pick=250):
     metas = []
     indexes = []
     for cnum in range(n_cams):
-        folder = folder_base + '_' + cam_names[cnum]
+        folder = folder_base + '--' + cam_names[cnum]
         images_cur = [os.path.join('labeled-data', folder, img) for img in images]
         indexes.append(images_cur)
 
@@ -451,7 +457,7 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
     metas = []
     indexes = []
     for cnum in range(n_cams):
-        folder = folder_base + '_' + cam_names[cnum]
+        folder = folder_base + '--' + cam_names[cnum]
         images_cur = [os.path.join('labeled-data', folder, img) for img in images]
         indexes.append(images_cur)
 
