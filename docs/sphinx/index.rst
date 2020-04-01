@@ -107,6 +107,7 @@ User Guide
    start2d
    start3d
    tutorial 
+   aniposelib-api
 
    :caption: Contents:
 
