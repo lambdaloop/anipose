@@ -18,62 +18,39 @@ Getting started
    `here <https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md>`_
 2) Install Anipose through pip: ``pip install anipose``
 
-Documentation
-=============
-
--  :doc:`Setting up Anipose for 2D tracking </start2d>`
--  :doc:`Setting up Anipose for 3D tracking </start3d>`
-
-Demos
-=====
-
--  :doc:`Anipose Tutorial </tutorial>`
 
 .. figure:: anipose-tutorial/tracking_3cams_full_slower5.gif
-   :scale: 70 %
    :align: center
 
    Videos of flies by Evyn Dickinson (slowed 5x), `Tuthill Lab <http://faculty.washington.edu/tuthill>`_
 
 .. figure:: anipose-tutorial/hand-demo.gif
-   :scale: 70 %
    :align: center
 
    Videos of hand by Katie Rupp
 
-Why this project?
-=================
+Documentation
+=============
 
-DeepLabCut is great for training a network to track features in a video,
-and to run it on a small set of videos.
+.. toctree::
+   :maxdepth: 2
 
-However, in practice, to accommodate our experiments, we found that we
-need to write custom code to iterate through folders and videos.
-Different experimental runs tended to be placed in different folders,
-and processing this structured data can quickly get overwhelming. This
-problem is compounded if one wants to do 3D tracking, where many more
-videos are generated and organization of these is critical for
-processing data.
+   params
+   start2d
+   start3d
+   tutorial 
+   aniposelib-api
 
-Hence, we created Anipose, which places the DeepLabCut feature analysis
-into a pipeline, organizing the results into folders and autodetecting
-all the files that need to be processed.
+   :caption: Contents:
 
-For 2D tracking, Anipose can:
+Collaborators 
+=============
 
-- track all videos in a group of folders 
-- detect, remove, and interpolate bad tracking 
-- make videos labeled with the 2D tracked points and lines, and filtered
-  points 
-- aggregate all the 2D data into one file (easier to analyze further)
-
-For 3D tracking, Anipose can: 
-
-- process calibration videos per session (or per experiment, as needed)
-- handle triangulation from multiple videos to get 3D points 
-- generate 3D videos from 3D points 
-- compute angles in 3D
-- aggregate all 3D data and angles into one file (for easier analysis)
+- **Pierre Karashchuk**, Neuroscience Graduate Program, University of Washington 
+- **Evyn S. Dickinson**, Department of Physiology and Biophysics, University of Washington
+- **Katie Rupp**, Department of Physiology and Biophysics, University of Washington
+- **Bingni W. Brunton**, Department of Biology, University of Washington
+- **John C. Tuthill**, Department of Physiology and Biophysics, University of Washington
 
 References
 ==========
@@ -96,22 +73,6 @@ relies upon:
    :target: https://zenodo.org/badge/latestdoi/165723389
 .. |License: LGPL v3| image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
    :target: https://www.gnu.org/licenses/lgpl-3.0
-
-User Guide
-==========
-
-.. toctree::
-   :maxdepth: 2
-
-   params
-   start2d
-   start3d
-   tutorial 
-   aniposelib-api
-
-   :caption: Contents:
-
-
 
 Indices and tables
 ==================
