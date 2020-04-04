@@ -1,5 +1,6 @@
 aniposelib
-opencv-python
+opencv-python~=3.4
+opencv-contrib-python~=3.4
 toml
 numpy
 scipy
