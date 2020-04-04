@@ -39,6 +39,7 @@ Documentation
    start2d
    start3d
    tutorial 
+   aniposelib-tutorial
    aniposelib-api
 
    :caption: Contents:
