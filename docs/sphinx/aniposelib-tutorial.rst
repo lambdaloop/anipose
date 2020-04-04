@@ -63,7 +63,7 @@ the necessary modules from ``aniposelib``. More information about the
 ``aniposelib.cameras`` and ``aniposelib.boards`` modules can be found in 
 the :doc:`aniposelib API reference </aniposelib-api>`.
 
-.. code:: ipython3
+.. code-block:: python
 
     import numpy as np
     from aniposelib.boards import CharucoBoard, Checkerboard
@@ -87,7 +87,7 @@ checkerboard object instead. When forming the camera group object, we
 set ``fisheye = true`` because the videos from this dataset were 
 recorded using fisheye lens.
 
-.. code:: ipython3
+.. code-block:: python
 
     vidnames = [['calib-charuco-camA-compressed.MOV'],
                 ['calib-charuco-camB-compressed.MOV'],
@@ -121,7 +121,7 @@ that was discussed in `Setup`_.  If you choose to
 do this, you can proceed to the next step, where you are shown how to load
 ``calibration.toml``. 
 
-.. code:: ipython3
+.. code-block:: python
 
     # this will take about 15 minutes (mostly due to detection)
     # it will detect the charuco board in the videos,
@@ -135,7 +135,7 @@ do this, you can proceed to the next step, where you are shown how to load
 If you saved ``calibration.toml`` to load for later or used the provided,
 ``calibration.toml`` file, it can be loaded with the following line of code.  
 
-.. code:: ipython3
+.. code-block:: python
 
     ## example of loading calibration from a file
     ## you can also load the provided file if you don't want to wait 15 minutes
@@ -155,7 +155,7 @@ associated with each 3D point. The reprojection error describes how well
 the 2D projections of a triangulated 3D point match its corresponding
 2D keypoints in every camera view.
 
-.. code:: ipython3
+.. code-block:: python
 
     ## example triangulation without filtering, should take < 15 seconds
     fname_dict = {
@@ -196,7 +196,7 @@ across time. The code shown below extracts and plots the *x*, *y*, and
 *z* positions of joint 0, which corresponds to the base of the hand 
 (see Figure 1).
 
-.. code:: ipython3
+.. code-block:: python
 
     # plot the x, y, z coordinates of joint 0
     
@@ -212,7 +212,7 @@ across time. The code shown below extracts and plots the *x*, *y*, and
     plt.title("x, y, z coordinates of {}".format(bodyparts[0]))
 
 
-.. figure:: anipose-tutorial/xyz_coords.PNG
+.. figure:: anipose-tutorial/xyz_coords.png
    :align: center
 
    Figure 1. The x, y, and z coordinates of the joint corresponding
@@ -225,7 +225,7 @@ in the three videos. The ``scheme`` defines which keypoints are connected in
 the hand, so it serves as a nice visual aid. The 3D positions of 
 the hand are shown in Figure 2.
 
-.. code:: ipython3
+.. code-block:: python
 
     ## plot the first frame in 3D
     from mpl_toolkits.mplot3d import Axes3D
@@ -265,7 +265,7 @@ the hand are shown in Figure 2.
     connect_all(ax, p3d, scheme, bodyparts)
     
 
-.. figure:: anipose-tutorial/3d_frame.PNG
+.. figure:: anipose-tutorial/3d_frame.png
    :align: center
 
    Figure 2. 3D positions of the hand joints in the first frame. 
