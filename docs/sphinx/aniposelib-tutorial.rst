@@ -201,7 +201,7 @@ across time. The code shown below extracts and plots the *x*, *y*, and
     # plot the x, y, z coordinates of joint 0
     
     import matplotlib.pyplot as plt
-    .. %matplotlib notebook
+    % matplotlib notebook
     
     plt.figure(figsize=(9.4, 6))
     plt.plot(p3ds[:, 0, 0])
