@@ -5,25 +5,20 @@ Aniposelib Tutorial
 library for calibrating cameras and triangulation. Anipose uses
 aniposelib for the ``anipose calibrate`` and ``anipose triangulate``,
 but there may be instances in which you have a DeepLabCut project and only 
-want to use Anipose for camera calibration, triangulation, and (optionally) 
-applying 3D filters. This is a tutorial on how to use aniposelib for those who 
-already have a DeepLabCut project and are interested in using Anipose for 
-these steps. 
+want to use perform calibration, triangulation, and (optionally) 
+apply 3D filters. This is a tutorial on how to use aniposelib for those who 
+already have a DeepLabCut project.
 
 In this tutorial, we will walk through a Python script that uses aniposelib to 
 calibrate three cameras and triangulate the 2D detections. We will be starting from  
-a DLC project folder that contains a model to track 21 keypoints on a hand. This 
-tutorial uses the same hand dataset used in the :doc:`Anipose Tutorial </tutorial>`
-itself.
+a DLC project folder that contains a model to track 20 keypoints on a hand, 
+the same dataset that was used in the :doc:`Anipose Tutorial </tutorial>`.
 
 Setup
 -----
 
 If you would like to follow along as we walk through the Python code, then 
 you may begin by downloading the following: 
-
-.. - The DLC project folder for the hand dataset, ``hand-demo-dlc-TuthillLab-2019-08-05``, from 
-  `here <https://drive.google.com/drive/u/1/folders/18qGbHyiSJ2au9sFXScZ63EZ83PtC1-ld>`_.
 
 - The calibration and triangulation materials for the hand dataset found in this
   `Google Drive folder <https://drive.google.com/drive/u/1/folders/1Y4qzeL80mXOvDAJpbAsnQQLXeoBcvtK0>`_.
@@ -35,8 +30,7 @@ you may begin by downloading the following:
     the code locally.
 
   - The three ``.MOV`` files contain the calibration videos. We used a ChArUco board 
-    to calibrate the cameras, though you also have the option of using an AruCo board
-    or a checkerboard.
+    to calibrate the cameras, though you also have the option of using a checkerboard.
 
   - The three ``.h5`` files are from the DLC project. They encode the the most 
     likely *x* and *y* coordinates of each keypoint on the ChArUco board. These 
@@ -77,15 +71,35 @@ The following code sets some variables regarding information about the
 cameras and board used for calibration. The videos in ``vidnames`` correspond 
 to the path names of the calibration videos for each of the three 
 cameras used in calibration. The variable ``cam_names`` contains the names
-of the three cameras, and ``n_cams`` stores the number of cameras. A ChArUco
-board was used for the calibration (this can be seen in any of the three
-calibration videos), so a ChArUco board object is constructed with 
-parameters regarding information about the markers. When 
-using aniposelib to calibrate your cameras, if you used an ArUco or 
-checkerboard for calibration, then you would construct an ArUco or 
-checkerboard object instead. When forming the camera group object, we
+of the three cameras, and ``n_cams`` stores the number of cameras. 
+
+A ChArUco board was used for the calibration (this can be seen in any of
+the three calibration videos), so a ChArUco board object is constructed 
+with parameters regarding information about the markers:
+
+- ``X = 7`` and ``Y = 10`` because there are 7 squares in the vertical direction
+  and 10 squares in the borizontal direction on the calibration board. 
+- ``square_length = 25`` indicate that the dimensions of each square on the board 
+  is 25 mm. 
+- ``marker_length = 18.75`` indicates that the dimensions of each marker within 
+  each square is 18.75 mm. 
+- ``marker_bits = 4`` describes the dimension of the markers, so each marker
+  consists of 4x4 bits.
+- ``dict_size = 50`` specifies that there are 50 types of markers in the marker
+  dictionary. 
+
+When using aniposelib to calibrate your cameras, if you used a checkerboard
+for calibration, then you would construct a checkerboard object instead. 
+More information about the 
+`ChArUco board <https://anipose.readthedocs.io/en/latest/aniposelib-api.html#aniposelib.boards.CharucoBoard>`_
+and `checkerboard <https://anipose.readthedocs.io/en/latest/aniposelib-api.html#aniposelib.boards.Checkerboard>`_
+objects can be found in the aniposelib API. 
+
+Lastly, ``cgroup`` is an object used to refer to all of the cameras as
+a single unit. When given the names of the cameras, ``CameraGroup.from_names()``
+forms a CameraGroup object of the corresponding cameras. We
 set ``fisheye = true`` because the videos from this dataset were 
-recorded using fisheye lens.
+recorded using fisheye lens, but ``fisheye = false`` by default.
 
 .. code-block:: python
 
@@ -107,8 +121,11 @@ recorded using fisheye lens.
     cgroup = CameraGroup.from_names(cam_names, fisheye=True)
     
 Next, we will use the function ``calibrate_videos()`` to detect the ChArUco 
-boards in each of the videos and calibrate the cameras accordingly. Iterative 
-bundle adjustment is used to calibrate the cameras by minimizing the reprojection
+boards in each of the videos and calibrate the cameras accordingly. This 
+function takes as parameters a list of lists of video filenames (one list
+per camera) and a calibration board object, which specifies what should
+be detected in the videos. Iterative bundle adjustment 
+is used to calibrate the cameras by minimizing the reprojection
 error. At each iteration, this method defines a threshold for the reprojection 
 error, then performs bundle adjustment on the points for which the 
 reprojection error is below the determined threshold. 
@@ -146,14 +163,22 @@ Triangulation
 
 During triangulation, aniposelib provides you with the option to apply 3D filters.
 The code shown below is an example of triangulation without filtering. First,
-the ``.h5`` files are loaded, which encode the the most likely 2D coordinates 
-of each keypoint tracked on the ChArUco board. All of the 2D points with a score
-below ``score_threshold`` are removed, as they are considered erroneous. The 
-functions ``triangulate()`` and ``reprojection_error()`` are then used to 
-obtain the 3D coordinates of the hand and determine the reprojection error
-associated with each 3D point. The reprojection error describes how well
+the ``.h5`` files are loaded with ``load_pose2d_fnames()``, which takes a 
+dictionary that maps the camera names to the corresponding ``.h5`` files 
+and a list of the camera names contained in the camera group. These 
+``.h5`` files encode the the most likely 2D coordinates of each keypoint 
+that we tracked on the hand. All of the 2D points with a score
+below ``score_threshold`` are removed, as they are considered erroneous. 
+
+The function ``triangulate()`` then determined the 3D coordinates of the hand 
+given the 2D coordinates from all of the cameras. The reprojection error 
+is then computed with ``reprojection_error()`` given the 2D coordinates 
+associated with each keypoint from each camera and the 3D coordinates determined
+from all of the cameras. The reprojection error describes how well
 the 2D projections of a triangulated 3D point match its corresponding
-2D keypoints in every camera view.
+2D keypoints in every camera view. Further information about the functions for  
+`triangulation <https://anipose.readthedocs.io/en/latest/aniposelib-api.html#aniposelib.cameras.CameraGroup.triangulate>`_ and 
+`reprojection error <https://anipose.readthedocs.io/en/latest/aniposelib-api.html#aniposelib.cameras.CameraGroup.reprojection_error>`_ can be found in the API.
 
 .. code-block:: python
 
@@ -215,7 +240,7 @@ across time. The code shown below extracts and plots the *x*, *y*, and
 .. figure:: anipose-tutorial/xyz_coords.png
    :align: center
 
-   Figure 1. The x, y, and z coordinates of the joint corresponding
+   Figure 1. The *x*, *y*, and *z* coordinates of the joint corresponding
    to the base of the hand across all of the frames. 
 
 Additionally, we can visualize the position of the hand at each frame 
