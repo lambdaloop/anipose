@@ -264,7 +264,7 @@ def draw_data(start_img, frames_2d, frame_3d, all_angles, pp):
 
     return imout
 
-
+## TODO: remove this function and import from project_2d.py
 def get_projected_points(config, pose_fname, cgroup, offsets_dict):
     try:
         scheme = config['labeling']['scheme']

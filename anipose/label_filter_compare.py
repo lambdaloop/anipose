@@ -169,7 +169,7 @@ def process_session(config, session_path):
         os.makedirs(outdir, exist_ok=True)
 
     for vidname in sorted(fnames_raw.keys(), key=natural_keys):
-        out_fname = os.path.join(outdir, vidname+'.avi')
+        out_fname = os.path.join(outdir, vidname+'.mp4')
         
         vids_raw = sorted(fnames_raw[vidname], key=natural_keys)
         vid_fname = vids_raw[0]
@@ -179,12 +179,12 @@ def process_session(config, session_path):
             continue
 
         vids_2d = [os.path.join(session_path, pipeline_videos_labeled_2d,
-                                true_basename(f) + '.avi')
+                                true_basename(f) + '.mp4')
                    for f in vids_raw]
 
         vids_2d_filtered = [os.path.join(session_path,
                                          pipeline_videos_labeled_2d_filter,
-                                         true_basename(f) + '.avi')
+                                         true_basename(f) + '.mp4')
                             for f in vids_raw]
         
         if not all([os.path.exists(f) for f in vids_2d]):
