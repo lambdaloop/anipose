@@ -57,7 +57,13 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
     except KeyError:
         scheme = []
 
-    dlabs = pd.read_hdf(labels_fname)
+    if isinstance(labels_fname, str):
+        dlabs = pd.read_hdf(labels_fname)
+    elif isinstance(labels_fname, pd.DataFrame):
+        dlabs = labels_fname
+    else:
+        raise TypeError('visualize_labels could not understand type for labels: {}', type(labels_fname))
+        
     if len(dlabs.columns.levels) > 2:
         scorer = dlabs.columns.levels[0][0]
         dlabs = dlabs.loc[:, scorer]

@@ -177,7 +177,7 @@ def filter_pose_viterbi(config, all_points, bodyparts):
     return points, scores
 
 
-def write_pose_2d(all_points, metadata, outname):
+def write_pose_2d(all_points, metadata, outname=None):
     points = all_points[:, :, :2]
     scores = all_points[:, :, 2]
 
@@ -195,7 +195,10 @@ def write_pose_2d(all_points, metadata, outname):
     dout.loc[:, (scorer, bodyparts, 'y')] = points[:, :, 1]
     dout.loc[:, (scorer, bodyparts, 'likelihood')] = scores
 
-    dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
+    if outname is not None:
+        dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
+
+    return dout
 
 
 def filter_pose_medfilt(config, all_points, bodyparts):
