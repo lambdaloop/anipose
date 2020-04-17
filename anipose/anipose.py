@@ -46,6 +46,7 @@ DEFAULT_CONFIG = {
         'summaries': 'summaries',
         'videos_combined': 'videos-combined',
         'videos_compare': 'videos-compare',
+        'videos_2d_projected': 'videos-2d-proj',
     },
     'filter': {
         'enabled': False,
@@ -225,7 +226,15 @@ def project_2d(config):
     from .project_2d import project_2d_all
     click.echo('Projecting 3D points back to 2D...')
     project_2d_all(config)
-        
+
+
+@cli.command()
+@pass_config
+def label_2d_proj(config):
+    from .label_videos_proj import label_proj_all
+    click.echo('Making 2D videos from 3D projections...')
+    label_proj_all(config)
+    
 @cli.command()
 @pass_config
 def label_2d(config):
@@ -276,6 +285,13 @@ def draw_calibration(config):
     click.echo('Drawing calibration board...')
     img = get_calibration_board_image(config)
     cv2.imwrite('calibration.png', img)
+
+@cli.command()
+@pass_config
+def train_autoencoder(config):
+    from .train_autoencoder import train_autoencoder
+    click.echo('Training autoencoder...')
+    train_autoencoder(config)
 
 
 @cli.command()
