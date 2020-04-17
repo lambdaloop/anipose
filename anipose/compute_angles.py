@@ -25,9 +25,8 @@ def normalize(u):
     return u / np.linalg.norm(u, axis = 1)[:, None]
 
 
-def get_angles(vecs, config):
+def get_angles(vecs, angles):
     outdict = dict()
-    angles = config['angles']
     angle_names = list(angles.keys())
     for ang_name in angle_names:
         angle = angles[ang_name]
@@ -85,7 +84,7 @@ def compute_angles(config, labels_fname, outname):
         vec = np.array(data[[bp+'_x', bp+'_y', bp+'_z']])
         vecs[bp] = vec
     
-    outdict = get_angles(vecs, config)
+    outdict = get_angles(vecs, config.get('angles', dict()))
     outdict['fnum'] = data['fnum']
     
     dout = pd.DataFrame(outdict)
