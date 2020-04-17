@@ -11,7 +11,7 @@ import pandas as pd
 
 from .common import get_folders, true_basename, get_video_name
 from .triangulate import load_offsets_dict, load_pose2d_fnames
-from .compute_angles import get_angles_vecs
+from .compute_angles import get_angles
 
 from aniposelib.cameras import CameraGroup
 
@@ -128,8 +128,8 @@ def get_errors_group(config, group, scorer=None):
         vecs_pred[bp] = points_3d_pred[:, bp_ix]
     angles = config.get('angles', dict())
     angle_names = sorted(angles.keys())
-    angles_pred = get_angles_vecs(vecs_pred, angles)
-    angles_lab = get_angles_vecs(vecs_lab, angles)
+    angles_pred = get_angles(vecs_pred, angles)
+    angles_lab = get_angles(vecs_lab, angles)
 
     # save into dataframe
     out = pd.DataFrame()
