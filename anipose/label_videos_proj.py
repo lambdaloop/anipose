@@ -85,7 +85,7 @@ def process_session(config, session_path):
         if all([os.path.exists(f) for f in out_fnames]):
             continue
 
-        print(pose_fname)
+        # print(pose_fname)
 
         cam_names = [get_cam_name(config, fname)
                      for fname in fnames_2d_current]
@@ -112,6 +112,11 @@ def process_session(config, session_path):
             pts[:, :, :2] = points_2d_proj[cix].swapaxes(0, 1)
             pts[:, :, 2] = all_scores.T
             dlabs = write_pose_2d(pts, metadata, outname)
+
+            if os.path.exists(outname) and \
+               abs(get_nframes(outname) - get_nframes(vidname)) < 50:
+                continue
+            print(outname)
             visualize_labels(config, dlabs, vidname, outname)
 
 label_proj_all = make_process_fun(process_session)
