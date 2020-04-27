@@ -23,6 +23,12 @@ def get_pose3d_fnames(config, session_path):
                                '*.csv'))
     return fnames
 
+def get_pose3d_filtered_fnames(config, session_path):
+    fnames = glob(os.path.join(session_path,
+                               config['pipeline']['pose_3d_filter'],
+                               '*.csv'))
+    return fnames
+
 def get_pose2d_fnames(config, session_path):
     fnames = glob(os.path.join(session_path,
                                config['pipeline']['pose_2d'],
@@ -83,6 +89,7 @@ def make_summarize_fun(get_fnames_session, output_fname, h5=False):
 
 summarize_angles = make_summarize_fun(get_angle_fnames, 'angles.csv', h5=False)
 summarize_pose3d = make_summarize_fun(get_pose3d_fnames, 'pose_3d.csv', h5=False)
+summarize_pose3d_filtered = make_summarize_fun(get_pose3d_fnames, 'pose_3d_filtered.csv', h5=False)
 
 summarize_pose2d = make_summarize_fun(get_pose2d_fnames, 'pose_2d.csv', h5=True)
 summarize_pose2d_filtered = make_summarize_fun(get_pose2d_filtered_fnames, 'pose_2d_filtered.csv', h5=True)

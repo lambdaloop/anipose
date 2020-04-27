@@ -8,26 +8,57 @@ import click
 pass_config = click.make_pass_decorator(dict)
 
 DEFAULT_CONFIG = {
+    'video_extension': 'avi',
+    'calibration': {
+        'animal_calibration': False,
+        'calibration_init': None,
+        'fisheye': False
+    },
+    'manual_verification': {
+        'manually_verify': False
+    },
+    'triangulation': {
+        'ransac': False,
+        'optim': False,
+        'scale_smooth': 2,
+        'scale_length': 2,
+        'scale_length_weak': 1,
+        'reproj_error_threshold': 5,
+        'score_threshold': 0.8,
+        'n_deriv_smooth': 3,
+        'constraints': [],
+        'constraints_weak': []
+    },
     'pipeline': {
         'videos_raw': 'videos-raw',
         'pose_2d': 'pose-2d',
         'pose_2d_filter': 'pose-2d-filtered',
+        'pose_2d_projected': 'pose-2d-proj',
         'pose_3d': 'pose-3d',
+        'pose_3d_filter': 'pose-3d-filtered',
         'videos_labeled_2d': 'videos-labeled',
         'videos_labeled_2d_filter': 'videos-labeled-filtered',
         'calibration_videos': 'calibration',
         'calibration_results': 'calibration',
         'videos_labeled_3d': 'videos-3d',
+        'videos_labeled_3d_filter': 'videos-3d-filtered',
         'angles': 'angles',
         'summaries': 'summaries',
         'videos_combined': 'videos-combined',
+        'videos_compare': 'videos-compare',
     },
     'filter': {
         'enabled': False,
+        'type': 'medfilt',
         'medfilt': 13,
         'offset_threshold': 25,
-        'score_threshold': 0.8,
-        'spline': True
+        'score_threshold': 0.05,
+        'spline': True,
+        'n_back': 5,
+        'multiprocessing': False
+    },
+    'filter3d': {
+        'enabled': False
     }
 }
 
@@ -79,25 +110,9 @@ def cli(ctx, config):
 @cli.command()
 @pass_config
 def calibrate(config):
-    from .calibrate_intrinsics import calibrate_intrinsics_all
-    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate import calibrate_all
     click.echo('Calibrating...')
-    calibrate_intrinsics_all(config)
-    calibrate_extrinsics_all(config)
-
-@cli.command()
-@pass_config
-def calibrate_intrinsics(config):
-    from .calibrate_intrinsics import calibrate_intrinsics_all
-    click.echo('Calibrating intrinsics...')
-    calibrate_intrinsics_all(config)
-
-@cli.command()
-@pass_config
-def calibrate_extrinsics(config):
-    from .calibrate_extrinsics import calibrate_extrinsics_all
-    click.echo('Calibrating extrinsics...')
-    calibrate_extrinsics_all(config)
+    calibrate_all(config)
 
 @cli.command()
 @pass_config
@@ -106,6 +121,14 @@ def calibration_errors(config):
     click.echo('Getting all the calibration errors...')
     get_errors_all(config)
 
+@cli.command()
+@click.option('--scorer', type=str, help='scorer to use for labeled data')
+@pass_config
+def tracking_errors(config, scorer=None):
+    from .tracking_errors import get_tracking_errors
+    click.echo('Comparing tracking to labeled data...')
+    get_tracking_errors(config, scorer)
+    
 @cli.command()
 @pass_config
 def analyze(config):
@@ -119,6 +142,13 @@ def filter(config):
     from .filter_pose import filter_pose_all
     click.echo('Filtering tracked points...')
     filter_pose_all(config)
+
+@cli.command()
+@pass_config
+def filter_3d(config):
+    from .filter_3d import filter_pose_3d_all
+    click.echo('Filtering tracked points...')
+    filter_pose_3d_all(config)
 
 @cli.command()
 @pass_config
@@ -138,23 +168,32 @@ def angles(config):
 @cli.command()
 @pass_config
 def summarize_3d(config):
-    from .summarize import summarize_angles, summarize_pose3d
+    from .summarize import summarize_angles, summarize_pose3d, summarize_pose3d_filtered
     click.echo('Summarizing angles...')
     summarize_angles(config)
 
     click.echo('Summarizing 3D pose...')
     summarize_pose3d(config)
 
+    if config['filter3d']['enabled']:
+        click.echo('Summarizing 3D pose filtered...')
+        summarize_pose3d_filtered(config)
+
+
 @cli.command()
 @pass_config
 def summarize_2d(config):
-    from .summarize import summarize_pose2d, summarize_pose2d_filtered
+    from .summarize import summarize_pose2d
     click.echo('Summarizing pose 2d...')
     summarize_pose2d(config)
 
-    if config['filter']['enabled']:
-        click.echo('Summarizing pose 2d filtered...')
-        summarize_pose2d_filtered(config)
+
+@cli.command()
+@pass_config
+def summarize_2d_filter(config):
+    from .summarize import summarize_pose2d_filtered
+    click.echo('Summarizing pose 2d filtered...')
+    summarize_pose2d_filtered(config)
 
 
 @cli.command()
@@ -165,6 +204,28 @@ def summarize_errors(config):
     summarize_errors(config)
 
 
+@cli.command()
+@click.option('--nframes', default=200, type=int, show_default=True)
+@click.option('--mode', default='bad', type=str, show_default=True)
+@click.option('--no-pred', is_flag=True)
+@pass_config
+def extract_frames(config, nframes=200, mode='bad', no_pred=False):
+    from .extract_frames import extract_frames_picked, extract_frames_random
+    click.echo('Extracting frames...')
+    if no_pred:
+        mode = 'random'
+        extract_frames_random(config, nframes)
+    else:
+        extract_frames_picked(config, mode, nframes)
+
+
+@cli.command()
+@pass_config
+def project_2d(config):
+    from .project_2d import project_2d_all
+    click.echo('Projecting 3D points back to 2D...')
+    project_2d_all(config)
+        
 @cli.command()
 @pass_config
 def label_2d(config):
@@ -188,10 +249,24 @@ def label_3d(config):
 
 @cli.command()
 @pass_config
+def label_3d_filter(config):
+    from .label_videos_3d import label_videos_3d_filtered_all
+    click.echo('Labeling videos in 3D...')
+    label_videos_3d_filtered_all(config)
+
+@cli.command()
+@pass_config
 def label_combined(config):
     from .label_combined import label_combined_all
     click.echo('Labeling combined videos...')
     label_combined_all(config)
+
+@cli.command()
+@pass_config
+def label_filter_compare(config):
+    from .label_filter_compare import label_filter_compare_all
+    click.echo('Labeling videos to compare filtered vs raw tracking...')
+    label_filter_compare_all(config)
 
 @cli.command()
 @pass_config
@@ -206,22 +281,32 @@ def draw_calibration(config):
 @cli.command()
 @pass_config
 def run_data(config):
-    from .calibrate_intrinsics import calibrate_intrinsics_all
-    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate import calibrate_all
     from .pose_videos import pose_videos_all
     from .triangulate import triangulate_all
-
-    click.echo('Calibrating...')
-    calibrate_intrinsics_all(config)
-    calibrate_extrinsics_all(config)
+    from .compute_angles import compute_angles_all
 
     click.echo('Analyzing videos...')
     pose_videos_all(config)
 
+    if config['filter']['enabled']:
+        from .filter_pose import filter_pose_all
+        click.echo('Filtering tracked points...')
+        filter_pose_all(config)
+
+    click.echo('Calibrating...')
+    calibrate_all(config)
+
     click.echo('Triangulating points...')
     triangulate_all(config)
 
-    click.echo('Running data processing')
+    if config['filter3d']['enabled']:
+        from .filter_3d import filter_pose_3d_all
+        click.echo('Filtering 3D points...')
+        filter_pose_3d_all(config)
+    
+    click.echo('Computing angles...')
+    compute_angles_all(config)
 
 
 @cli.command()
@@ -242,15 +327,10 @@ def run_viz(config):
 @cli.command()
 @pass_config
 def run_all(config):
-    from .calibrate_intrinsics import calibrate_intrinsics_all
-    from .calibrate_extrinsics import calibrate_extrinsics_all
+    from .calibrate import calibrate_all
     from .pose_videos import pose_videos_all
     from .triangulate import triangulate_all
     from .compute_angles import compute_angles_all
-
-    click.echo('Calibrating...')
-    calibrate_intrinsics_all(config)
-    calibrate_extrinsics_all(config)
 
     click.echo('Analyzing videos...')
     pose_videos_all(config)
@@ -260,22 +340,35 @@ def run_all(config):
         click.echo('Filtering tracked points...')
         filter_pose_all(config)
 
+    click.echo('Calibrating...')
+    calibrate_all(config)
+
     click.echo('Triangulating points...')
     triangulate_all(config)
+
+    if config['filter3d']['enabled']:
+        from .filter_3d import filter_pose_3d_all
+        click.echo('Filtering 3D points...')
+        filter_pose_3d_all(config)
 
     click.echo('Computing angles...')
     compute_angles_all(config)
 
     from .label_videos import label_videos_filtered_all, label_videos_all
     from .label_videos_3d import label_videos_3d_all
+    from .label_combined import label_combined_all
 
     click.echo('Labeling videos in 2D...')
     if config['filter']['enabled']:
         label_videos_filtered_all(config)
     else:
         label_videos_all(config)
+
     click.echo('Labeling videos in 3D...')
     label_videos_3d_all(config)
+
+    click.echo('Labeling combined videos...')
+    label_combined_all(config)
 
 if __name__ == '__main__':
     cli()

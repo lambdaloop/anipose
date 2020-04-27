@@ -11,9 +11,16 @@ from scipy import signal
 import queue
 import threading
 
-from .common import make_process_fun, get_nframes, get_video_name, \
+from aniposelib.cameras import CameraGroup
+
+from .common import make_process_fun, get_nframes, \
+    get_video_name, get_cam_name, \
     get_video_params, get_video_params_cap, \
-    get_data_length, natural_keys, true_basename
+    get_data_length, natural_keys, true_basename, find_calibration_folder
+
+from .triangulate import load_offsets_dict
+
+from .label_videos import label_frame
 
 def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
@@ -127,7 +134,7 @@ def draw_axis_y(img, rect, range_y, label,
     return img
 
 
-def get_plotting_params(caps_2d, cap_3d, ang_names):
+def get_plotting_params(caps_2d, cap_3d, ang_names=[]):
 
     height_angle = 175
     spacing_angle = 40
@@ -195,7 +202,7 @@ def get_plotting_params(caps_2d, cap_3d, ang_names):
 
     return d
 
-def get_start_image(pp, ang_names):
+def get_start_image(pp, ang_names=[]):
 
     start_img = np.zeros((pp['height_total'], pp['width_total'], 3), dtype='uint8')
     start_img[:] = 255
@@ -258,11 +265,87 @@ def draw_data(start_img, frames_2d, frame_3d, all_angles, pp):
     return imout
 
 
-def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
-    angles = pd.read_csv(angle_fname)
+def get_projected_points(config, pose_fname, cgroup, offsets_dict):
+    try:
+        scheme = config['labeling']['scheme']
+    except KeyError:
+        scheme = []
 
-    bad_cols = ['fnum']
-    ang_names = [col for col in angles.columns if col not in bad_cols]
+    pose_data = pd.read_csv(pose_fname)
+    cols = [x for x in pose_data.columns if '_error' in x]
+    if len(scheme) == 0:
+        bodyparts = [c.replace('_error', '') for c in cols]
+    else:
+        bodyparts = sorted(set([x for dx in scheme for x in dx]))
+
+    M = np.identity(3)
+    center = np.zeros(3)
+    for i in range(3):
+        center[i] = np.mean(pose_data['center_{}'.format(i)])
+        for j in range(3):
+            M[i, j] = np.mean(pose_data['M_{}{}'.format(i, j)])
+
+    bp_dict = dict(zip(bodyparts, range(len(bodyparts))))
+
+    all_points = np.array([np.array(pose_data.loc[:, (bp+'_x', bp+'_y', bp+'_z')])
+                           for bp in bodyparts])
+
+    all_errors = np.array([np.array(pose_data.loc[:, bp+'_error'])
+                           for bp in bodyparts])
+
+    if config['triangulation']['optim']:
+        all_errors[np.isnan(all_errors)] = 0
+    else:
+        all_errors[np.isnan(all_errors)] = 10000
+    good = (all_errors < 100)
+    all_points[~good] = np.nan
+
+    n_joints, n_frames, _ = all_points.shape
+    n_cams = len(cgroup.cameras)
+
+    all_points_flat = all_points.reshape(-1, 3)
+    all_points_flat_t = (all_points_flat + center).dot(np.linalg.inv(M.T))
+
+    points_2d_proj_flat = cgroup.project(all_points_flat_t)
+    points_2d_proj = points_2d_proj_flat.reshape(n_cams, n_joints, n_frames, 2)
+
+    cam_names = cgroup.get_names()
+    for cix, cname in enumerate(cam_names):
+        offset = offsets_dict[cname]
+        dx, dy = offset[0], offset[1]
+        points_2d_proj[cix, :, :, 0] -= dx
+        points_2d_proj[cix, :, :, 1] -= dy
+
+    return scheme, bodyparts, points_2d_proj
+
+
+def draw_projected_points(frames_2d, scheme, bodyparts, points):
+    n_cams, n_joints, _ = points.shape
+    out = []
+    for cix, frame in enumerate(frames_2d):
+        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_out = label_frame(img, points[cix], scheme, bodyparts)
+        img_out = cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
+        out.append(img_out)
+    return out
+
+def visualize_combined(config, pose_fname, cgroup, offsets_dict,
+                       fnames_2d, fname_3d, out_fname):
+
+    should_load_3d = (cgroup is not None) and \
+        (pose_fname is not None) and \
+        (offsets_dict is not None)
+
+    if should_load_3d:
+        scheme, bodyparts, points_2d_proj = get_projected_points(config, pose_fname, cgroup, offsets_dict)
+
+    # if angle_fname is not None:
+    #     angles = pd.read_csv(angle_fname)
+    #     bad_cols = ['fnum']
+    #     ang_names = [col for col in angles.columns if col not in bad_cols]
+    # else:
+    ang_names = []
+    angles = None
 
     ang_values = dict()
 
@@ -274,7 +357,9 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
 
         vals[err > 10] = np.nan
         nans, ix = nan_helper(vals)
-        vals[nans] = np.interp(ix(nans), ix(~nans), vals[~nans])
+        # some data missing, but not too much
+        if np.sum(nans) > 0 and np.sum(~nans) > 5:
+            vals[nans] = np.interp(ix(nans), ix(~nans), vals[~nans])
 
         ang_values[name] = vals
 
@@ -294,11 +379,11 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
         ang_values_padded[name] = np.pad(angles, pad_size,
                                          mode='constant', constant_values=np.nan)
 
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    writer = cv2.VideoWriter(out_fname, fourcc, fps,
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    writer = cv2.VideoWriter(out_fname, fourcc, round(fps, ndigits=2),
                              (pp['width_total'], pp['height_total']))
 
-    q = queue.Queue()
+    q = queue.Queue(maxsize=50)
 
     thread = threading.Thread(target=write_frame_thread,
                               args=(writer, q))
@@ -309,6 +394,10 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
         if not ret:
             break
 
+        if should_load_3d:
+            frames_2d = draw_projected_points(
+                frames_2d, scheme, bodyparts, points_2d_proj[:, :, framenum])
+
         all_angles = []
         for angnum, name in enumerate(ang_names):
             a = framenum + pad_size - ang_window_size//2
@@ -317,27 +406,43 @@ def visualize_combined(config, angle_fname, fnames_2d, fname_3d, out_fname):
             all_angles.append(angles)
 
         imout = draw_data(start_img, frames_2d, frame_3d, all_angles, pp)
-        q.put_nowait(imout)
+        q.put(imout)
 
-    q.put_nowait(None)
+    for cap in caps_2d:
+        cap.release()
+    cap_3d.release()
+
+    q.put(None)
     thread.join()
     writer.release()
 
 def process_session(config, session_path):
-    filtered = config['filter']['enabled']
-    if filtered:
-        pipeline_videos_labeled_2d = config['pipeline']['videos_labeled_2d_filter']
-    else:
-        pipeline_videos_labeled_2d = config['pipeline']['videos_labeled_2d']
+    # filtered = config['filter']['enabled']
+    # if filtered:
+    #     pipeline_videos_labeled_2d = config['pipeline']['videos_labeled_2d_filter']
+    # else:
+    #     pipeline_videos_labeled_2d = config['pipeline']['videos_labeled_2d']
     pipeline_videos_labeled_3d = config['pipeline']['videos_labeled_3d']
-    pipeline_angles = config['pipeline']['angles']
+    pipeline_videos_raw = config['pipeline']['videos_raw']
+    # pipeline_angles = config['pipeline']['angles']
+
+    if config['filter3d']['enabled']:
+        pipeline_pose_3d = config['pipeline']['pose_3d_filter']
+    else:
+        pipeline_pose_3d = config['pipeline']['pose_3d']
     pipeline_videos_combined = config['pipeline']['videos_combined']
 
+    video_ext = config['video_extension']
+
     vid_fnames_2d = glob(os.path.join(session_path,
-                                      pipeline_videos_labeled_2d, "*.avi"))
+                                      pipeline_videos_raw, "*."+video_ext))
+
+    # vid_fnames_2d = glob(os.path.join(session_path,
+    #                                   pipeline_videos_labeled_2d, "*.avi"))
 
     vid_fnames_3d = glob(os.path.join(session_path,
-                                      pipeline_videos_labeled_3d, "*.avi"))
+                                      pipeline_videos_labeled_3d, "*.mp4"))
+    vid_fnames_3d = sorted(vid_fnames_3d, key=natural_keys)
 
     fnames_2d = defaultdict(list)
     for vid in vid_fnames_2d:
@@ -349,36 +454,60 @@ def process_session(config, session_path):
         vidname = true_basename(vid)
         fnames_3d[vidname].append(vid)
 
-    angle_fnames = glob(os.path.join(session_path,
-                                     pipeline_angles, '*.csv'))
-    angle_fnames = sorted(angle_fnames, key=natural_keys)
+    cgroup = None
+    calib_folder = find_calibration_folder(config, session_path)
+    if calib_folder is not None:
+        calib_fname = os.path.join(calib_folder,
+                                   config['pipeline']['calibration_results'],
+                                   'calibration.toml')
+        if os.path.exists(calib_fname):
+            cgroup = CameraGroup.load(calib_fname)
+
+    # angle_fnames = glob(os.path.join(session_path,
+    #                                  pipeline_angles, '*.csv'))
+    # angle_fnames = sorted(angle_fnames, key=natural_keys)
 
     outdir = os.path.join(session_path, pipeline_videos_combined)
-    os.makedirs(outdir, exist_ok=True)
 
-    for angle_fname in angle_fnames:
-        basename = true_basename(angle_fname)
+    if len(vid_fnames_3d) > 0:
+        os.makedirs(outdir, exist_ok=True)
 
-        out_fname = os.path.join(outdir, basename+'.avi')
+    for vid_fname in vid_fnames_3d:
+        basename = true_basename(vid_fname)
+
+        out_fname = os.path.join(outdir, basename+'.mp4')
+        pose_fname = os.path.join(session_path, pipeline_pose_3d, basename+'.csv')
 
         if os.path.exists(out_fname) and \
-           abs(get_nframes(out_fname) - get_data_length(angle_fname)) < 100:
+           abs(get_nframes(out_fname) - get_nframes(vid_fname)) < 100:
+            continue
+
+        if not os.path.exists(pose_fname):
+            print(out_fname, 'missing 3d data')
             continue
 
         if len(fnames_2d[basename]) == 0:
-            print(out_fname, 'missing 2d')
+            print(out_fname, 'missing 2d videos')
             continue
 
         if len(fnames_3d[basename]) == 0:
-            print(out_fname, 'missing 3d')
+            print(out_fname, 'missing 3d videos')
             continue
 
         fname_3d_current = fnames_3d[basename][0]
         fnames_2d_current = fnames_2d[basename]
+        fnames_2d_current = sorted(fnames_2d_current, key=natural_keys)
+
+        cam_names = [get_cam_name(config, fname) for fname in fnames_2d_current]
 
         print(out_fname)
 
-        visualize_combined(config, angle_fname,
+        video_folder = os.path.join(session_path, pipeline_videos_raw)
+        offsets_dict = load_offsets_dict(config, cam_names, video_folder)
+
+        cgroup_subset = cgroup.subset_cameras_names(cam_names)
+
+        visualize_combined(config, pose_fname, cgroup_subset, offsets_dict,
                            fnames_2d_current, fname_3d_current, out_fname)
 
 

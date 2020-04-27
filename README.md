@@ -1,6 +1,7 @@
 # Anipose
 
 [![PyPI version](https://badge.fury.io/py/anipose.svg)](https://badge.fury.io/py/anipose)
+[![DOI](https://zenodo.org/badge/165723389.svg)](https://zenodo.org/badge/latestdoi/165723389)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 Anipose is a framework for scalable [DeepLabCut](https://github.com/AlexEMG/DeepLabCut)-based analysis. It supports both 2d and 3d tracking, handles calibration and processing all files within a group of folders.
@@ -9,13 +10,29 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 
 ## Getting started
 
-1) Setup DeepLabCut by following instruction [here](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md)
+1) Setup DeepLabCut by following the instructions [here](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md)
 2) Install Anipose through pip: `pip install anipose`
 
 ## Documentation
 
-- [Setting up Anipose for 2D tracking](./docs/start_2d.md)
-- [Setting up Anipose for 3D tracking](./docs/start_3d.md)
+- [Setting up Anipose for 2D tracking](./docs/github/start_2d.md)
+- [Setting up Anipose for 3D tracking](./docs/github/start_3d.md)
+
+## Demos
+
+<p align="center">
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/tracking_3cams_full_slower5.gif" width="70%" >
+</p>
+<p align="center">
+Videos of flies by Evyn Dickinson (slowed 5x), <a href=http://faculty.washington.edu/tuthill/>Tuthill Lab</a>
+</p>
+
+<p align="center">
+<img src="https://raw.githubusercontent.com/lambdaloop/anipose-docs/master/hand-demo.gif" width="70%" >
+</p>
+<p align="center">
+Videos of hand by Katie Rupp
+</p>
 
 ## Why this project?
 

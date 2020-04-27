@@ -10,17 +10,7 @@ from tqdm import trange
 
 from matplotlib.pyplot import get_cmap
 
-from .common import make_process_fun, natural_keys
-
-def get_duration(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    duration = float(metadata['video']['@duration'])
-    return duration
-
-def get_nframes(vidname):
-    metadata = skvideo.io.ffprobe(vidname)
-    length = int(metadata['video']['@nb_frames'])
-    return length
+from .common import make_process_fun, natural_keys, get_nframes
 
 def connect(img, points, bps, bodyparts, col=(0,255,0,255)):
     try:
@@ -43,6 +33,23 @@ def connect_all(img, points, scheme, bodyparts):
         connect(img, points, bps, bodyparts, col)
 
 
+def label_frame(img, points, scheme, bodyparts, cmap='tab10'):
+    n_joints, _ = points.shape
+
+    cmap_c = get_cmap(cmap)
+    connect_all(img, points, scheme, bodyparts)
+
+    for lnum, (x, y) in enumerate(points):
+        if np.isnan(x) or np.isnan(y):
+            continue
+        x = np.clip(int(round(x)), 1, img.shape[1]-1)
+        y = np.clip(int(round(y)), 1, img.shape[0]-1)
+        col = cmap_c(lnum % 10, bytes=True)
+        col = [int(c) for c in col]
+        cv2.circle(img,(x,y), 7, col[:3], -1)
+
+    return img
+
 def visualize_labels(config, labels_fname, vid_fname, outname):
 
     try:
@@ -54,7 +61,11 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
     if len(dlabs.columns.levels) > 2:
         scorer = dlabs.columns.levels[0][0]
         dlabs = dlabs.loc[:, scorer]
-    bodyparts = list(dlabs.columns.levels[0])
+
+    if len(scheme) == 0:
+        bodyparts = list(dlabs.columns.levels[0])
+    else:
+        bodyparts = sorted(set([x for dx in scheme for x in dx]))
 
     cap = cv2.VideoCapture(vid_fname)
     # cap.set(1,0)
@@ -65,7 +76,9 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
         # '-hwaccel': 'auto',
         '-framerate': str(fps),
     }, outputdict={
-        '-vcodec': 'h264', '-qp': '30'
+        '-vcodec': 'h264', '-qp': '28',
+        '-pix_fmt': 'yuv420p', # to support more players
+        '-vf': 'pad=ceil(iw/2)*2:ceil(ih/2)*2' # to handle width/height not divisible by 2
     })
 
     last = len(dlabs)
@@ -92,21 +105,8 @@ def visualize_labels(config, labels_fname, vid_fname, outname):
             break
 
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        labels = dlabs.iloc[ix]
-
         points = all_points[:, :, ix]
-
-        connect_all(img, points, scheme, bodyparts)
-
-        for lnum, (x, y) in enumerate(points):
-            if np.isnan(x) or np.isnan(y):
-                continue
-            x = int(round(x))
-            y = int(round(y))
-            col = cmap(lnum % 10, bytes=True)
-            col = [int(c) for c in col]
-            cv2.circle(img,(x,y), 7, col[:3], -1)
+        img = label_frame(img, points, scheme, bodyparts)
 
         writer.writeFrame(img)
 
@@ -124,20 +124,24 @@ def process_session(config, session_path, filtered=False):
         pipeline_videos_labeled = config['pipeline']['videos_labeled_2d']
         pipeline_pose = config['pipeline']['pose_2d']
 
+    video_ext = config['video_extension']
+
     print(session_path)
 
     labels_fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
     labels_fnames = sorted(labels_fnames, key=natural_keys)
 
     outdir = os.path.join(session_path, pipeline_videos_labeled)
-    os.makedirs(outdir, exist_ok=True)
+
+    if len(labels_fnames) > 0:
+        os.makedirs(outdir, exist_ok=True)
 
     for fname in labels_fnames:
         basename = os.path.basename(fname)
         basename = os.path.splitext(basename)[0]
 
-        out_fname = os.path.join(outdir, basename+'.avi')
-        vidname = os.path.join(session_path, pipeline_videos_raw, basename+'.avi')
+        out_fname = os.path.join(outdir, basename+'.mp4')
+        vidname = os.path.join(session_path, pipeline_videos_raw, basename+'.'+video_ext)
 
         if os.path.exists(vidname):
             if os.path.exists(out_fname) and \

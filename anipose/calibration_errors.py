@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
 import cv2
-from cv2 import aruco
+# from cv2 import aruco
 from tqdm import trange
 import numpy as np
 import os, os.path
 from glob import glob
 from collections import defaultdict
 import pandas as pd
+
+## TODO: rewrite this whole file with aniposelib
 
 from .common import \
     get_calibration_board, get_board_type, \
@@ -146,6 +148,7 @@ def process_trig_errors(config, fname_dict, cam_intrinsics, extrinsics, skip=20)
     dout['fnum'] = framenums
 
     return dout
+
 
 
 def process_session(config, session_path):

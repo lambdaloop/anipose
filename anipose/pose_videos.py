@@ -7,7 +7,6 @@ import os
 from glob import glob
 import io
 from contextlib import redirect_stdout
-import deeplabcut
 
 from .common import natural_keys, make_process_fun
 
@@ -23,28 +22,33 @@ def rename_dlc_files(folder, base):
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_pose = config['pipeline']['pose_2d']
+    video_ext = config['video_extension']
 
     config_name = os.path.join(config['model_folder'], 'config.yaml')
 
     source_folder = os.path.join(session_path, pipeline_videos_raw)
     outdir = os.path.join(session_path, pipeline_pose)
 
-    videos = glob(os.path.join(source_folder, '*.avi'))
+    videos = glob(os.path.join(source_folder, '*.'+video_ext))
     videos = sorted(videos, key=natural_keys)
+
+    if len(videos) > 0:
+        os.makedirs(outdir, exist_ok=True)
 
     for video in videos:
         basename = os.path.basename(video)
         basename, ext = os.path.splitext(basename)
-        os.makedirs(os.path.join(session_path, pipeline_pose), exist_ok=True)
+
         dataname = os.path.join(outdir, basename + '.h5')
         print(dataname)
         if os.path.exists(dataname):
             continue
         else:
+            import deeplabcut
             trap = io.StringIO()
             with redirect_stdout(trap):
                 deeplabcut.analyze_videos(config_name, [video], videotype=ext,
-                                          save_as_csv=True, destfolder=outdir)
+                                          save_as_csv=False, destfolder=outdir)
             rename_dlc_files(outdir, basename)
 
 
