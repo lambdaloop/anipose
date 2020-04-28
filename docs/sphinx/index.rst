@@ -3,9 +3,7 @@ Anipose
 
 |PyPI version| |DOI| |License: LGPL v3|
 
-Anipose is an open-source toolkit for robust, markerless 3D tracking of animal behavior from multiple camera views. It leverages the machine learning toolbox 
- `DeepLabCut <https://github.com/AlexEMG/DeepLabCut>`_
-to track keypoints in 2D, then triangulates across camera views to estimate 3D pose.
+Anipose is an open-source toolkit for robust, markerless 3D tracking of animal behavior from multiple camera views. It leverages the machine learning toolbox `DeepLabCut <https://github.com/AlexEMG/DeepLabCut>`_ to track keypoints in 2D, then triangulates across camera views to estimate 3D pose.
 
 Anipose consists of four modular components: (1) a 3D calibration module designed to minimize the influence of outliers, (2) a set of filters to resolve errors in 2D detections, (3) a triangulation module that integrates temporal and spatial constraints to obtain accurate 3D trajectories despite 2D tracking errors, and (4) a pipeline for efficiently processing large numbers of videos. These modules are packaged together within Anipose, but the calibration and triangulation functions are also availble as an independent library (aniposelib) for use without the full pipeline and applications beyond pose estimation.
 
@@ -52,7 +50,7 @@ Collaborators
 - **Evyn S. Dickinson**, Department of Physiology and Biophysics, University of Washington
 - **Katie Rupp**, Department of Physiology and Biophysics, University of Washington
 - **Bingni W. Brunton**, Department of Biology, University of Washington
-- **John C. Tuthill**, Department of Physiology and Biophysics, University of Washington
+- `**John C. Tuthill**, Department of Physiology and Biophysics, University of Washington <http://faculty.washington.edu/tuthill>`_
 
 References
 ==========
