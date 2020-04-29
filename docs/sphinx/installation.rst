@@ -1,8 +1,12 @@
 Installation
 ############
 
+Anipose can be installed with the steps described below, starting with installing 
+Python 3. If you already have Python 3 installed through the Anaconda distribution,
+you can begin the installation process at `Set up a virtual environment with Anipose`_. 
+
 Install Python 3 via Anaconda
-================================
+==============================
  
 1. We recommend installing Python 3 through the Anaconda distribution.
    You can download the installer for your machine `here <https://www.anaconda.com/products/individual#macos>`_.
@@ -23,7 +27,7 @@ Install Python 3 via Anaconda
    Exit the Python shell with ``quit()``.
 
 Set up a virtual environment with Anipose
-============================================
+==========================================
 
 1. From the Anaconda Prompt (for Windows) or the terminal (for Linux and macOS), create
    a conda environment with Python 3.7 and Tensorflow. Activate the environment, then 
@@ -61,7 +65,7 @@ Set up a virtual environment with Anipose
        pip install --upgrade apptools
 
 Check if Anipose was installed 
-=================================
+===============================
 
 1. You can check if Anipose was installed by typing 
 
@@ -74,3 +78,5 @@ Check if Anipose was installed
 
 .. figure:: anipose-tutorial/anipose_output.PNG
    :align: center
+
+Now you are all set to use Anipose!
