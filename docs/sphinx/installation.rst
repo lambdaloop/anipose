@@ -60,8 +60,7 @@ Set up a virtual environment with Anipose
 
    .. code-block:: text
 
-       python -m pip install ffmpeg
-       conda install mayavi
+       conda install mayavi ffmpeg
        pip install --upgrade apptools
 
 Check if Anipose was installed 

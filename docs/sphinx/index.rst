@@ -10,13 +10,8 @@ Anipose consists of four modular components: (1) a 3D calibration module designe
 The name Anipose comes from **Ani**\ mal **Pose**, but it also sounds
 like "any pose".
 
-Getting started
+Demos
 ===============
-
-1) Setup DeepLabCut by following the instructions
-   `here <https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md>`_
-2) Install Anipose through pip: ``pip install anipose``
-
 
 .. figure:: anipose-tutorial/tracking_3cams_full_slower5.gif
    :align: center
@@ -42,16 +37,27 @@ Documentation
    aniposelib-tutorial
    aniposelib-api
 
-   :caption: Contents:
+Contributors
+============
 
-Collaborators 
-=============
+Code and documentation:
 
-- **Pierre Karashchuk**, Neuroscience Graduate Program, University of Washington 
-- **Evyn S. Dickinson**, Department of Physiology and Biophysics, University of Washington
-- **Katie Rupp**, Department of Physiology and Biophysics, University of Washington
-- **Bingni W. Brunton**, Department of Biology, University of Washington
-- `**John C. Tuthill**, Department of Physiology and Biophysics, University of Washington <http://faculty.washington.edu/tuthill>`_
+- Pierre Karashchuk
+- Katie Rupp
+
+Testing datasets:
+
+- Evyn S. Dickinson (fly)
+- Elischa Sanders and Eiman Azim (mouse)
+
+Mentorship:
+
+- `Bingni W. Brunton <https://www.bingbrunton.com/>`_
+- `John C. Tuthill <http://faculty.washington.edu/tuthill>`_
+
+Pull requests:
+
+- Julian Pitney (manually verify calibration board detections)
 
 References
 ==========
@@ -61,19 +67,21 @@ relies upon:
 
 - Mathis et al, 2018, "DeepLabCut: markerless pose
   estimation of user-defined body parts with deep learning" 
-- Insafutdinov et al, 2016, "DeeperCut: A Deeper, Stronger, and Faster
-  Multi-Person Pose Estimation Model" 
+
 - Romero-Ramirez et al, 2018, "Speeded up
   detection of squared fiducial markers" 
+
 - Garrido-Jurado et al, 2016, "Generation of fiducial marker dictionaries
   using Mixed Integer Linear Programming"
 
 .. |PyPI version| image:: https://badge.fury.io/py/anipose.svg
    :target: https://badge.fury.io/py/anipose
+
 .. |DOI| image:: https://zenodo.org/badge/165723389.svg
    :target: https://zenodo.org/badge/latestdoi/165723389
-.. |License: LGPL v3| image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
-   :target: https://www.gnu.org/licenses/lgpl-3.0
+
+.. |License: LGPL v3| image:: https://img.shields.io/badge/License-BSD%202--Clause-orange.svg
+   :target: https://opensource.org/licenses/BSD-2-Clause
 
 Indices and tables
 ==================
