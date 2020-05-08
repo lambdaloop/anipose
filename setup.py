@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+        "License :: OSI Approved :: BSD License",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Image Recognition"
@@ -26,7 +26,7 @@ setuptools.setup(
     install_requires=[
         'deeplabcut>=2.0.4.1',
         'aniposelib>=0.3.7',
-        'opencv-python~=3.4',
+        'opencv-contrib-python~=3.4',
         'toml',
         'numpy',
         'scipy',
