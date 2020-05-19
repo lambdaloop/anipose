@@ -56,7 +56,7 @@ You can read more about what you can match from the
 Here is how you might specify a pattern for the example list of
 filenames above.
 
-.. code:: yaml
+.. code:: toml
 
     [triangulation]
     cam_regex = 'cam([0-9])'
@@ -67,7 +67,7 @@ Another example, suppose your filenames look like:
 ``02112019_fly4_0 R2C14 Cam-A str-ccw-0.72 sec.avi``. Here the camera
 name is the one capital letter after "Cam-". We can specify this as:
 
-.. code:: yaml
+.. code:: toml
 
     cam_regex = 'Cam-([A-Z])'
 
@@ -119,7 +119,7 @@ What to configure:
 
 An example configuration:
 
-.. code:: yaml
+.. code:: toml
 
     [calibration]
     # checkerboard / charuco / aruco
@@ -157,7 +157,7 @@ What to configure:
 
 To manually verify, add the example below to your config.toml file.
 
-.. code:: yaml
+.. code:: toml
 
     [manual_verification]
     # true / false
@@ -214,7 +214,7 @@ point. Anipose allows this too.
 
 An example configuration:
 
-.. code:: yaml
+.. code:: toml
 
     [triangulation]
     axes = [
@@ -234,7 +234,7 @@ which angles she cares about.
 
 This may be specified in the config.toml file as follows:
 
-.. code:: yaml
+.. code:: toml
 
     [angles]
     L1_CF = ["L1A", "L1B", "L1C"]

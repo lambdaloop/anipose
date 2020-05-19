@@ -71,7 +71,7 @@ Below is an annotated example config file for 2D tracking. Create a file
 called ``config.toml`` within your experiment folder with this
 structure, and update the parameters.
 
-.. code:: yaml
+.. code:: toml
 
     # Project name
     project = "flypose"
@@ -102,7 +102,7 @@ is high for these.
 
 To do this, you can edit your config with these parameters:
 
-.. code:: yaml
+.. code:: toml
 
     # Settings for a threshold filter
     # Removes data outside threshold (probably errors in tracking), and interpolates
