@@ -27,9 +27,10 @@ Documentation
 =============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    installation
+   questions
    params
    start2d
    start3d
