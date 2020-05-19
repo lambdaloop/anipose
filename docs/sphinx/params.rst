@@ -18,14 +18,16 @@ Parameters for Setting up the Project
 Parameters for Calibration
 ==========================
 | **board_type:** Specifies the type of board used for calibration (``"checkerboard"``, ``"charuco"``, or ``"aruco"``).
-| **board_size:** Width and height of grid (mm).
+| **board_size:** Width and height of grid.*
 | **board_marker_bits:** If ArUco or ChArUco boards are used for calibration, specifies the number of bits in the markers.
 | **board_marker_dict_number:** If ArUco or ChArUco boards are used for calibration, specifies the number of markers in the dictionary.
-| **board_marker_length:** Specifies the length of marker side (mm).
-| **board_marker_separation_length:** If ArUco boards are used for calibration, specifies the length of marker separation (mm).
-| **board_square_side_length:** If chArUco or checkerboards are used for calibration, specifies the, square side length (mm).
+| **board_marker_length:** Specifies the length of marker side.*
+| **board_marker_separation_length:** If ArUco boards are used for calibration, specifies the length of marker separation.*
+| **board_square_side_length:** If chArUco or checkerboards are used for calibration, specifies the, square side length.*
 | **animal_calibration:** Set to ``true`` if an animal was used for camera calibration.
 | **fisheye:** Set to ``true`` if the videos were taken using fisheye lens. Default set to ``false``.
+
+\*Any units can be used, as long as they are consistent across all of the calibration parameters.
 
 Parameters for 2D Filtering 
 ===========================

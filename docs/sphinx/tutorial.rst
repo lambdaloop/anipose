@@ -1,7 +1,12 @@
 Anipose Tutorial
 ################
 
-Welcome! This is a tutorial that will help familiarize you with the workflow of Anipose.
+Welcome! This is a tutorial that will help familiarize you with the workflow of Anipose. 
+
+We also have tutorial in the format of a 
+`Google Slides presentation <https://docs.google.com/presentation/d/1L1OeAmuXd95YdUIv3e8U67CVdD--3AxkmxbQ101h2Co/edit?usp=sharing>`_, 
+and you are welcome to reference or use them. Note that it assumes that Anipose has 
+been installed and the dataset mentioned below has been dowloaded in advance. 
 
 Setting Up the Project
 ======================
@@ -82,18 +87,19 @@ filtering the 2D data.
 
 Generating 2D Labels
 ====================
-Next, to plot the predicted 2D labels on each frame, run 
+Next, to plot the filtered predicted 2D labels on each frame, run 
 
 .. code-block:: text
 
-   anipose label-2d
+   anipose label-2d-filter
 
 .. figure:: anipose-tutorial/label-2d_screenshot_c.png
    :align: center
 
-This will create a folder in ``hand-demo-unfilled/2019-08-02`` called ``videos-labeled`` 
+This will create a folder in ``hand-demo-unfilled/2019-08-02`` called ``videos-labeled-filtered`` 
 that contains a labeled version for each of the videos that were initially in the 
-Anipose project folder.
+Anipose project folder. The lines that connect the 2D labels can be specified with 
+the ``scheme`` parameter in the Anipose ``config.toml`` file.
 
 Feel free to navigate to this folder and watch a couple of the videos. For example, 
 you should find that the labeled video generated for ``2019-08-02-vid01-camA.avi`` 
@@ -101,6 +107,14 @@ looks like this:
 
 .. figure:: anipose-tutorial/videos-labeled.gif
    :align: center
+
+There is also the option to view the unfiltered predicted 2D labels on each frame by running
+
+.. code-block:: text
+
+   anipose label-2d
+
+which will generate videos with unfiltered predictions in ``hand-demo-unfilled/2019-08-02/videos-labeled``. 
 
 
 Calibrating the Cameras
@@ -111,9 +125,13 @@ Before labeling the videos in 3D, the cameras have to be calibrated. The command
 
    anipose calibrate
 
-Performs camera calibration of intrinsics and extrinsics. The folder calibration in
-``hand-demo-unfilled/2019-08-02`` will be updated to include the camera parameters
-obtained from 3D calibration. The calibration videos were initially in this folder.
+Performs camera calibration of intrinsics and extrinsics. These parameters are 
+determined by minimizing the reprojection error through iterative bundle adjustment.
+The reprojection error is a metric to quantify how closely the 3D projections 
+of a triangulated 3D point match the 2D detections in each camera. The
+``hand-demo-unfilled/2019-08-02/calibration`` folder will be updated to include
+the camera parameters obtained from 3D calibration in ``calibration.toml``. 
+The calibration videos were initially in this folder.
 
 Note that the cameras can be calibrated with ArUco, ChArUco, or checkerboards. The
 relevant parameters in config.toml for this step relate to the board used for 
@@ -121,10 +139,11 @@ calibration. For this demo, the videos were calibrated with a ChArUco board, as 
 in Figure 2. In ``config.toml``, ``board_size`` specifies the dimensions of the board used 
 for calibration, ``square_side_length`` specifies the length of the squares in the
 board, and ``board_marker_length`` specifies the size of the marker within each square.
-In the ``config.toml`` file, we set ``fisheye = true`` because our videos were taken with
-cameras that have fisheye lenses. When running Anipose on your own data, these 
-parameters will need to be set according to your calibration.
-
+These dimensions can be specified in any units, as long as they are consistent for all 
+of the calibration board parameters. In the ``config.toml`` file, we set
+``fisheye = true`` because our videos were taken with cameras that have fisheye lenses.
+When running Anipose on your own data, these parameters will need to be set according
+to your calibration.
 
 .. figure:: anipose-tutorial/calibration.png
    :align: center
@@ -157,7 +176,7 @@ constraints between. The ``scale_smooth`` and ``scale_length`` parameters specif
 extent to which smoothing and spatial constraints are enforced, respectively. These 
 constraints help reduce tracking errors.
 
-By default, the ``anipose label-3d`` command alsocapplies filters to the 3D data, similar 
+By default, the ``anipose label-3d`` command also applies filters to the 3D data, similar 
 to the ``anipose filter`` command used to apply 2D filters. The parameter ``optim`` in the
 Anipose ``config.toml`` file specifies whether the 3D filters are applied. If you do
 not want to apply 3D filters, you may replace ``optim = true`` with ``optim = false``
@@ -181,7 +200,8 @@ Now that the data have been triangulated, we can plot the predicted labels from 
 .. figure:: anipose-tutorial/label-3d_screenshot.PNG
    :align: center
 
-This step will generate videos of the 3D tracking in ``hand-demo-unfilled/2019-08-02/videos-3d``.
+This step will generate 4 videos of the 3D tracking in ``hand-demo-unfilled/2019-08-02/videos-3d``,
+since one video is generated per camera group (the number of cameras in the setup).
 The resulting video from ``hand-demo-unfilled/2019-08-02/videos-3d/2019-08-02-vid01.avi``
 is shown below. 
 
