@@ -10,7 +10,7 @@ The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any po
 
 ## Documentation
 
-Up to date documentation may be found at [anipose.org](anipose.org) .
+Up to date documentation may be found at [anipose.org](http://anipose.org) .
 
 ## Demos
 
