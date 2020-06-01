@@ -7,6 +7,8 @@ Anipose is a framework for scalable [DeepLabCut](https://github.com/AlexEMG/Deep
 
 The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any pose".
 
+Check out the [Anipose preprint](https://www.biorxiv.org/content/10.1101/2020.05.26.117325v1) for more information.
+
 ## Getting started
 
 1) Setup DeepLabCut by following the instructions [here](https://github.com/AlexEMG/DeepLabCut/blob/master/docs/installation.md)
