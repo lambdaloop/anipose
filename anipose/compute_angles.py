@@ -7,6 +7,7 @@ import os.path
 from tqdm import tqdm, trange
 import sys
 from collections import defaultdict
+from scipy.spatial.transform import Rotation
 
 from .common import make_process_fun, get_data_length, natural_keys
 
@@ -30,12 +31,73 @@ def get_angles(vecs, angles):
     angle_names = list(angles.keys())
     for ang_name in angle_names:
         angle = angles[ang_name]
-        if len(angle) == 4 and angle[0] == 'axis':
+        if angle[0] == "chain":
+            d = angles_chain(vecs, angle[1:])
+            for k, v in d.items():
+                outdict[k] = v
+        elif len(angle) == 4 and angle[0] == 'axis':
             outdict[ang_name] = angles_axis(vecs, angle[1:])
         elif len(angle) == 4 and angle[0] == 'cross-axis':
             outdict[ang_name] = angles_crossaxis(vecs, angle[1:])
         else: # 'flex'
             outdict[ang_name] = angles_flex(vecs, angle[-3:])
+    return outdict
+
+
+def angles_chain(vecs, chain_list):
+    chain = []
+    flex_type = []
+    for c in chain_list:
+        if c[-1] == "/":
+            chain.append(c[:-1])
+            flex_type.append(-1)
+        else:
+            chain.append(c)
+            flex_type.append(1)
+
+    n_joints = len(chain)
+    keypoints = np.array([vecs[c] for c in chain])
+
+    xfs = []
+    cc = Rotation.identity()
+    xfs.append(cc)
+
+    for i in range(n_joints-1):
+        pos = keypoints[i+1]
+        z_dir = normalize(pos - keypoints[i])
+        if i == n_joints - 2: # pick an arbitrary axis for the last joint
+            x_dir = ortho([1, 0, 0], z_dir)
+            if np.linalg.norm(x_dir) < 1e-5:
+                x_dir = ortho([0, 1, 0], z_dir)
+        else:
+            x_dir = ortho(keypoints[i+2] - pos, z_dir)
+            x_dir *= flex_type[i+1]
+        x_dir = normalize(x_dir)
+        y_dir = np.cross(z_dir, x_dir)
+        M = np.dstack([x_dir, y_dir, z_dir])
+        rot = Rotation.from_matrix(M)
+        xfs.append(rot)
+
+    angles = []
+    for i in range(n_joints-1):
+        rot = xfs[i].inv() * xfs[i+1]
+        ang = rot.as_euler('zyx', degrees=True)
+        if i != 0:
+            flex = angles_flex(vecs, chain[i-1:i+2]) * flex_type[i]
+            test = ~np.isclose(flex, ang[:,1])
+            ang[:,0] += 180*test
+            ang[:,1] = test*np.mod(-(ang[:,1]+180), 360) + (1-test)*ang[:,1]
+            ang = np.mod(np.array(ang) + 180, 360) - 180
+        angles.append(ang)
+
+    outdict = dict()
+    for i, (name, ang) in enumerate(zip(chain, angles)):
+        outdict[name + "_flex"] = ang[:,1]
+        if i != len(angles)-1:
+            outdict[name + "_rot"] = ang[:,0]
+        if i == 0:
+            outdict[name + "_abduct"] = ang[:,2]
+
     return outdict
 
 
