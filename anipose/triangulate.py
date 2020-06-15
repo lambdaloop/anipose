@@ -61,7 +61,11 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
     M = np.zeros((3,3))
     M[a_dir] = a_diff
     M[b_dir] = b_diff
-    M[c_dir] = np.cross(a_diff, b_diff)
+    # form a right handed coordinate system
+    if (a_dir,b_dir) in [(0,1), (2,0), (1,2)]:
+        M[c_dir] = np.cross(a_diff, b_diff)
+    else:
+        M[c_dir] = np.cross(b_diff, a_diff)
 
     M /= np.linalg.norm(M, axis=1)[:,None]
 
