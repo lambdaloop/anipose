@@ -39,14 +39,18 @@ def load_2d_data(config, calibration_path):
 
     pose_fnames = process_all(new_config, get_pose2d_fnames)
     cam_videos = defaultdict(list)
+    all_cam_names = set()
 
     for key, (session_path, fnames) in pose_fnames.items():
         for fname in fnames:
             # print(fname)
             vidname = get_video_name(config, fname)
+            cname = get_cam_name(config, fname)
             k = (key, session_path, vidname)
             cam_videos[k].append(fname)
+            all_cam_names.add(cname)
 
+    all_cam_names = sorted(list(all_cam_names))
     vid_names = sorted(cam_videos.keys())
 
     all_points = []
@@ -59,12 +63,21 @@ def load_2d_data(config, calibration_path):
         fname_dict = dict(zip(cam_names, fnames))
         video_folder = os.path.join(session_path, config['pipeline']['videos_raw'])
         offsets_dict = load_offsets_dict(config, cam_names, video_folder)
-        out = load_pose2d_fnames(fname_dict, offsets_dict)
-        points_raw = out['points']
-        scores = out['scores']
+        out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names)
+        points_raw_dict = dict(zip(cam_names, out['points']))
+        scores_dict = dict(zip(cam_names, out['scores']))
 
-        # print(points_raw.shape)
-        # print(scores.shape)
+        _, n_frames, n_joints, _ = out['points'].shape
+        points_raw = np.full((len(all_cam_names), n_frames, n_joints, 2), np.nan, 'float')
+        scores = np.full((len(all_cam_names), n_frames, n_joints), np.nan, 'float')
+
+        for cnum, cname in enumerate(all_cam_names):
+            if cname in points_raw_dict:
+                points_raw[cnum] = points_raw_dict[cname]
+                scores[cnum] = scores_dict[cname]
+
+        print(points_raw.shape)
+        print(scores.shape)
 
         all_points.append(points_raw)
         all_scores.append(scores)

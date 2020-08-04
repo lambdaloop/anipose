@@ -178,10 +178,12 @@ def triangulate(config,
 
     offsets_dict = load_offsets_dict(config, cam_names, video_folder)
 
-    out = load_pose2d_fnames(fname_dict, offsets_dict)
+    out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names)
     all_points_raw = out['points']
     all_scores = out['scores']
     bodyparts = out['bodyparts']
+
+    cgroup = cgroup.subset_cameras_names(cam_names)
 
     n_cams, n_frames, n_joints, _ = all_points_raw.shape
 
@@ -338,9 +340,13 @@ def process_session(config, session_path):
             continue
 
 
-        triangulate(config,
-                    calib_folder, video_folder, pose_folder,
-                    fname_dict, output_fname)
-
+        try:
+            triangulate(config,
+                        calib_folder, video_folder, pose_folder,
+                        fname_dict, output_fname)
+        except ValueError:
+            import traceback, sys
+            traceback.print_exc(file=sys.stdout)
+            
 
 triangulate_all = make_process_fun(process_session)
