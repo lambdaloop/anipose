@@ -406,12 +406,14 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
         start += num_frames
 
     good = np.isfinite(errors)
-    errors[~good] = np.max(errors[good])*0.85
+    errors[~good] = np.max(errors[good])*0.5
 
     if mode == 'bad':
-        error_percent = np.mean(errors) * 0.2
-        noise = np.random.uniform(-error_percent, error_percent, size=errors.shape)
-        indexes = np.argsort(-errors + noise)
+        log_errors = np.log(errors+0.1)
+        log_errors = np.clip(log_errors, -np.inf, np.percentile(log_errors, 85))
+        error_percent = np.max(log_errors) - np.percentile(log_errors, 60)
+        noise = np.random.uniform(0, error_percent, size=errors.shape)
+        indexes = np.argsort(-log_errors + noise)
     elif mode == 'good':
         error_percent = np.percentile(errors, 20)
         noise = np.random.uniform(-error_percent, error_percent, size=errors.shape)
