@@ -49,7 +49,7 @@ def load_pose_2d_training(fname):
 
     return test, metadata
 
-def generate_training_data(scores, n_iters=10):
+def generate_training_data(scores, n_iters=5):
     Xs = []
     ys = []
 
@@ -70,11 +70,11 @@ def generate_training_data(scores, n_iters=10):
     return X, y
 
 def train_mlp_classifier(X, y):
-    hidden = X.shape[1]
+    hidden = int(X.shape[1] * 1.5)
     
     mlp = MLPClassifier(hidden_layer_sizes=(hidden),
                         verbose=2, max_iter=2000,
-                        activation='tanh',
+                        activation='tanh', tol=1e-5,
                         learning_rate='adaptive', solver='adam',
                         early_stopping=True)
     mlp.fit(X, y)
