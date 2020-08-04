@@ -127,9 +127,10 @@ def get_errors_group(config, group, scorer=None):
         vecs_lab[bp] = points_3d_labeled[:, bp_ix]
         vecs_pred[bp] = points_3d_pred[:, bp_ix]
     angles = config.get('angles', dict())
-    angle_names = sorted(angles.keys())
+    # angle_names = sorted(angles.keys())
     angles_pred = get_angles(vecs_pred, angles)
     angles_lab = get_angles(vecs_lab, angles)
+    angle_names = sorted(angles_pred.keys())
 
     # save into dataframe
     out = pd.DataFrame()
