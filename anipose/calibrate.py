@@ -76,8 +76,6 @@ def load_2d_data(config, calibration_path):
                 points_raw[cnum] = points_raw_dict[cname]
                 scores[cnum] = scores_dict[cname]
 
-        print(points_raw.shape)
-        print(scores.shape)
 
         all_points.append(points_raw)
         all_scores.append(scores)
@@ -101,6 +99,8 @@ def process_points_for_calibration(all_points, all_scores):
     points = np.copy(all_points).reshape(n_cams, -1, 2)
     scores = all_scores.reshape(n_cams, -1)
 
+    bad = np.isnan(points[:, :, 0])
+    scores[bad] = 0
     points[scores < 0.95] = np.nan
 
     num_good = np.sum(~np.isnan(points[:, :, 0]), axis=0)
