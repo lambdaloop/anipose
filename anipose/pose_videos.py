@@ -35,21 +35,38 @@ def process_session(config, session_path):
     if len(videos) > 0:
         os.makedirs(outdir, exist_ok=True)
 
+    videos_to_process = []
     for video in videos:
         basename = os.path.basename(video)
         basename, ext = os.path.splitext(basename)
 
         dataname = os.path.join(outdir, basename + '.h5')
-        print(dataname)
         if os.path.exists(dataname):
             continue
         else:
-            import deeplabcut
-            trap = io.StringIO()
+            rename_dlc_files(outdir, basename) # try renaming in case it processed before
+            if os.path.exists(dataname):
+                print(video)
+                continue
+            else:
+                videos_to_process.append(video)
+
+    if len(videos_to_process) > 0:
+        import deeplabcut
+        trap = io.StringIO()
+        for i in range(0, len(videos_to_process), 5):
+            batch = videos_to_process[i:i+5]
+            for video in batch:
+                print(video)
             with redirect_stdout(trap):
-                deeplabcut.analyze_videos(config_name, [video], videotype=ext,
-                                          save_as_csv=False, destfolder=outdir)
-            rename_dlc_files(outdir, basename)
+                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+                deeplabcut.analyze_videos(config_name, batch,
+                                          videotype=video_ext, save_as_csv=False,
+                                          destfolder=outdir, TFGPUinference=False)
+            for video in batch:
+                basename = os.path.basename(video)
+                basename, ext = os.path.splitext(basename)
+                rename_dlc_files(outdir, basename)
 
 
 pose_videos_all = make_process_fun(process_session)
