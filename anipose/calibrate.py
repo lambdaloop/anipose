@@ -83,7 +83,7 @@ def load_2d_data(config, calibration_path):
     all_points = np.hstack(all_points)
     all_scores = np.hstack(all_scores)
 
-    return all_points, all_scores
+    return all_points, all_scores, all_cam_names
 
 def process_points_for_calibration(all_points, all_scores):
     """Takes in an array all_points of shape CxFxJx2 and all_scores of shape CxFxJ, where
@@ -101,7 +101,10 @@ def process_points_for_calibration(all_points, all_scores):
 
     bad = np.isnan(points[:, :, 0])
     scores[bad] = 0
-    points[scores < 0.95] = np.nan
+
+    thres = np.percentile(scores, 90)
+    thres = max(min(thres, 0.95), 0.8)
+    points[scores < thres] = np.nan
 
     num_good = np.sum(~np.isnan(points[:, :, 0]), axis=0)
     good = num_good >= 2
@@ -210,9 +213,10 @@ def process_session(config, session_path):
     cgroup.dump(outname)
         
     if config['calibration']['animal_calibration']:
-        all_points, all_scores = load_2d_data(config, calibration_path)
+        all_points, all_scores, all_cam_names = load_2d_data(config, calibration_path)
         imgp = process_points_for_calibration(all_points, all_scores)
         # error = cgroup.bundle_adjust(imgp, threshold=10, ftol=1e-4, loss='huber')
+        cgroup = cgroup.subset_cameras_names(all_cam_names)
         error = cgroup.bundle_adjust_iter(imgp, ftol=1e-4, n_iters=10,
                                           n_samp_iter=300, n_samp_full=1000,
                                           max_nfev=500,
