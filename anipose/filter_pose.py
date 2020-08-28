@@ -174,6 +174,9 @@ def filter_pose_viterbi(config, all_points, bodyparts):
         points[:, jix] = pts_new
         scores[:, jix] = scs_new
 
+    pool.close()
+    pool.join()
+
     return points, scores
 
 
