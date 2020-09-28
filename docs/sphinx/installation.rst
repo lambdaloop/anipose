@@ -55,6 +55,13 @@ Set up a virtual environment with Anipose
 
        python -m pip install anipose
 
+NOTE: You may need to remove ``opencv-python`` before running the above command, so that ``opencv-contrib-python`` is installed correctly:
+
+   .. code-block:: text
+
+       python -m pip uninstall opencv-python
+
+
 4. Install ``ffmpeg`` and ``mayavi`` in your conda environment with the commands shown below. 
    Note that you will have to upgrade ``apptools`` after installing ``mayavi`` with ``conda``. 
 
