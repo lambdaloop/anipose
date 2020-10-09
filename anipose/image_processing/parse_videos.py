@@ -96,10 +96,11 @@ def parse_video(fnames, cameras, sub, ses=None, run=None, acq=None,
           'down to move between frames. Press `enter` when they are all '
           'aligned. Then use up and down to move to where the video '
           'should start and press `enter` again. Then move to where the '
-          'video should end by pressing up and press `enter` a third time. '
+          'video should end by pressing up and press `enter` a third time.'
           'You can press right during the stop stage to go forward a '
-          'minute (you can crop after). Follow the prompts to name and tag '
-          'the video and repeat. Press `q` at any time to quit.')
+          'minute (you can crop after) or `e` to write until the end. '
+          'Follow the prompts to name and tag the video and repeat. '
+          'Press `q` at any time to quit.')
     # get the input video
     video_idx = 0
     stage_idx = 0
@@ -130,17 +131,25 @@ def parse_video(fnames, cameras, sub, ses=None, run=None, acq=None,
         cv2.imshow('Video Alignment Editor', cv2.hconcat(frames))
         # pull for key
         key = cv2.waitKey(0)
-        while key not in (81, 82, 83, 84, 13, ord('q')):
+        while key not in (81, 82, 83, 84, 13, ord('e'), ord('q')):
             key = cv2.waitKey(0)
         if key == ord('q'):
             break
-        if key == 13:
-            if stages[stage_idx] == 'start':
+        if key in (13, ord('e')):
+            if stages[stage_idx] == 'start' and key == 13:
                 tmins = [idx / fps for idx, fps in zip(frame_indices, fpss)]
                 if verbose:
                     print('\nVideos starting at ' + ' '.join(
                         ['{:.4f}'.format(tmin) for tmin in tmins]) + '\n')
             elif stages[stage_idx] == 'stop':
+                if key == ord('e'):
+                    frame_outputs = [cap.read() for cap in caps]  # fencepost
+                    while all([fo[0] and fo[1].size > 0 for fo in
+                               frame_outputs]):  # none too far
+                        for out, frame_output in zip(out_writers,
+                                                     frame_outputs):
+                            out.write(frame_output[1])
+                        frame_outputs = [cap.read() for cap in caps]
                 tmaxs = [idx / fps for idx, fps in zip(frame_indices, fpss)]
                 if all([tmax == tmin for tmax, tmin in zip(tmaxs, tmins)]):
                     break  # if nothing was written skip
