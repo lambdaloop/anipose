@@ -10,7 +10,7 @@ video_extension = 'avi'
 # checkerboard / charuco / aruco
 board_type = "charuco"
 
-# width and height of grid
+# width and height of grid, in squares
 board_size = [6, 6]
 
 # number of bits in the markers, if aruco/charuco
@@ -20,13 +20,13 @@ board_marker_bits = 4
 board_marker_dict_number = 50
 
 # length of marker side
-board_marker_length = 0.375 # mm
+board_marker_length = 3.75 # mm
 
 # If aruco, length of marker separation
 # board_marker_separation_length = 1 # mm
 
 # If charuco or checkerboard, square side length
-board_square_side_length = 0.5 # mm
+board_square_side_length = 5 # mm
 
 animal_calibration = False
 
