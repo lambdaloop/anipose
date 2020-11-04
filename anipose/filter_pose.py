@@ -13,7 +13,7 @@ from scipy.spatial import cKDTree
 from scipy.special import logsumexp
 from collections import Counter
 from multiprocessing import cpu_count
-from multiprocessing import Pool
+from multiprocessing import Pool, get_context
 import pickle
 
 from .common import make_process_fun, natural_keys
@@ -156,10 +156,12 @@ def filter_pose_viterbi(config, all_points, bodyparts):
     scores = np.empty((n_frames, n_joints), dtype='float64')
 
     if config['filter']['multiprocessing']:
-        n_proc = max(min(cpu_count() // 2, n_joints), 1)
+        n_proc_default = max(min(cpu_count() // 2, n_joints), 1)
+        n_proc = config['filter'].get('n_proc', n_proc_default)
     else:
         n_proc = 1
-    pool = Pool(n_proc)
+    ctx = get_context('spawn')
+    pool = ctx.Pool(n_proc)
 
     max_offset = config['filter']['n_back']
     thres_dist = config['filter']['offset_threshold']
