@@ -111,12 +111,12 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
 
     # frame, camera, bodypart, xy
     points = np.full((n_cams, n_frames, n_joints, 2), np.nan, 'float')
-    scores = np.full((n_cams, n_frames, n_joints), np.nan, 'float')
+    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')#initialise as zeros, instead of NaN, makes more sense? 
 
     for cam_ix, dlabs in enumerate(datas):
         for joint_ix, joint_name in enumerate(joint_names):
-            points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames]
             try:
+                points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames] 
                 scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
             except KeyError:
                 pass
