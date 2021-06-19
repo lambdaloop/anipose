@@ -232,15 +232,17 @@ def extract_frames_random(config, num_frames_pick=250):
     cam_names = d['cam_names']
     calib_fnames = d['calib_fnames']
 
+    main_folder = os.path.basename(os.getcwd())
+
     n_cams = len(cam_names)
 
     model_folder = config['model_folder']
-    dlc_config_fname = os.path.join(model_folder, 'config.yaml')
+    # dlc_config_fname = os.path.join(model_folder, 'config.yaml')
 
-    yaml = YAML(typ='rt')
-    with open(dlc_config_fname, 'r') as f:
-        dlc_config = yaml.load(f)
-    
+    # yaml = YAML(typ='rt')
+    # with open(dlc_config_fname, 'r') as f:
+    #     dlc_config = yaml.load(f)
+
     vidnums = []
     framenums = []
 
@@ -283,8 +285,8 @@ def extract_frames_random(config, num_frames_pick=250):
     img_format = 'img{:0' + str(nd) +'d}.png'
     images = [img_format.format(i) for i in range(num_frames_pick)]
 
-    folder_base = '{}_{}_random'.format(
-        config['project'], datetime.now().strftime('%Y-%m-%d_%H-%M'))
+    folder_base = '{}_{}_{}_random'.format(
+        config['project'], main_folder, datetime.now().strftime('%Y-%m-%d_%H-%M'))
 
     folders = []
     metas = []
@@ -350,13 +352,13 @@ def extract_frames_random(config, num_frames_pick=250):
         metas[cnum].to_csv(os.path.join(folder, 'anipose_metadata.csv'), index=False)
 
         key = true_basename(folder) + '.avi'
-        dlc_config['video_sets'][key] = {
-            'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
-        }
+        # dlc_config['video_sets'][key] = {
+        #     'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
+        # }
 
-    with open(dlc_config_fname, 'w') as f:
-        yaml.dump(dlc_config, f)
-        
+    # with open(dlc_config_fname, 'w') as f:
+    #     yaml.dump(dlc_config, f)
+
     
 POSSIBLE_MODES = ['good', 'bad', 'random']
 def extract_frames_picked(config, mode='bad', num_frames_pick=250):
@@ -377,8 +379,11 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
     calib_fnames = d['calib_fnames']
     bodyparts = d['bodyparts']
 
+    main_folder = os.path.basename(os.getcwd())
+
     model_folder = config['model_folder']
     dlc_config_fname = os.path.join(model_folder, 'config.yaml')
+
 
     yaml = YAML(typ='rt')
     with open(dlc_config_fname, 'r') as f:
@@ -451,8 +456,8 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
     images = [img_format.format(i) for i in range(num_frames_pick)]
 
     # folder_base = datetime.now().strftime('%Y-%m-%d--%H-%M')
-    folder_base = '{}_{}_{}'.format(
-        config['project'], datetime.now().strftime('%Y-%m-%d_%H-%M'), mode)
+    folder_base = '{}_{}_{}_{}'.format(
+        config['project'], main_folder, datetime.now().strftime('%Y-%m-%d_%H-%M'), mode)
 
     folders = []
     douts = []
@@ -533,9 +538,9 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
         metas[cnum].to_csv(os.path.join(folder, 'anipose_metadata.csv'), index=False)
 
         key = true_basename(folder) + '.avi'
-        dlc_config['video_sets'][key] = {
-            'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
-        }
+        # dlc_config['video_sets'][key] = {
+        #     'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
+        # }
 
-    with open(dlc_config_fname, 'w') as f:
-        yaml.dump(dlc_config, f)
+    # with open(dlc_config_fname, 'w') as f:
+    #     yaml.dump(dlc_config, f)
