@@ -46,8 +46,9 @@ def label_frame(img, points, scheme, bodyparts, cmap='tab10'):
         y = np.clip(y, 1, img.shape[0]-1)
         x = int(round(x))
         y = int(round(y))
-        col = cmap_c(lnum % 10, bytes=True)
-        col = [int(c) for c in col]
+        # col = cmap_c(lnum % 10, bytes=True)
+        # col = [int(c) for c in col]
+        col = (255, 255, 255)
         cv2.circle(img,(x,y), 7, col[:3], -1)
 
     return img
