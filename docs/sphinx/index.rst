@@ -56,7 +56,7 @@ Code and documentation:
 
 Testing datasets:
 
-- Evyn S. Dickinson (fly)
+- Evyn S. Dickinson and Sarah Walling-Bell (fly)
 - Elischa Sanders and Eiman Azim (mouse)
 
 Mentorship:
