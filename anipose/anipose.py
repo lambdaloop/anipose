@@ -341,6 +341,11 @@ def run_viz(config):
 
 
 @cli.command()
+def visualizer():
+    from .server import run_server
+    run_server()
+
+@cli.command()
 @pass_config
 def run_all(config):
     from .calibrate import calibrate_all

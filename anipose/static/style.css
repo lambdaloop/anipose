@@ -1,0 +1,508 @@
+
+html, body {
+    /* overflow: hidden; */
+    width   : 100%;
+    height  : 100%;
+    margin  : 0;
+    padding : 0;
+    background-color: #181A1B;
+    font-size: 16px;
+    font-family: "Times New Roman", Times, Serif;
+}
+
+p {
+    text-align: center;
+}
+
+.white  {
+    color: white;
+}
+
+#header {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+#selectSession {
+    width: 198px;
+    display: block;
+}
+
+#selectBehavior {
+    width: 198px;
+    display: block;
+}
+
+#selectVideo {
+    width: 400px;
+    display: block;
+    text-align: left;
+}
+
+/*#toggle2d {
+    width: 200px;
+    display: block;
+    margin: 0 auto;
+    margin-top: 10px;
+}*/
+
+#toolbox {
+    display: flex;
+    margin-top: 10px;
+}
+
+#speedButtons {
+    float: left;
+    width: 50%;
+    margin-left: 5px;
+}
+
+#videoTime {
+    text-align: right;
+    float: right;
+    width: 50%;
+    margin-top: 5px;
+}
+
+#timer {
+    margin-left: 5px;
+}
+
+#frameCount {
+    margin-left: 5px;
+}
+
+.time {
+    margin-right: 15px;
+    color: white;
+}
+
+.seek {
+    display: block;
+    text-align: center
+}
+
+.selectVideoContainer {
+    margin: 0 auto;
+    display: block;
+    width: 400px;
+}
+
+button#keyboardShortcutsButton {
+    width: 150px;
+    height: 22px;
+    border: none;
+    outline: none;
+    padding: 0px;
+    background-color: #181A1B;
+    font-size: 8;
+    margin-left: 2px;
+    margin-top: 10px;
+    color: white;
+    float: left;
+}
+
+#keyboardShortcutsButton:hover {
+    color: #7B68EE;
+    border: none;
+    outline: none;
+}
+
+/* keyboard shortcut box */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 11;
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgb(0,0,0); 
+    background-color: rgba(0,0,0,0.4); 
+}
+
+.modal-content table {
+    border-collapse:collapse;
+    border:1px solid #cccccc;
+}
+
+.modal-content th { 
+    border:1px solid #cccccc; 
+    padding:0.3em 0.4em; 
+}
+
+.modal-content td { 
+    border:1px solid #cccccc; 
+    padding:0.3em 0.4em; 
+}
+
+.modal-content li { 
+    margin:1em 0; 
+}
+
+/* keyboard shortcut contents */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+}
+
+/* button to dismiss the keyboard shortcuts */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.key { 
+    font-family:monospace;
+    padding:1px 6px;
+    background:linear-gradient(to bottom,#f0f0f0,#fcfcfc);;
+    border:1px solid #e0e0e0;
+    white-space:nowrap; 
+    color:#303030;
+    border-bottom-width:2px;
+    border-radius:3px; 
+    font-size:14px; 
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: 0px;
+    margin-bottom: auto;
+    margin-top: auto;
+    display: block;
+    touch-action: none;
+    text-align: center;
+}
+
+#modelContainer {
+    float: right;
+    width: 35%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 15px;
+    margin-right: 15px;
+    display: block;
+    touch-action: none;
+    text-align: center;
+    flex: 1 1 auto;
+}
+
+#videoContainer {
+    float: left;
+    width: 65%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    touch-action: none;
+    flex: 1 1 auto;
+}
+
+#viz {
+    display: flex;
+    height: 40%;
+}
+
+.ncontainer {
+    position: relative;
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+#fps {
+    position: absolute;
+    background-color: black;
+    border: 2px solid red;
+    text-align: center;
+    font-size: 16px;
+    color: white;
+    top: 10px;
+    right: 10px;
+    width: 60px;
+    height: 20px;
+}
+
+button#nextVideo {
+    width: 85px;
+    height: 22px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+}
+
+button#previousVideo {
+    width: 85px;
+    height: 22px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+}
+
+button#unlock {
+    width: 15%;
+    height: 22px;
+    margin-left: 5px;
+    margin-right: 0px;
+    margin-top: 5px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+}
+
+button#download {
+    width: 15%;
+    height: 22px;
+    margin-left: 5px;
+    margin-right: 0px;
+    margin-top: 5px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+}
+
+button#addBehavior {
+    width: 15%;
+    height: 22px;
+    margin-left: 5px;
+    margin-right: 0px;
+    margin-top: 5px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+}
+
+button#pushChanges {
+    width: 15%;
+    height: 22px;
+    margin-left: 2px;
+    margin-right: 0px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+}
+
+button#undo{
+    width: 15%;
+    height: 22px;
+    margin-left:2px;
+    margin-right: 0px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+}
+
+button#redo {
+    width: 15%;
+    height: 22px;
+    margin-left: 2px;
+    margin-right: 0px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow: auto;
+}
+
+button#clearUnusedBehavior {
+    width: 15%;
+    height: 22px;
+    margin-left: 2px;
+    margin-right: 0px;
+    border: 1px solid white;
+    padding: 0px;
+    background-color: black;
+    color: white;
+    overflow:auto;
+}
+
+.behaviorName {
+    float: left;
+    display: block;
+    width: 15%;
+    height:22px;
+    position: relative; 
+    background-color: black;
+    text-align: center;
+    font-size: 16px;
+    font-family: "Times New Roman", Times, Serif;
+    color: white;
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-top:5px;
+    margin-bottom:auto;
+    border-radius:2px;
+    padding:0px;
+    overflow: scroll;
+    box-sizing: border-box;
+}
+.behaviorCanvas {
+    float: left;
+    display: block;
+    width: 83%;
+    height:22px;
+    position: relative;
+    background-color: black;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top:5px;
+    border-radius:2px;
+    cursor: default;
+    box-sizing: border-box;
+    padding: 0px;
+}
+video {
+    height: 200px;
+    top: 0;
+    left: 0;
+    display: inline;
+}
+#vidlist {
+    display: block;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15px;
+    width: 100%;
+    text-align: center;
+}
+.buttons {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    width: 350px;
+    text-align: center;
+}
+.vid {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 10;
+}
+.container {
+    width: 300px;
+    height: 300px;
+    position: relative;
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+    flex: 1 1 auto;
+}
+.behaviorContainer {
+    max-height: 30px
+    overflow:auto;
+}
+
+button {
+    background-color: #ccc;
+    border: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    height: 22px;
+    border-radius: 2px;
+    font-size: 16px;
+    font-family: "Times New Roman", Times, Serif;
+}
+
+button#play {
+    display: block;
+    width: 15%;
+    float:left;
+    height: 22px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    border: 1px solid white;
+    padding: 0px;
+}
+div#playButtons.buttons {
+    height: 32px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #ddd;
+}
+
+progress#progressBar {
+    display: block;
+    width: 83%;
+    float: left;
+    height: 22px;
+    border: 1px solid #777;
+    margin-top:5px;
+    padding: 0px;
+}
+
+progress[value]  {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    background-color: #ddd;
+    border-radius: 2px;
+    padding: 0;
+    /* margin-top: 5px; */
+    /* margin-bottom: 5px; */
+
+    /* remove border in Firefox */
+    border: 2px solid #777;
+
+    /* /\* IE *\/ */
+    /* color: #777; */
+}
+
+/* Chrome */
+progress[value]::-webkit-progress-bar {
+    background-color: #ddd;
+         border-radius: 2px;
+}
+
+progress[value]::-webkit-progress-value {
+    background-color: #777;
+}
+
+/* Firefox */
+progress[value]::-moz-progress-bar {
+    background-color: #777;
+}
