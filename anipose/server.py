@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 from flask import Flask
-from flask import url_for, render_template
 from flask import jsonify
-from flask import Response
 from flask import request, safe_join, send_from_directory
 from flask_compress import Compress
-# from flask_squeeze import Squeeze
 from flask_ipban import IpBan
 
 from glob import glob
@@ -15,20 +12,18 @@ import re
 import cv2
 import string
 import random
-from datetime import datetime
 
 import pandas as pd
 import numpy as np
 
+from .anipose import load_config
+from .common import find_calibration_folder, \
+    get_video_name, get_cam_name, natural_keys, true_basename
+
+
 from aniposelib.cameras import CameraGroup
 import toml
 import json
-
-## folders that are needed within each session
-## pose-3d, videos-raw-slow
-## angles, pose-2d-filtered not currently needed but may be in the future
-## Calibration (with calibration.toml)
-## config.toml
 
 valid_tokens = set()
 
@@ -53,25 +48,6 @@ ip_ban = IpBan(ban_seconds=3600, ban_count=5, persist=True, ipc=True)
 ip_ban.init_app(app)
 ip_ban.load_nuisances()
 
-def true_basename(fname):
-    basename = os.path.basename(fname)
-    basename = os.path.splitext(basename)[0]
-    return basename
-
-def get_cam_name(cam_regex, fname):
-    basename = true_basename(fname)
-    match = re.search(cam_regex, basename)
-    if not match:
-        return None
-    else:
-        name = match.groups()[0]
-        return name.strip()
-
-def get_video_name(cam_regex, fname):
-    basename = true_basename(fname)
-    vidname = re.sub(cam_regex, '', basename)
-    return vidname.strip()
-
 def get_video_fnames(session_path):
     fnames = glob(os.path.join(session_path, 'videos-raw-slow', '*.mp4'))
     return fnames
@@ -79,23 +55,6 @@ def get_video_fnames(session_path):
 def get_folders(path):
     folders = next(os.walk(path))[1]
     return sorted(folders)
-
-def find_calibration_folder(config, session_path):
-
-    pipeline_calibration_videos = config.get('pipeline', {}).get('calibration_videos', 'calibration')
-    nesting = config['nesting']
-
-    # TODO: fix this for nesting = -1
-    level = nesting
-    curpath = session_path
-
-    while level >= 0:
-        checkpath = os.path.join(curpath, pipeline_calibration_videos)
-        if os.path.isdir(checkpath):
-            return curpath
-
-        curpath = os.path.dirname(curpath)
-        level -= 1
 
 def generate_token(length): 
     letters = string.ascii_letters + '_'
@@ -166,17 +125,16 @@ def get_unique_behaviors(session_path):
     session_behaviors = list(session_behaviors)
     return session_behaviors, trial_behaviors
 
-def get_cam_regex(session):
+
+def get_config(session):
     config_fname = os.path.join(prefix, session, 'config.toml')
     config_fname = os.path.normpath(config_fname)
-    config = toml.load(config_fname)
-    cam_regex = config['triangulation']['cam_regex']
-    return cam_regex
+    config = load_config(config_fname)
+    return config
 
 def load_2d_projections(session_path, folders, fname):
-
     config_fname = os.path.join(session_path, "config.toml")
-    config = toml.load(os.path.normpath(config_fname))
+    config = load_config(os.path.normpath(config_fname))
 
     pipeline_calibration_videos = config.get('pipeline', {}).get('calibration_videos', 'calibration')
     search_path = os.path.normpath(os.path.join(session_path, *folders))
@@ -338,16 +296,6 @@ def get_metadata(session):
     scheme = config['labeling']['scheme']
 
     bodyparts = get_bodyparts_scheme(scheme)
-    # kps = {}
-    # bodyparts = []
-    # ix = 0
-    # for i in range(len(scheme)):
-    #     for j in range(len(scheme[i])):
-    #         bp = scheme[i][j]
-    #         if bp not in kps:
-    #             kps[bp] = ix
-    #             bodyparts.append(bp)
-    #             ix = ix + 1
     kps = dict(zip(bodyparts, range(len(bodyparts))))
 
     ix = 0
@@ -377,31 +325,6 @@ def get_behaviors(session, folders, filename):
     # behaviors = add_laser(behaviors, folders, filename)
 
     return jsonify(behaviors)
-
-# def add_laser(behaviors, folders, filename):
-
-#     if 'sec' not in filename:
-#         return behaviors
-
-#     pat = re.compile(r'(\d+)_fly(\d+_\d+) R(\d+)C(\d+)\s+([a-z]+)-([a-z]+)-([0-9.]+) sec')
-#     names = ['date', 'fly', 'rep', 'condnum', 'type', 'dir', 'stimlen']
-#     groups = pat.match(filename).groups()
-#     d = dict(zip(names, groups))
-#     stimlen = float(d['stimlen'])
-
-#     if stimlen > 0:
-#         start_frame = 150
-#         end_frame = int(np.floor(start_frame + 300*stimlen))
-#         laser_id = generate_token(22)
-#         behaviors[laser_id] = {'filename': filename, 
-#                                'folders': folders,
-#                                'start': start_frame,
-#                                'end': end_frame, 
-#                                'bout_id': laser_id,
-#                                'behavior': 'laser',
-#                                'manual': True}
-
-#     return behaviors
 
 def merge_behavior_changes(behavior_changes):
 
@@ -516,16 +439,16 @@ def get_framerate(session, folders, filename):
     return jsonify(fps)
 
 def group_by_trial(fnames, session):
-    cam_regex = get_cam_regex(session)
+    config = get_config(session)
     cam_videos = defaultdict(list)
     for fname in fnames:
-        name = get_video_name(cam_regex, fname)
+        name = get_video_name(config, fname)
         cam_videos[name].append(fname)
     names = sorted(cam_videos.keys(), key=natural_keys)
     out = []
     for name in names:
         fnames = [true_basename(x) for x in cam_videos[name]]
-        cnames = [get_cam_name(cam_regex, f) for f in cam_videos[name]]
+        cnames = [get_cam_name(config, f) for f in cam_videos[name]]
         out.append({
             'vidname': name,
             'camnames': cnames,
