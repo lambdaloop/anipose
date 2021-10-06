@@ -19,7 +19,8 @@ import numpy as np
 from .anipose import load_config
 from .common import find_calibration_folder, \
     get_video_name, get_cam_name, natural_keys, true_basename
-
+from .project_2d import get_projected_points
+from .triangulate import load_offsets_dict
 
 from aniposelib.cameras import CameraGroup
 import toml
@@ -48,8 +49,8 @@ ip_ban = IpBan(ban_seconds=3600, ban_count=5, persist=True, ipc=True)
 ip_ban.init_app(app)
 ip_ban.load_nuisances()
 
-def get_video_fnames(session_path):
-    fnames = glob(os.path.join(session_path, 'videos-raw-slow', '*.mp4'))
+def get_video_fnames(config, session_path):
+    fnames = glob(safe_join(session_path, config['pipeline']['videos_raw_mp4'], '*.mp4'))
     return fnames
 
 def get_folders(path):
@@ -61,12 +62,12 @@ def generate_token(length):
     token = ''.join(random.choice(letters) for i in range(length))
     return token
 
-def process_all(source_dir, process_session, **args):
+def process_all(config, source_dir, process_session, **args):
     pipeline_prefix = source_dir
 
     output = dict()
 
-    x = process_session(pipeline_prefix, **args)
+    x = process_session(config, pipeline_prefix, **args)
     if x is not None:
         output[()] = x
 
@@ -75,7 +76,7 @@ def process_all(source_dir, process_session, **args):
 
     q = deque()
 
-    next_folders = [ (os.path.join(pipeline_prefix, folder),
+    next_folders = [ (safe_join(pipeline_prefix, folder),
                       (folder,),
                       level)
                      for folder in folders ]
@@ -84,12 +85,12 @@ def process_all(source_dir, process_session, **args):
     while len(q) != 0:
         path, past_folders, level = q.popleft()
 
-        x = process_session(path, **args)
+        x = process_session(config, path, **args)
         if x is not None:
             output[past_folders] = x
 
         folders = get_folders(path)
-        next_folders = [ (os.path.join(path, folder),
+        next_folders = [ (safe_join(path, folder),
                           past_folders + (folder,),
                           level+1)
                          for folder in folders ]
@@ -126,82 +127,53 @@ def get_unique_behaviors(session_path):
     return session_behaviors, trial_behaviors
 
 
-def get_config(session):
-    config_fname = os.path.join(prefix, session, 'config.toml')
+def get_config(session, append_prefix=True):
+    if append_prefix:
+        session_path = safe_join(prefix, session)
+    else:
+        session_path = session
+    config_fname = safe_join(session_path, 'config.toml')
     config_fname = os.path.normpath(config_fname)
     config = load_config(config_fname)
     return config
 
-def load_2d_projections(session_path, folders, fname):
-    config_fname = os.path.join(session_path, "config.toml")
-    config = load_config(os.path.normpath(config_fname))
+def load_2d_projections(session, folders, fname):
+    config = get_config(session)
 
     pipeline_calibration_videos = config.get('pipeline', {}).get('calibration_videos', 'calibration')
-    search_path = os.path.normpath(os.path.join(session_path, *folders))
+    search_path = os.path.normpath(safe_join(prefix, session, *folders))
     calib_folder = find_calibration_folder(config, search_path) 
-    calib_fname = os.path.join(calib_folder, pipeline_calibration_videos, "calibration.toml")
+    calib_fname = safe_join(calib_folder, pipeline_calibration_videos, "calibration.toml")
     cgroup = CameraGroup.load(os.path.normpath(calib_fname))
 
-    data = pd.read_csv(fname)
+    offsets_dict = load_offsets_dict(config, cgroup.get_names())
 
-    M = np.identity(3)
-    center = np.zeros(3)
-    for i in range(3):
-        center[i] = np.mean(data['center_{}'.format(i)])
-        for j in range(3):
-            M[i, j] = np.mean(data['M_{}{}'.format(i, j)])
+    bodyparts, points_2d_proj, all_scores = get_projected_points(
+        config, fname, cgroup, offsets_dict)
 
-    cols = [x for x in data.columns if '_error' in x]
-    # bodyparts = sorted([c.replace('_error', '') for c in cols])
-    bodyparts = get_bodyparts_scheme(config['labeling']['scheme'])
-
-    vecs = []
-    for bp in bodyparts:
-        vec = np.array(data[[bp+'_x', bp+'_y', bp+'_z']])
-        vecs.append(vec)
-    p3d = np.array(vecs).swapaxes(0, 1)
-
-    # project to 2d
-    n_cams = len(cgroup.cameras)
-    n_frames, n_joints, _ = p3d.shape
-
-    all_points_flat = p3d.reshape(-1, 3)
-    all_points_flat_t = (all_points_flat + center).dot(np.linalg.inv(M.T))
-
-    points_2d_proj_flat = cgroup.project(all_points_flat_t)
-    points_2d_proj = points_2d_proj_flat.reshape(n_cams, n_frames, n_joints, 2)
-
-    # points_2d_proj = points_2d_proj.swapaxes(0, 1)
     cam_names = cgroup.get_names()
-    offsets = [config.get('cameras', {}).get(name, {}).get('offset', [0,0]) for name in cam_names]
 
-    for i in range(n_cams):
-        dx = offsets[i][0]
-        dy = offsets[i][1]
-        points_2d_proj[i, :, :, 0] -= dx
-        points_2d_proj[i, :, :, 1] -= dy
-
+    points_2d_proj[~np.isfinite(points_2d_proj)] = 0
     points_2d_proj = np.int32(np.round(points_2d_proj))
     out = dict()
     for i, cname in enumerate(cam_names):
-        out[cname] = points_2d_proj[i].tolist()
+        out[cname] = points_2d_proj[i].swapaxes(0,1).tolist()
 
     return out
 
 def get_structure(cdir):
 
-    config_path = os.path.join(cdir, 'config.toml')
+    config_path = safe_join(cdir, 'config.toml')
     single_project = False
 
     if os.path.exists(config_path):
         prefix = os.path.dirname(cdir) 
         single_project = True
-             
-    else: 
+    else:
         (root, dirs, files) = next(os.walk(cdir))
         config_exists = False
         for d in dirs:
-            if os.path.exists(os.path.join(cdir, d, 'config.toml')):
+            if os.path.exists(safe_join(cdir, d, 'config.toml')):
                 config_exists = True
 
         if config_exists: 
@@ -228,7 +200,7 @@ def get_sessions():
         (root, dirs, files) = next(os.walk(prefix))
         dirs = sorted(dirs, key=natural_keys)
         for folder in dirs:
-            if os.path.exists(os.path.join(prefix, folder, 'config.toml')):
+            if os.path.exists(safe_join(prefix, folder, 'config.toml')):
                 sessions.append(folder)
 
         sessions = sorted(sessions)
@@ -239,6 +211,7 @@ def get_sessions():
 
 @app.route('/pose3d/<session>/<folders>/<filename>')
 def get_3d(session, folders, filename):
+    config = get_config(session)
     folders = folders.split('|')
     path = safe_join(prefix, session, *folders)
     path = safe_join(path, 'pose-3d', filename + '.csv')
@@ -253,11 +226,18 @@ def get_3d(session, folders, filename):
     vecs = []
     for bp in bodyparts:
         vec = np.array(data[[bp+'_x', bp+'_y', bp+'_z']])
+        error = np.array(data[bp+'_error'])
+        if config['triangulation']['optim']:
+            error[np.isnan(error)] = 0
+        else:
+            error[np.isnan(error)] = 1000
+        vec[error > 50] = np.nan
         vecs.append(vec)
 
     vecs = np.array(vecs).swapaxes(0, 1)
     m = np.nanmean(vecs, axis = 0)
-    std = np.nanmean(np.nanstd(m, axis = 0))
+    # std = np.nanmean(np.nanstd(m, axis = 0))
+    std = np.nanmedian(np.diff(np.nanpercentile(m, [25, 75], axis=0), axis=0))
     vecs = 0.3 * vecs / std
     
     cm = np.nanmean(np.nanmean(vecs, axis = 1), axis = 0)
@@ -273,7 +253,7 @@ def get_2d_proj(session, folders, filename):
     path = os.path.normpath(safe_join(prefix, session))
     fname = safe_join(path, *folders, 'pose-3d', filename + '.csv')
 
-    projs = load_2d_projections(path, folders, fname)
+    projs = load_2d_projections(session, folders, fname)
     return jsonify(projs)
 
 def get_bodyparts_scheme(scheme):
@@ -284,15 +264,10 @@ def get_bodyparts_scheme(scheme):
                 bodyparts.append(bp)
     return bodyparts
 
-def get_config(session):
-    config_fname = os.path.join(prefix, session, 'config.toml')
-    config = toml.load(config_fname)
-    return config
-
 @app.route('/metadata/<session>')
 def get_metadata(session):
     config = get_config(session)
-    video_speed = config.get('videos', {}).get('video_speed', 1)
+    video_speed = config.get('converted_video_speed', 1)
     scheme = config['labeling']['scheme']
 
     bodyparts = get_bodyparts_scheme(scheme)
@@ -423,15 +398,18 @@ def download_behaviors(session):
 @app.route('/video/<session>/<folders>/<filename>')
 def get_video(session, folders, filename):
     print(session, folders, filename)
+    config = get_config(session)
     folders = folders.split('|')
     path = safe_join(prefix, session, *folders)
-    path = safe_join(path, 'videos-raw-slow')
+    path = safe_join(path, config['pipeline']['videos_raw_mp4'])
     print(path, filename + '.mp4')
     return send_from_directory(path, filename + '.mp4')
 
 @app.route('/framerate/<session>/<folders>/<filename>')
 def get_framerate(session, folders, filename):
-    path = safe_join(prefix, session, folders.replace('|', '/'),'videos-raw-slow', filename + '.mp4')
+    config = get_config(session)
+    path = safe_join(prefix, session, folders.replace('|', '/'),
+                     config['pipeline']['videos_raw_mp4'], filename + '.mp4')
     cap = cv2.VideoCapture(path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     cap.release()
@@ -462,7 +440,8 @@ def get_trials(session):
     path = safe_join(prefix, session)
     print(path)
     session_behaviors, trial_behaviors = get_unique_behaviors(path)
-    fnames_dict = process_all(path, get_video_fnames)
+    config = get_config(session)
+    fnames_dict = process_all(config, path, get_video_fnames)
     out = []
     for key, fnames in fnames_dict.items():
         if len(fnames) == 0:
@@ -486,7 +465,7 @@ def get_trials(session):
 
 
 def run_server():
-    global prefix, single_project
+    global cdir, prefix, single_project
     cdir = os.getcwd()
     prefix, single_project = get_structure(cdir)
     app.run(debug=False, host="0.0.0.0", port=5000)
