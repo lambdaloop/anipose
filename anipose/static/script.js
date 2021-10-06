@@ -1866,6 +1866,12 @@ function updateKeypoints(kps) {
     var scale = 3;
     for(var i=0; i<kps.length; i++) {
         var kp = kps[i];
+        var is_bad = (kp[0] == 0 && kp[1] == 0 && kp[2] == 0);
+        if(is_bad) {
+            kp[0] = NaN;
+            kp[1] = NaN;
+            kp[2] = NaN;
+        }
         if (!state.spheres) {
             drawSpheres(state.scene, kps, scale);
             drawTubes(state.scene, state.metadata.scheme, kps, scale);
@@ -2010,12 +2016,14 @@ function draw2D(framenum) {
             var path = [];
             for(var j=0; j<links.length; j++) {
                 var kp = kps[links[j]]
+                if(kp[0] == 0 && kp[1] == 0) continue; // missing data
                 path.push([kp[0]*ratio, kp[1]*ratio]);
             }
             drawPath(ctx, path, col);
         }
         for(var i=0; i<kps.length; i++) {
             var kp = kps[i];
+            if(kp[0] == 0 && kp[1] == 0) continue; // missing data
             drawPoint(ctx, kp[0]*ratio, kp[1]*ratio, "white");
         }
     }
