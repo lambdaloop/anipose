@@ -24,9 +24,9 @@ setuptools.setup(
         'console_scripts': ['anipose=anipose.anipose:cli']
     },
     install_requires=[
-        # 'deeplabcut>=2.0.4.1',
+        'deeplabcut>=2.0.4.1',
         'aniposelib>=0.4.0',
-        'opencv-contrib-python~=3.4',
+        'opencv-contrib-python',
         'toml',
         'numpy',
         'scipy',
