@@ -52,6 +52,7 @@ def process_session(config, session_path):
                 videos_to_process.append(video)
 
     if len(videos_to_process) > 0:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         import deeplabcut
         trap = io.StringIO()
         for i in range(0, len(videos_to_process), 5):
@@ -59,7 +60,6 @@ def process_session(config, session_path):
             for video in batch:
                 print(video)
             with redirect_stdout(trap):
-                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
                 deeplabcut.analyze_videos(config_name, batch,
                                           videotype=video_ext, save_as_csv=False,
                                           destfolder=outdir, TFGPUinference=False)
