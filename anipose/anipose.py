@@ -9,6 +9,7 @@ pass_config = click.make_pass_decorator(dict)
 
 DEFAULT_CONFIG = {
     'video_extension': 'avi',
+    'converted_video_speed': 1,
     'calibration': {
         'animal_calibration': False,
         'calibration_init': None,
@@ -31,6 +32,7 @@ DEFAULT_CONFIG = {
     },
     'pipeline': {
         'videos_raw': 'videos-raw',
+        'videos_raw_mp4': 'videos-raw-mp4',
         'pose_2d': 'pose-2d',
         'pose_2d_filter': 'pose-2d-filtered',
         'pose_2d_projected': 'pose-2d-proj',
@@ -344,6 +346,12 @@ def run_viz(config):
 def visualizer():
     from .server import run_server
     run_server()
+
+@cli.command()
+@pass_config
+def convert_videos(config):
+    from .convert_videos import convert_all
+    convert_all(config)
 
 @cli.command()
 @pass_config
