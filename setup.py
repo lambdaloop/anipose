@@ -25,7 +25,7 @@ setuptools.setup(
     },
     install_requires=[
         'deeplabcut>=2.0.4.1',
-        'aniposelib>=0.4.0',
+        'aniposelib>=0.4.3',
         'opencv-contrib-python',
         'toml',
         'numpy',
