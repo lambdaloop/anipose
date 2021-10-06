@@ -195,16 +195,16 @@ def process_session(config, session_path):
 
         cgroup.set_camera_sizes_videos(video_list)
 
-        cgroup.calibrate_rows(all_rows, board,
-                              init_extrinsics=init_stuff,
-                              init_intrinsics=init_stuff,
-                              max_nfev=100, n_iters=2,
-                              n_samp_iter=100, n_samp_full=300,
-                              verbose=True)
+        # cgroup.calibrate_rows(all_rows, board,
+        #                       init_extrinsics=init_stuff,
+        #                       init_intrinsics=init_stuff,
+        #                       max_nfev=100, n_iters=2,
+        #                       n_samp_iter=100, n_samp_full=300,
+        #                       verbose=True)
         error = cgroup.calibrate_rows(all_rows, board,
-                                      init_intrinsics=False, init_extrinsics=False,
-                                      max_nfev=100, n_iters=10,
-                                      n_samp_iter=100, n_samp_full=1000,
+                                      init_intrinsics=init_stuff, init_extrinsics=init_stuff,
+                                      max_nfev=200, n_iters=6,
+                                      n_samp_iter=200, n_samp_full=1000,
                                       verbose=True)
 
     cgroup.metadata['adjusted'] = False
