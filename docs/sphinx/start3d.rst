@@ -4,12 +4,12 @@ Setting up Anipose for 3D tracking
 I hear you're interested in tracking animals in three dimensions. Here's
 how to set up Anipose for that.
 
-Overall, the set up is as follows: 
+Overall, the set up is as follows:
 
 - set up Anipose for 2D tracking by
   following the instructions :doc:`here </start2d>`
 - setup calibration and folder structure for your experiment
-- optionally, specify more post-processing you're interested in 
+- optionally, specify more post-processing you're interested in
   (e.g. angles, axis alignment, etc)
 
 Setup calibration
@@ -108,13 +108,13 @@ Calibration marker configuration
 Once you have figured out which calibration board you will use, you need
 to specify this to anipose.
 
-What to configure: 
+What to configure:
 
 - the type of board (aruco / charuco / checkerboard)
-- the size of the board (number squares in X and Y directions) 
+- the size of the board (number squares in X and Y directions)
 - length of marker separation (for aruco) or square side
-  (for charuco or checkerboard) (triangulation is set to this unit) 
-- length of marker side in appropriate unit, in same unit as above 
+  (for charuco or checkerboard) (triangulation is set to this unit)
+- length of marker side in appropriate unit, in same unit as above
 - aruco marker dictionary (number of bits and number of markers in dictionary)
 
 An example configuration:
@@ -173,7 +173,7 @@ calibration boards.
 
 .. code:: bash
 
-    anipose draw_calibration
+    anipose draw-calibration
 
 This will output an image named ``calibration.png`` in your project
 folder.

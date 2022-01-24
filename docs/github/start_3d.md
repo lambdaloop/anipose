@@ -121,7 +121,7 @@ board_square_side_length = 4 # mm
 
 ## Manual verification of calibration pattern detection
 
-The automatic calibration pattern detection can fail. Removing incorrectly detected frames will improve calibration accuracy. 
+The automatic calibration pattern detection can fail. Removing incorrectly detected frames will improve calibration accuracy.
 
 What to configure:
 - Optional boolean (default=false) indicating whether or not you want to manually verify the detection of the calibration pattern in each frame (Allows you to throw out bad detections)
@@ -139,7 +139,7 @@ If you have specified your calibration marker in the configuration (as above), y
 This can be useful for checking whether the configuration is correct, or for drawing arbitrary calibration boards.
 
 ```bash
-anipose draw_calibration
+anipose draw-calibration
 ```
 This will output an image named `calibration.png` in your project folder.
 
