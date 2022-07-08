@@ -7,6 +7,7 @@ import os
 import os.path
 import pandas as pd
 import toml
+import pickle
 from numpy import array as arr
 from glob import glob
 from scipy import optimize
@@ -293,7 +294,12 @@ def triangulate(config,
 
     dout['fnum'] = np.arange(n_frames)
 
-    dout.to_csv(output_fname, index=False)
+    if output_fname.endswith('.csv'):
+        dout.to_csv(output_fname, index=False)
+    else:
+        with open(output_fname, 'wb') as f: pickle.dump(dout, f)
+
+    print(f'Triangulated pose is saved at: {output_fname}')
 
 
 def process_session(config, session_path):
@@ -302,6 +308,10 @@ def process_session(config, session_path):
     pipeline_pose = config['pipeline']['pose_2d']
     pipeline_pose_filter = config['pipeline']['pose_2d_filter']
     pipeline_3d = config['pipeline']['pose_3d']
+    output_ext = config['pipeline']['pose_3d_ext']
+
+    if not output_ext in ['csv', 'h5', 'pkl']:
+        raise ValueError('The output extension should be csv, h5 or pkl!')
 
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:
@@ -335,13 +345,11 @@ def process_session(config, session_path):
         cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
 
-        output_fname = os.path.join(output_folder, name + '.csv')
-
-        print(output_fname)
+        output_fname = os.path.join(output_folder, name + f'.{output_ext}')
 
         if os.path.exists(output_fname):
+            print(f'Triangulation file already exists at: {output_fname}')
             continue
-
 
         try:
             triangulate(config,
