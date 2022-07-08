@@ -87,6 +87,7 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
         offsets_dict = dict([(cname, (0,0)) for cname in cam_names])
 
     datas = []
+    joints_all = []
     for ix_cam, (cam_name, pose_name) in \
             enumerate(zip(cam_names, pose_names)):
         dlabs = pd.read_hdf(pose_name)
@@ -104,19 +105,21 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
             dlabs.loc[:, (joint, 'y')] += dy
 
         datas.append(dlabs)
+        joints_all += joint_names
 
+    joint_names_unique = np.unique(joints_all)
     n_cams = len(cam_names)
-    n_joints = len(joint_names)
+    n_joints = len(joint_names_unique)
     n_frames = min([d.shape[0] for d in datas])
 
     # frame, camera, bodypart, xy
     points = np.full((n_cams, n_frames, n_joints, 2), np.nan, 'float')
-    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')#initialise as zeros, instead of NaN, makes more sense? 
+    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')#initialise as zeros, instead of NaN, makes more sense?
 
     for cam_ix, dlabs in enumerate(datas):
-        for joint_ix, joint_name in enumerate(joint_names):
+        for joint_ix, joint_name in enumerate(joint_names_unique):
             try:
-                points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames] 
+                points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames]
                 scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
             except KeyError:
                 pass
@@ -125,7 +128,7 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
         'cam_names': cam_names,
         'points': points,
         'scores': scores,
-        'bodyparts': joint_names
+        'bodyparts': joint_names_unique
     }
 
 
@@ -335,7 +338,7 @@ def process_session(config, session_path):
         output_fname = os.path.join(output_folder, name + '.csv')
 
         print(output_fname)
-        
+
         if os.path.exists(output_fname):
             continue
 
@@ -347,6 +350,6 @@ def process_session(config, session_path):
         except ValueError:
             import traceback, sys
             traceback.print_exc(file=sys.stdout)
-            
+
 
 triangulate_all = make_process_fun(process_session)
