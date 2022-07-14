@@ -345,7 +345,7 @@ def process_session(config, session_path):
         cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
 
-        output_fname = os.path.join(output_folder, name + f'.{output_ext}')
+        output_fname = os.path.join(output_folder, name + f'_pose3d.{output_ext}')
 
         if os.path.exists(output_fname):
             print(f'Triangulation file already exists at: {output_fname}')
