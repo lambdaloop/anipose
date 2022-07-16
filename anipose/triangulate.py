@@ -82,6 +82,7 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
 def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
     if cam_names is None:
         cam_names = sorted(fname_dict.keys())
+
     pose_names = [fname_dict[cname] for cname in cam_names]
 
     if offsets_dict is None:
@@ -302,6 +303,16 @@ def triangulate(config,
     print(f'Triangulated pose is saved at: {output_fname}')
 
 
+def get_camera_names_from_calib(calib_folder):
+    """ Get camera names from the calibration folder."""
+    calib_fname = os.path.join(calib_folder, 'calibration.toml')
+    master_dict = toml.load(calib_fname)
+    return [
+        camera_dict['name']
+        for camera, camera_dict in master_dict.items() if 'cam' in camera
+    ]
+
+
 def process_session(config, session_path):
     pipeline_videos_raw = config['pipeline']['videos_raw']
     pipeline_calibration_results = config['pipeline']['calibration_results']
@@ -326,7 +337,12 @@ def process_session(config, session_path):
     video_folder = os.path.join(session_path, pipeline_videos_raw)
     output_folder = os.path.join(session_path, pipeline_3d)
 
-    pose_files = glob(os.path.join(pose_folder, '*.h5'))
+    camera_names = get_camera_names_from_calib(calib_folder)
+
+    pose_files = []
+
+    for cam_name in camera_names:
+        pose_files.append(glob(os.path.join(pose_folder, f'*{cam_name}*.h5'))[0])
 
     cam_videos = defaultdict(list)
 
@@ -345,7 +361,8 @@ def process_session(config, session_path):
         cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
 
-        output_fname = os.path.join(output_folder, name + f'_pose3d.{output_ext}')
+        output_fname = os.path.join(output_folder, name + f'pose3d.{output_ext}')
+        print(output_fname)
 
         if os.path.exists(output_fname):
             print(f'Triangulation file already exists at: {output_fname}')
