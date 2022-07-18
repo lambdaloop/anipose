@@ -27,7 +27,7 @@ def same_length(vid1, vid2):
 
 def process_video(fname, outname, video_speed):
     # print(outname, 'started')
-    if os.path.exists(outname) and same_length(vidname, outname):
+    if os.path.exists(outname) and same_length(fname, outname):
         return
 
     params = get_video_params(fname)
