@@ -61,7 +61,9 @@ DEFAULT_CONFIG = {
         'multiprocessing': False
     },
     'filter3d': {
-        'enabled': False
+        'enabled': False,
+        'medfilt': 17,
+        'offset_threshold': 15
     }
 }
 
