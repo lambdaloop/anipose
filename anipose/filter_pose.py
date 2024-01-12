@@ -200,6 +200,8 @@ def write_pose_2d(all_points, metadata, outname=None):
     dout.loc[:, (scorer, bodyparts, 'y')] = points[:, :, 1]
     dout.loc[:, (scorer, bodyparts, 'likelihood')] = scores
 
+    dout = dout.infer_objects()  # need this to have floats not objects in newer pandas
+
     if outname is not None:
         dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
 
