@@ -190,7 +190,7 @@ views (e.g. to get a faster frame rate).
 
 Anipose supports this to some extent, but as of yet it is not properly
 documented. If you're particularly interested in this feature, please
-email Pierre about it.
+email Lili about it.
 
 Configuring the standardized 3D pose
 ------------------------------------

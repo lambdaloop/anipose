@@ -51,7 +51,7 @@ Contributors
 
 Code and documentation:
 
-- Pierre Karashchuk
+- Lili Karashchuk
 - Katie Rupp
 
 Testing datasets:
