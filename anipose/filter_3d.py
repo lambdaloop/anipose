@@ -36,17 +36,17 @@ def filter_pose(config, fname, outname):
     cols = [x for x in data.columns if '_error' in x]
     bodyparts = [c.replace('_error', '') for c in cols]
 
-    ## TODO: configure these thresholds
     for bp in bodyparts:
         error = np.array(data[bp + '_error'])
         error[np.isnan(error)] = 100000
-        bad = error > 15
+        bad = error > config['filter3d']['offset_threshold']
         for v in 'xyz':
             key = '{}_{}'.format(bp, v)
             values = np.array(data[key])
             values[bad] = np.nan
             values_intp = interpolate_data(values)
-            values_filt = medfilt_data(values_intp, size=17)
+            values_filt = medfilt_data(values_intp,
+                                       size=config['filter3d']['medfilt'])
             data[key] = values_filt
         data[bp+'_error'] = 10 # FIXME: hack for plotting
         
