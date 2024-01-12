@@ -57,6 +57,7 @@ def angles_chain(vecs, chain_list):
 
     n_joints = len(chain)
     keypoints = np.array([vecs[c] for c in chain])
+    n_points = keypoints.shape[1]
 
     xfs = []
     cc = Rotation.identity()
@@ -80,7 +81,12 @@ def angles_chain(vecs, chain_list):
 
     angles = []
     for i in range(n_joints-1):
-        rot = xfs[i].inv() * xfs[i+1]
+        try:
+            rot = xfs[i].inv() * xfs[i+1]
+        except ValueError:
+            print(" W: nan points, failed to compute angle chain")
+            angles.append(np.full((n_points,3), np.nan))
+
         ang = rot.as_euler('zyx', degrees=True)
         if i != 0:
             flex = angles_flex(vecs, chain[i-1:i+2]) * flex_type[i]
@@ -89,6 +95,8 @@ def angles_chain(vecs, chain_list):
             ang[:,1] = test*np.mod(-(ang[:,1]+180), 360) + (1-test)*ang[:,1]
             ang = np.mod(np.array(ang) + 180, 360) - 180
         angles.append(ang)
+
+
 
     outdict = dict()
     for i, (name, ang) in enumerate(zip(chain, angles)):
