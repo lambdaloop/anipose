@@ -33,16 +33,42 @@ def get_median(all_points_3d, ix):
 
 def correct_coordinate_frame(config, all_points_3d, bodyparts):
     """Given a config and a set of points and bodypart names, this function will rotate the coordinate frame to match the one in config"""
+    # import IPython
+    # IPython.embed()
     bp_index = dict(zip(bodyparts, range(len(bodyparts))))
     axes_mapping = dict(zip('xyz', range(3)))
 
     ref_point = config['triangulation']['reference_point']
     axes_spec = config['triangulation']['axes']
-    a_dirx, a_l, a_r = axes_spec[0]
-    b_dirx, b_l, b_r = axes_spec[1]
 
-    a_dir = axes_mapping[a_dirx]
-    b_dir = axes_mapping[b_dirx]
+    # a_dirx, a_l, a_r = axes_spec[0]
+    # b_dirx, b_l, b_r = axes_spec[1]
+
+    # a_dir = axes_mapping[a_dirx]
+    # b_dir = axes_mapping[b_dirx]
+
+
+    # a_lv = get_median(all_points_3d, bp_index[a_l])
+    # a_rv = get_median(all_points_3d, bp_index[a_r])
+    # b_lv = get_median(all_points_3d, bp_index[b_l])
+    # b_rv = get_median(all_points_3d, bp_index[b_r])
+
+    # a_diff = a_rv - a_lv
+    # b_diff = ortho(b_rv - b_lv, a_diff)
+
+    M = np.zeros((3,3))
+    dirs = []
+    for (a_dirx, a_l, a_r) in axes_spec:
+        a_dir = axes_mapping[a_dirx]
+        a_lv = get_median(all_points_3d, bp_index[a_l])
+        a_rv = get_median(all_points_3d, bp_index[a_r])
+        a_diff = a_rv - a_lv
+        M[a_dir] += a_diff / np.linalg.norm(a_diff)
+        if a_dir not in dirs:
+            dirs.append(a_dir)
+
+    a_dir = dirs[0]
+    b_dir = dirs[1]
 
     ## find the missing direction
     done = np.zeros(3, dtype='bool')
@@ -50,17 +76,13 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
     done[b_dir] = True
     c_dir = np.where(~done)[0][0]
 
-    a_lv = get_median(all_points_3d, bp_index[a_l])
-    a_rv = get_median(all_points_3d, bp_index[a_r])
-    b_lv = get_median(all_points_3d, bp_index[b_l])
-    b_rv = get_median(all_points_3d, bp_index[b_r])
+    a_diff = M[a_dir]
+    b_diff = M[b_dir]
 
-    a_diff = a_rv - a_lv
-    b_diff = ortho(b_rv - b_lv, a_diff)
-
-    M = np.zeros((3,3))
-    M[a_dir] = a_diff
-    M[b_dir] = b_diff
+    # M = np.zeros((3,3))
+    # M[a_dir] = a_diff
+    # M[b_dir] = b_diff
+    #
     # form a right handed coordinate system
     if (a_dir,b_dir) in [(0,1), (2,0), (1,2)]:
         M[c_dir] = np.cross(a_diff, b_diff)
