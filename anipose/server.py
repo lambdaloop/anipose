@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 from flask import Flask
 from flask import jsonify
-from flask import request, safe_join, send_from_directory
+from flask import request, send_from_directory
 from flask_compress import Compress
 from flask_ipban import IpBan
+from werkzeug.utils import safe_join
 
 from glob import glob
 import os
