@@ -69,6 +69,9 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     all_scores = np.array([np.array(data.loc[:, bp+'_score'])
                            for bp in bodyparts], dtype='float64')
 
+    all_ncams = np.array([np.array(data.loc[:, bp+'_ncams'])
+                          for bp in bodyparts], dtype='float64')
+
 
     if config['triangulation']['optim']:
         all_errors[np.isnan(all_errors)] = 0
@@ -77,13 +80,16 @@ def visualize_labels(config, labels_fname, outname, fps=300):
     good = (all_errors < 100)
     all_points[~good] = np.nan
 
+    not_enough_points = np.mean(all_ncams >= 2, axis=1) < 0.2
+    all_points[not_enough_points] = np.nan
+
     all_points_flat = all_points.reshape(-1, 3)
     check = ~np.isnan(all_points_flat[:, 0])
 
     if np.sum(check) < 10:
         print('too few points to plot, skipping...')
         return
-    
+
     low, high = np.percentile(all_points_flat[check], [5, 95], axis=0)
 
     nparts = len(bodyparts)
