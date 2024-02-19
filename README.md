@@ -4,7 +4,7 @@
 
 Anipose is an open-source toolkit for robust, markerless 3D pose estimation of animal behavior from multiple camera views. It leverages the machine learning toolbox [DeepLabCut](https://github.com/AlexEMG/DeepLabCut) to track keypoints in 2D, then triangulates across camera views to estimate 3D pose.
 
-Check out the [Anipose preprint](https://www.biorxiv.org/content/10.1101/2020.05.26.117325v1) for more information.
+Check out the [Anipose paper](https://www.cell.com/cell-reports/fulltext/S2211-1247(21)01179-7) for more information.
 
 The name Anipose comes from **Ani**mal **Pose**, but it also sounds like "any pose".
 
