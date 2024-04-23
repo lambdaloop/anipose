@@ -12,6 +12,7 @@ import queue
 import threading
 from datetime import datetime
 from ruamel.yaml import YAML
+import shutil
 
 from aniposelib.cameras import CameraGroup
 
@@ -24,6 +25,11 @@ from .triangulate import load_pose2d_fnames, load_offsets_dict
 
 def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
+
+def clean_index(df):
+    df.index = [x.replace('\\', '/') for x in df.index]
+    df.index = [x.replace('labeled-data/', '') for x in df.index]
+    return df
 
 def read_frames(caps_2d):
     frames_2d = []
@@ -236,7 +242,7 @@ def extract_frames_random(config, num_frames_pick=250):
 
     n_cams = len(cam_names)
 
-    model_folder = config['model_folder']
+    # model_folder = config['model_folder']
     # dlc_config_fname = os.path.join(model_folder, 'config.yaml')
 
     # yaml = YAML(typ='rt')
@@ -293,15 +299,15 @@ def extract_frames_random(config, num_frames_pick=250):
     indexes = []
     for cnum in range(n_cams):
         folder = folder_base + '--' + cam_names[cnum]
-        images_cur = [os.path.join('labeled-data', folder, img) for img in images]
+        images_cur = [os.path.join('labeled-data', folder_base, folder, img) for img in images]
         indexes.append(images_cur)
 
         meta = pd.DataFrame(columns=['img', 'calib', 'video', 'framenum'])
         metas.append(meta)
 
         # full_folder = os.path.join(model_folder, 'labeled-data', folder)
-        full_folder = os.path.join('labeled-data', folder)
-        os.makedirs(full_folder)
+        full_folder = os.path.join('labeled-data', folder_base, folder)
+        os.makedirs(full_folder, exist_ok=True)
         folders.append(full_folder)
 
     caps = []
@@ -351,17 +357,27 @@ def extract_frames_random(config, num_frames_pick=250):
     for cnum, folder in enumerate(folders):
         metas[cnum].to_csv(os.path.join(folder, 'anipose_metadata.csv'), index=False)
 
-        key = true_basename(folder) + '.avi'
+        # key = true_basename(folder) + '.avi'
         # dlc_config['video_sets'][key] = {
         #     'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
         # }
+
+    config_path = os.path.join(config['path'], 'config.toml')
+    if os.path.exists(config_path):
+        shutil.copy(config_path, os.path.join('labeled-data', folder_base, 'config.toml'))
+
+    calib_path = os.path.join(config['path'],
+                              config['pipeline']['calibration_results'],
+                              'calibration.toml')
+    if os.path.exists(calib_path):
+        shutil.copy(calib_path, os.path.join('labeled-data', folder_base, 'calibration.toml'))
 
     # with open(dlc_config_fname, 'w') as f:
     #     yaml.dump(dlc_config, f)
 
     
 POSSIBLE_MODES = ['good', 'bad', 'random']
-def extract_frames_picked(config, mode='bad', num_frames_pick=250):
+def extract_frames_picked(config, mode='bad', num_frames_pick=250, scorer=None):
     if mode not in POSSIBLE_MODES:
         raise ValueError(
             'extract_frames_picked needs mode to be one of {}, but received "{}"'
@@ -385,9 +401,15 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
     dlc_config_fname = os.path.join(model_folder, 'config.yaml')
 
 
-    yaml = YAML(typ='rt')
-    with open(dlc_config_fname, 'r') as f:
-        dlc_config = yaml.load(f)
+    if scorer is None:
+        # try to read it from yaml file
+        if os.path.exists(dlc_config_fname):
+            yaml = YAML(typ='rt')
+            with open(dlc_config_fname, 'r') as f:
+                dlc_config = yaml.load(f)
+            scorer = dlc_config['scorer']
+        else:
+            scorer = 'default'
 
     nums = [p.shape[1] for p in points]
     num_total = np.sum(nums)
@@ -445,7 +467,6 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
 
     picked = sorted(picked)
 
-    scorer = dlc_config['scorer']
 
     columns = pd.MultiIndex.from_product(
         [[scorer], bodyparts, ['x', 'y']],
@@ -465,7 +486,7 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
     indexes = []
     for cnum in range(n_cams):
         folder = folder_base + '--' + cam_names[cnum]
-        images_cur = [os.path.join('labeled-data', folder, img) for img in images]
+        images_cur = [os.path.join('labeled-data', folder_base, folder, img) for img in images]
         indexes.append(images_cur)
 
         dout = pd.DataFrame(columns=columns)
@@ -476,8 +497,8 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
         metas.append(meta)
 
         # full_folder = os.path.join(model_folder, 'labeled-data', folder)
-        full_folder = os.path.join('labeled-data', folder)
-        os.makedirs(full_folder)
+        full_folder = os.path.join('labeled-data', folder_base, folder)
+        os.makedirs(full_folder, exist_ok=True)
         folders.append(full_folder)
 
     caps = []
@@ -515,8 +536,9 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
 
         for cnum in range(n_cams):
             row = indexes[cnum][imgnum]
-            douts[cnum].loc[row, (scorer, bodyparts, 'x')] = pred[cnum, :, 0]
-            douts[cnum].loc[row, (scorer, bodyparts, 'y')] = pred[cnum, :, 1]
+            row_x = row.replace(folder_base + '/', '')
+            douts[cnum].loc[row_x, (scorer, bodyparts, 'x')] = pred[cnum, :, 0]
+            douts[cnum].loc[row_x, (scorer, bodyparts, 'y')] = pred[cnum, :, 1]
 
             metas[cnum].loc[rowcount, 'img'] = row
             metas[cnum].loc[rowcount, 'calib'] = calib_fnames[vidnum]
@@ -532,7 +554,7 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
 
     for cnum, folder in enumerate(folders):
         douts[cnum].to_hdf(os.path.join(folder, 'CollectedData_' + scorer + '.h5'),
-                      'df_with_missing', format='table', mode='w')
+                      key='df_with_missing', format='table', mode='w')
         douts[cnum].to_csv(os.path.join(folder, 'CollectedData_' + scorer + '.csv'))
 
         metas[cnum].to_csv(os.path.join(folder, 'anipose_metadata.csv'), index=False)
@@ -542,5 +564,19 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250):
         #     'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
         # }
 
+    data_concat = pd.concat([clean_index(d.copy()) for d in douts])
+    data_concat.to_csv(os.path.join('labeled-data', folder_base, 'CollectedData.csv'), index=True)
+
+    config_path = os.path.join(config['path'], 'config.toml')
+    if os.path.exists(config_path):
+        shutil.copy(config_path, os.path.join('labeled-data', folder_base, 'config.toml'))
+
+    calib_path = os.path.join(config['path'],
+                              config['pipeline']['calibration_results'],
+                              'calibration.toml')
+    if os.path.exists(calib_path):
+        shutil.copy(calib_path, os.path.join('labeled-data', folder_base, 'calibration.toml'))
+
+    # calibration_path =
     # with open(dlc_config_fname, 'w') as f:
     #     yaml.dump(dlc_config, f)
