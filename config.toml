@@ -28,7 +28,7 @@ board_marker_length = 3.75 # mm
 # If charuco or checkerboard, square side length
 board_square_side_length = 5 # mm
 
-animal_calibration = False
+animal_calibration = false
 
 calibration_init = 'calibration_init.toml'
 
