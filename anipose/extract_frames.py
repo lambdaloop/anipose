@@ -232,7 +232,7 @@ def get_all_videos_fnames(config):
     }
     return out
 
-def extract_frames_random(config, num_frames_pick=250):
+def extract_frames_random(config, num_frames_pick=250, name=None):
     d = get_all_videos_fnames(config)
     all_fnames = d['fnames']
     cam_names = d['cam_names']
@@ -291,8 +291,11 @@ def extract_frames_random(config, num_frames_pick=250):
     img_format = 'img{:0' + str(nd) +'d}.png'
     images = [img_format.format(i) for i in range(num_frames_pick)]
 
-    folder_base = '{}_{}_{}_random'.format(
-        config['project'], main_folder, datetime.now().strftime('%Y-%m-%d_%H-%M'))
+    if name is None:
+        folder_base = '{}_{}_{}_random'.format(
+            config['project'], main_folder, datetime.now().strftime('%Y-%m-%d_%H-%M'))
+    else:
+        folder_base = name
 
     folders = []
     metas = []
@@ -377,7 +380,7 @@ def extract_frames_random(config, num_frames_pick=250):
 
     
 POSSIBLE_MODES = ['good', 'bad', 'random']
-def extract_frames_picked(config, mode='bad', num_frames_pick=250, scorer=None):
+def extract_frames_picked(config, mode='bad', num_frames_pick=250, scorer=None, name=None):
     if mode not in POSSIBLE_MODES:
         raise ValueError(
             'extract_frames_picked needs mode to be one of {}, but received "{}"'
@@ -477,8 +480,11 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250, scorer=None):
     images = [img_format.format(i) for i in range(num_frames_pick)]
 
     # folder_base = datetime.now().strftime('%Y-%m-%d--%H-%M')
-    folder_base = '{}_{}_{}_{}'.format(
-        config['project'], main_folder, datetime.now().strftime('%Y-%m-%d_%H-%M'), mode)
+    if name is None:
+        folder_base = '{}_{}_{}_{}'.format(
+            config['project'], main_folder, datetime.now().strftime('%Y-%m-%d_%H-%M'), mode)
+    else:
+        folder_base = name
 
     folders = []
     douts = []
