@@ -220,7 +220,7 @@ def extract_frames(config, nframes=200, mode='bad', no_pred=False, scorer=None):
     click.echo('Extracting frames...')
     if no_pred:
         mode = 'random'
-        extract_frames_random(config, nframes, scorer=scorer)
+        extract_frames_random(config, nframes)
     else:
         extract_frames_picked(config, mode, nframes, scorer=scorer)
 
