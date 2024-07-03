@@ -16,7 +16,7 @@ These modules are packaged together within Anipose, but the calibration and tria
 
 The name Anipose comes from **Ani**\ mal **Pose**, but it also sounds like "any pose".
 
-Check out the `Anipose preprint <https://www.biorxiv.org/content/10.1101/2020.05.26.117325v1>`_ for more information.
+Check out the `Anipose paper <https://doi.org/10.1016/j.celrep.2021.109730>`_ for more information.
 
 Demos
 ===============
