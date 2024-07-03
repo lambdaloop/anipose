@@ -21,7 +21,7 @@ If you would like to follow along as we walk through the Python code, then
 you may begin by downloading the following: 
 
 - The calibration and triangulation materials for the hand dataset found in this
-  `Google Drive folder <https://drive.google.com/drive/u/1/folders/1Y4qzeL80mXOvDAJpbAsnQQLXeoBcvtK0>`_.
+  `Google Drive folder <https://drive.google.com/drive/folders/1ItnZrtuELjWg1XZtu3VdJfEOBTYKJ-sH?usp=sharing>`_.
   You are welcome to use any of these files as a reference at any point.
 
   - The Jupyter Notebook, ``aniposelib example.ipynb``, and the Python script, 
