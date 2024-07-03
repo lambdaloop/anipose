@@ -3,19 +3,22 @@ Anipose Tutorial
 
 Welcome! This is a tutorial that will help familiarize you with the workflow of Anipose. 
 
-We also have tutorial in the format of a 
-`Google Slides presentation <https://docs.google.com/presentation/d/1L1OeAmuXd95YdUIv3e8U67CVdD--3AxkmxbQ101h2Co/edit?usp=sharing>`_, 
-and you are welcome to reference or use them. Note that it assumes that Anipose has 
-been installed and the dataset mentioned below has been dowloaded in advance. 
+..
+   We also have tutorial in the format of a
+   `Google Slides presentation <https://docs.google.com/presentation/d/1L1OeAmuXd95YdUIv3e8U67CVdD--3AxkmxbQ101h2Co/edit?usp=sharing>`_,
+   and you are welcome to reference or use them. Note that it assumes that Anipose has
+   been installed and the dataset mentioned below has been dowloaded in advance.
 
 Setting Up the Project
 ======================
 
 We have prepared a dataset to help you learn how to use Anipose. In this demo, 
 we will be using Anipose to track the positions of 21 different keypoints on the 
-hand (see Figure 1). Begin by downloading ``hand-demo-dlc-TuthillLab-2019-08-05``
-and ``hand-demo-unfilled`` from
-`here <https://drive.google.com/drive/u/1/folders/18qGbHyiSJ2au9sFXScZ63EZ83PtC1-ld>`_. 
+hand (see Figure 1). Begin by downloading `hand-demo-dlc-TuthillLab-2019-08-05 <https://drive.google.com/file/d/1BUhEx531xLYeESMMBXkCfU6nnSA_22o2/view?usp=drive_link>`_
+and `hand-demo-unfilled <https://drive.google.com/file/d/1T3UKDDpkucGp-cz1m04T3XfjPXtu7D89/view?usp=drive_link>`_.
+
+(You may also find it useful to reference `hand-demo-filled <https://drive.google.com/file/d/19TcS9Cd2dz1ehj59C--JsYe5yLKiqU1l/view?usp=drive_link>`_, which has the expected output after completing this tutorial.)
+
 The DeepLabCut project folder contains a 
 pre-trained DLC network, and the hand demo folder is the Anipose project folder. 
 Then do the following:
