@@ -26,15 +26,18 @@ def nan_helper(y):
 def remove_dups(pts, thres=7):
     tindex = np.repeat(np.arange(pts.shape[0])[:, None], pts.shape[1], axis=1)*100
     pts_ix = np.dstack([pts, tindex])
-    tree = cKDTree(pts_ix.reshape(-1, 3))
+    pts_flat = pts_ix.reshape(-1, 3)
+    check = np.all(np.isfinite(pts_flat), axis=1)
+    ix_good = np.where(check)[0]
+    tree = cKDTree(pts_flat[ix_good])
 
     shape = (pts.shape[0], pts.shape[1])
     pairs = tree.query_pairs(thres)
-    indices = [b for a, b in pairs]
 
     if len(pairs) == 0:
         return pts
 
+    indices = [ix_good[b] for a, b in pairs]
     i0, i1 = np.unravel_index(indices, shape)
     pts_out = np.copy(pts)
     pts_out[i0, i1] = np.nan
