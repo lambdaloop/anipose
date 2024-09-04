@@ -28,7 +28,9 @@ DEFAULT_CONFIG = {
         'score_threshold': 0.8,
         'n_deriv_smooth': 3,
         'constraints': [],
-        'constraints_weak': []
+        'constraints_weak': [],
+        'optim_chunking': False,
+        'optim_chunking_size': 1000
     },
     'pipeline': {
         'videos_raw': 'videos-raw',

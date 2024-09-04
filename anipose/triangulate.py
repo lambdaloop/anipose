@@ -230,7 +230,8 @@ def triangulate(config,
         if np.sum(c) < 20:
             print("warning: not enough 3D points to run optimization")
             points_3d = points_3d_init
-        else:
+        elif (not config['triangulation']['optim_chunking']) or \
+             (config['triangulation']['optim_chunking_size'] + 100 > n_frames):
             points_3d = cgroup.optim_points(
                 points_2d, points_3d_init,
                 constraints=constraints,
@@ -242,6 +243,35 @@ def triangulate(config,
                 n_deriv_smooth=config['triangulation']['n_deriv_smooth'],
                 reproj_error_threshold=config['triangulation']['reproj_error_threshold'],
                 verbose=True)
+        else:
+            # do optimization in chunks due to memory constraints
+            chunk_size = config['triangulation']['optim_chunking_size']
+            fixed = None
+            points_3d_out = points_3d_init * np.nan
+            for start in range(0, n_frames, chunk_size):
+                if start == 0:
+                    n_fixed = 0
+                    p2d = points_2d[:, start:start+chunk_size]
+                    p3d = points_3d_init[start:start+chunk_size]
+                else:
+                    n_fixed = 15
+                    p2d = points_2d[:, start-n_fixed:start+chunk_size]
+                    p3d = np.vstack([fixed, points_3d_init[start:start+chunk_size]])
+
+                points_3d = cgroup.optim_points(
+                    p2d, p3d,
+                    constraints=constraints,
+                    constraints_weak=constraints_weak,
+                    # scores=scores_2d,
+                    scale_smooth=config['triangulation']['scale_smooth'],
+                    scale_length=config['triangulation']['scale_length'],
+                    scale_length_weak=config['triangulation']['scale_length_weak'],
+                    n_deriv_smooth=config['triangulation']['n_deriv_smooth'],
+                    reproj_error_threshold=config['triangulation']['reproj_error_threshold'],
+                    verbose=True, n_fixed=n_fixed)
+                points_3d_out[start:start+chunk_size] = points_3d[n_fixed:]
+                fixed = points_3d[-15:]
+            points_3d = points_3d_out
 
         points_2d_flat = points_2d.reshape(n_cams, -1, 2)
         points_3d_flat = points_3d.reshape(-1, 3)
