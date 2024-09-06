@@ -24,7 +24,7 @@ setuptools.setup(
         'console_scripts': ['anipose=anipose.anipose:cli']
     },
     install_requires=[
-        'deeplabcut>=2.0.4.1',
+        # 'deeplabcut>=2.0.4.1',
         'aniposelib>=0.7.0',
         'opencv-contrib-python',
         'toml',
@@ -37,7 +37,8 @@ setuptools.setup(
         'flask', 'flask-compress', 'flask-ipban'
     ],
     extras_require={
-        'viz':  ["mayavi"]
+        'viz':  ["mayavi"],
+        'dlc': ['deeplabcut>=2.0.4.1']
     }
 
 )
