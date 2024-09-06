@@ -151,6 +151,8 @@ def process_session(config, session_path):
     outdir = os.path.join(calibration_path, pipeline_calibration_results)
     outname = os.path.join(outdir, outname_base)
 
+    os.makedirs(outdir, exist_ok=True)
+
     print(outname)
     skip_calib = False
     init_stuff = True
