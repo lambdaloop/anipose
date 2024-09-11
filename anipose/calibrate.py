@@ -113,7 +113,11 @@ def process_points_for_calibration(all_points, all_scores):
     max_size = int(100e3)
 
     if points.shape[1] > max_size:
-        sample_ixs = np.random.choice(points.shape[1], size=max_size, replace=False)
+        n_good = num_good[good]
+        prob = np.exp(n_good)
+        prob = prob / np.sum(prob)
+
+        sample_ixs = np.random.choice(points.shape[1], size=max_size, replace=False, p=prob)
         points = points[:, sample_ixs]
 
     return points
