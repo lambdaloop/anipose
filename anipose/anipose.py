@@ -40,6 +40,7 @@ DEFAULT_CONFIG = {
         'pose_2d_projected': 'pose-2d-proj',
         'pose_3d': 'pose-3d',
         'pose_3d_filter': 'pose-3d-filtered',
+        'pose_3d_ext': 'h5',
         'videos_labeled_2d': 'videos-labeled',
         'videos_labeled_2d_filter': 'videos-labeled-filtered',
         'calibration_videos': 'calibration',
@@ -135,7 +136,7 @@ def tracking_errors(config, scorer=None):
     from .tracking_errors import get_tracking_errors
     click.echo('Comparing tracking to labeled data...')
     get_tracking_errors(config, scorer)
-    
+
 @cli.command()
 @pass_config
 def analyze(config):
@@ -242,7 +243,7 @@ def label_2d_proj(config):
     from .label_videos_proj import label_proj_all
     click.echo('Making 2D videos from 3D projections...')
     label_proj_all(config)
-    
+
 @cli.command()
 @pass_config
 def label_2d(config):
@@ -328,7 +329,7 @@ def run_data(config):
         from .filter_3d import filter_pose_3d_all
         click.echo('Filtering 3D points...')
         filter_pose_3d_all(config)
-    
+
     click.echo('Computing angles...')
     compute_angles_all(config)
 
