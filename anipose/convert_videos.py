@@ -45,9 +45,10 @@ def process_video(fname, outname, encoding_params):
 
     print(outname)
     if gpu_enabled:
-        subprocess.run(['ffmpeg', '-y', '-i', fname, '-hide_banner',
-                        '-loglevel', 'error', '-hwaccel', 'cuda',
-                        '-hwaccel_output_format', 'cuda',
+        subprocess.run(['ffmpeg', '-y',
+                        '-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda',
+                        '-i', fname, '-hide_banner',
+                        '-loglevel', 'error',
                         '-vcodec', 'h264_nvenc', '-cq', str(quality), '-pix_fmt', 'yuv420p',
                         '-filter:v', vfilter,
                         outname])
