@@ -73,7 +73,9 @@ def process_folder(config, path):
 
     os.makedirs(outpath, exist_ok=True)
 
-    pool = Pool(3)
+    n_proc = config.get('encoding_nproc', 3)
+
+    pool = Pool(n_proc)
 
     encoding_params = {
         'converted_video_speed': config['converted_video_speed'],

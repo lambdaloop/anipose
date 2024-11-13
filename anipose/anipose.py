@@ -354,11 +354,13 @@ def visualizer():
     run_server()
 
 @cli.command()
+@click.option('--nproc', default=3, type=int, show_default=True)
 @click.option('--quality', default=28, type=int, show_default=True)
 @click.option('--gpu', is_flag=True)
 @pass_config
-def convert_videos(config, gpu=False, quality=28):
+def convert_videos(config, nproc=3, gpu=False, quality=28):
     from .convert_videos import convert_all
+    config['encoding_nproc'] = nproc
     config['gpu_enabled'] = gpu
     config['video_quality'] = quality
     convert_all(config)
