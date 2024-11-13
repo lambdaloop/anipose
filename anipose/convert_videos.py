@@ -25,13 +25,16 @@ def same_length(vid1, vid2):
     return abs(params1['nframes'] - params2['nframes']) < 5
 
 
-def process_video(fname, outname, video_speed):
+def process_video(fname, outname, encoding_params):
     # print(outname, 'started')
     if os.path.exists(outname) and same_length(fname, outname):
         return
 
+    video_speed = encoding_params.get('converted_video_speed', 1)
+    quality = encoding_params.get('video_quality', 28)
+    gpu_enabled = encoding_params.get('gpu_enabled', False)
+
     params = get_video_params(fname)
-    params['fps']
 
     if video_speed != 1:
         vfilter = 'setpts={:.2f}*PTS, fps=fps={:.2f}, pad=ceil(iw/2)*2:ceil(ih/2)*2'.format(
@@ -41,12 +44,21 @@ def process_video(fname, outname, video_speed):
         vfilter = 'pad=ceil(iw/2)*2:ceil(ih/2)*2'
 
     print(outname)
-    subprocess.run(['ffmpeg', '-y',
-                    '-i', fname,
-                    '-hide_banner', '-loglevel', 'error', # '-stats',
-                    '-vcodec', 'h264', '-qp', '28', '-pix_fmt', 'yuv420p',
-                    '-filter:v', vfilter,
-                    outname])
+    if gpu_enabled:
+        subprocess.run(['ffmpeg', '-y', '-i', fname, '-hide_banner',
+                        '-loglevel', 'error', '-hwaccel', 'cuda',
+                        '-hwaccel_output_format', 'cuda',
+                        '-vcodec', 'h264_nvenc', '-cq', str(quality), '-pix_fmt', 'yuv420p',
+                        '-filter:v', vfilter,
+                        outname])
+    else:
+        subprocess.run(['ffmpeg', '-y', '-i', fname, '-hide_banner',
+                        '-loglevel', 'error', # '-stats',
+                        '-vcodec', 'h264', '-qp', str(quality), '-pix_fmt', 'yuv420p',
+                        '-filter:v', vfilter,
+                        outname])
+
+
     # print(outname, 'finished')
 
 def process_folder(config, path):
@@ -62,13 +74,19 @@ def process_folder(config, path):
 
     pool = Pool(3)
 
+    encoding_params = {
+        'converted_video_speed': config['converted_video_speed'],
+        'video_quality': config['video_quality'],
+        'gpu_enabled': config['gpu_enabled']
+    }
+
     for vidname in vidnames:
         basename = os.path.basename(vidname)
         base, ext = os.path.splitext(basename)
         outname = os.path.join(outpath, base+'.mp4')
         # if not (os.path.exists(outname) and same_length(vidname, outname)):
             # process_video(vidname, outname)
-        pool.apply_async(process_video, (vidname, outname, config['converted_video_speed']))
+        pool.apply_async(process_video, (vidname, outname, encoding_params))
 
     pool.close()
     pool.join()

@@ -354,9 +354,13 @@ def visualizer():
     run_server()
 
 @cli.command()
+@click.option('--quality', default=28, type=int, show_default=True)
+@click.option('--gpu', is_flag=True)
 @pass_config
-def convert_videos(config):
+def convert_videos(config, gpu=False, quality=28):
     from .convert_videos import convert_all
+    config['gpu_enabled'] = gpu
+    config['video_quality'] = quality
     convert_all(config)
 
 @cli.command()
