@@ -7,6 +7,7 @@ import os
 import os.path
 import pandas as pd
 import toml
+import pickle
 from numpy import array as arr
 from glob import glob
 from scipy import optimize
@@ -103,12 +104,14 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
 def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
     if cam_names is None:
         cam_names = sorted(fname_dict.keys())
+
     pose_names = [fname_dict[cname] for cname in cam_names]
 
     if offsets_dict is None:
         offsets_dict = dict([(cname, (0,0)) for cname in cam_names])
 
     datas = []
+    joints_all = []
     for ix_cam, (cam_name, pose_name) in \
             enumerate(zip(cam_names, pose_names)):
         dlabs = pd.read_hdf(pose_name)
@@ -126,19 +129,21 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
             dlabs.loc[:, (joint, 'y')] += dy
 
         datas.append(dlabs)
+        joints_all += joint_names
 
+    joint_names_unique = np.unique(joints_all)
     n_cams = len(cam_names)
-    n_joints = len(joint_names)
+    n_joints = len(joint_names_unique)
     n_frames = min([d.shape[0] for d in datas])
 
     # frame, camera, bodypart, xy
     points = np.full((n_cams, n_frames, n_joints, 2), np.nan, 'float')
-    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')#initialise as zeros, instead of NaN, makes more sense? 
+    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')#initialise as zeros, instead of NaN, makes more sense?
 
     for cam_ix, dlabs in enumerate(datas):
-        for joint_ix, joint_name in enumerate(joint_names):
+        for joint_ix, joint_name in enumerate(joint_names_unique):
             try:
-                points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames] 
+                points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames]
                 scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
             except KeyError:
                 pass
@@ -147,7 +152,7 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
         'cam_names': cam_names,
         'points': points,
         'scores': scores,
-        'bodyparts': joint_names
+        'bodyparts': joint_names_unique
     }
 
 
@@ -342,7 +347,22 @@ def triangulate(config,
 
     dout['fnum'] = np.arange(n_frames)
 
-    dout.to_csv(output_fname, index=False)
+    if output_fname.endswith('.csv'):
+        dout.to_csv(output_fname, index=False)
+    else:
+        with open(output_fname, 'wb') as f: pickle.dump(dout, f)
+
+    print(f'Triangulated pose is saved at: {output_fname}')
+
+
+def get_camera_names_from_calib(calib_folder):
+    """ Get camera names from the calibration folder."""
+    calib_fname = os.path.join(calib_folder, 'calibration.toml')
+    master_dict = toml.load(calib_fname)
+    return [
+        camera_dict['name']
+        for camera, camera_dict in master_dict.items() if 'cam' in camera
+    ]
 
 
 def process_session(config, session_path):
@@ -351,6 +371,10 @@ def process_session(config, session_path):
     pipeline_pose = config['pipeline']['pose_2d']
     pipeline_pose_filter = config['pipeline']['pose_2d_filter']
     pipeline_3d = config['pipeline']['pose_3d']
+    output_ext = config['pipeline']['pose_3d_ext']
+
+    if not output_ext in ['csv', 'h5', 'pkl']:
+        raise ValueError('The output extension should be csv, h5 or pkl!')
 
     calibration_path = find_calibration_folder(config, session_path)
     if calibration_path is None:
@@ -365,7 +389,12 @@ def process_session(config, session_path):
     video_folder = os.path.join(session_path, pipeline_videos_raw)
     output_folder = os.path.join(session_path, pipeline_3d)
 
-    pose_files = glob(os.path.join(pose_folder, '*.h5'))
+    camera_names = get_camera_names_from_calib(calib_folder)
+
+    pose_files = []
+
+    for cam_name in camera_names:
+        pose_files.append(glob(os.path.join(pose_folder, f'*{cam_name}*.h5'))[0])
 
     cam_videos = defaultdict(list)
 
@@ -384,13 +413,12 @@ def process_session(config, session_path):
         cam_names = [get_cam_name(config, f) for f in fnames]
         fname_dict = dict(zip(cam_names, fnames))
 
-        output_fname = os.path.join(output_folder, name + '.csv')
-
+        output_fname = os.path.join(output_folder, name + f'pose3d.{output_ext}')
         print(output_fname)
-        
-        if os.path.exists(output_fname):
-            continue
 
+        if os.path.exists(output_fname):
+            print(f'Triangulation file already exists at: {output_fname}')
+            continue
 
         try:
             triangulate(config,
@@ -399,6 +427,6 @@ def process_session(config, session_path):
         except ValueError:
             import traceback, sys
             traceback.print_exc(file=sys.stdout)
-            
+
 
 triangulate_all = make_process_fun(process_session)
