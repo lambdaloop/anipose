@@ -644,9 +644,9 @@ function formatTime(milliseconds) {
     var mseconds = Math.floor(milliseconds % 1000)
     mseconds = mseconds.toString().substring(0, 2);
     mseconds = (mseconds >= 10) ? mseconds : '0' + mseconds;
-    var seconds = Math.floor(milliseconds / 1000);
+    var seconds = Math.floor(milliseconds / 1000) % 60;
     seconds = (seconds >= 10) ? seconds : '0' + seconds;
-    var minutes = Math.floor(seconds / 60);
+    var minutes = Math.floor(milliseconds / 1000 / 60);
     minutes = (minutes >= 10) ? minutes : '0' + minutes;
     return minutes + ':' + seconds + ':' + mseconds;
 }
