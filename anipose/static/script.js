@@ -688,11 +688,13 @@ function drawFrame(force) {
         }
     }
 
-    const fix = Math.max(0, Math.min(Math.floor(framenum), state.data.length-1));
-    setTimeout(function() {
-        updateKeypoints(state.data[fix])
-        draw2D(fix);
-    }, 0);
+    if(state.data) {
+        const fix = Math.max(0, Math.min(Math.floor(framenum), state.data.length-1));
+        setTimeout(function() {
+            updateKeypoints(state.data[fix])
+            draw2D(fix);
+        }, 0);
+    }
     if(playing) {
         setTimeout(drawFrame, 1000.0/state.fps);
     }
@@ -709,11 +711,13 @@ function drawNextFrame(force, framenum) {
         state.videos[i].currentTime = (framenum / nFrames) * state.videos[0].duration;
     }
 
-    const fix = Math.max(0, Math.min(Math.floor(framenum), state.data.length-1));
-    setTimeout(function() {
-        updateKeypoints(state.data[fix])
-        draw2D(fix);
-    }, 0);
+    if(state.data) {
+        const fix = Math.max(0, Math.min(Math.floor(framenum), state.data.length-1));
+        setTimeout(function() {
+            updateKeypoints(state.data[fix])
+            draw2D(fix);
+        }, 0);
+    }
 }
 
 function getUniqueTrialBehaviors() {
@@ -1689,8 +1693,10 @@ function pause() {
     t = state.videos[0].currentTime;
     var framenum = Math.round(t * state.fps);
     playing = false;
-    updateKeypoints(state.data[framenum])
-    draw2D(framenum);
+    if(state.data) {
+        updateKeypoints(state.data[framenum])
+        draw2D(framenum);
+    }
 }
 
 function clearUnusedBehavior() {

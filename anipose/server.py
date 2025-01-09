@@ -210,6 +210,10 @@ def get_sessions():
         'sessions': sessions
     })
 
+@app.route('/pose3d/<session>/<filename>')
+def get_3d_simple(session, filename):
+    return get_3d(session, "", filename)
+
 @app.route('/pose3d/<session>/<folders>/<filename>')
 def get_3d(session, folders, filename):
     config = get_config(session)
@@ -257,6 +261,10 @@ def get_2d_proj(session, folders, filename):
     projs = load_2d_projections(session, folders, fname)
     return jsonify(projs)
 
+@app.route('/pose2dproj/<session>/<filename>')
+def get_2d_proj_simple(session, filename):
+    return get_2d_proj(session, "", filename)
+
 def get_bodyparts_scheme(scheme):
     bodyparts = []
     for bp_list in scheme:
@@ -301,6 +309,10 @@ def get_behaviors(session, folders, filename):
     # behaviors = add_laser(behaviors, folders, filename)
 
     return jsonify(behaviors)
+
+@app.route('/behavior/<session>/<filename>')
+def get_behaviors_simple(session, filename):
+    return get_behaviors(session, "", filename)
 
 def merge_behavior_changes(behavior_changes):
 
@@ -398,13 +410,25 @@ def download_behaviors(session):
 
 @app.route('/video/<session>/<folders>/<filename>')
 def get_video(session, folders, filename):
-    print(session, folders, filename)
+    # print(session, folders, filename)
     config = get_config(session)
     folders = folders.split('|')
     path = safe_join(prefix, session, *folders)
     path = safe_join(path, config['pipeline']['videos_raw_mp4'])
-    print(path, filename + '.mp4')
+    # print(path, filename + '.mp4')
     return send_from_directory(path, filename + '.mp4')
+
+@app.route('/video/<session>/<filename>')
+def get_video_simple(session, filename):
+    return get_video(session, "", filename)
+    # print(session, folders, filename)
+    # config = get_config(session)
+    # folders = folders.split('|')
+    # path = safe_join(prefix, session, *folders)
+    # path = safe_join(path, config['pipeline']['videos_raw_mp4'])
+    # print(path, filename + '.mp4')
+    # return send_from_directory(path, filename + '.mp4')
+
 
 @app.route('/framerate/<session>/<folders>/<filename>')
 def get_framerate(session, folders, filename):
@@ -416,6 +440,11 @@ def get_framerate(session, folders, filename):
     cap.release()
     print(path, fps)
     return jsonify(fps)
+
+@app.route('/framerate/<session>/<filename>')
+def get_framerate_simple(session, filename):
+    return get_framerate(session, "", filename)
+
 
 def group_by_trial(fnames, session):
     config = get_config(session)
@@ -469,7 +498,7 @@ def run_server():
     global cdir, prefix, single_project
     cdir = os.getcwd()
     prefix, single_project = get_structure(cdir)
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
     # app.run(debug=False, threaded=False, processes=5, host="0.0.0.0", port=5000)
 
 # run the application
