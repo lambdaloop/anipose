@@ -145,10 +145,6 @@ window.addEventListener('DOMContentLoaded', function(){
     var selectBehavior = document.getElementById("selectBehavior");
     var actogram = document.getElementById("actogram");
     var vidlist = document.getElementById('vidlist');
-    var toggle2d = document.getElementById('toggle2d');
-    toggle2d.addEventListener(
-        "click", function() { toggle2D(); },
-        false);
 
     // run the render loop
     state.engine.runRenderLoop(function() {
@@ -167,9 +163,9 @@ window.addEventListener('DOMContentLoaded', function(){
         false);
 
     $(document).keyup(function(e) {
-        if (e.keyCode==187) {
+        if (e.keyCode==187) { // +
             speedupVideo();
-        } else if (e.keyCode==189) {
+        } else if (e.keyCode==189) { // -
             slowdownVideo();
         } else if (e.keyCode==190) { // .
             advanceFrame(1);
@@ -348,6 +344,23 @@ function previousVideo() {
     }
 }
 
+function clickVideo(e) {
+    console.log(e);
+    var container = e.target.parentElement;
+    console.log(container);
+    var parent = container.parentElement;
+    var vidlist = document.getElementById("vidlist");
+    var vidlistUnfocused = document.getElementById("vidlistUnfocused");
+
+    if(parent == vidlist) {
+        vidlist.removeChild(container);
+        vidlistUnfocused.appendChild(container);
+    } else {
+        vidlistUnfocused.removeChild(container);
+        vidlist.appendChild(container);
+    }
+}
+
 function updateSession(session, state_url) {
 
     state.metadata = undefined;
@@ -386,6 +399,8 @@ function updateSession(session, state_url) {
                 var canvas = document.createElement("canvas");
                 canvas.className = "canvas";
                 container.appendChild(canvas);
+
+                container.onclick = clickVideo;
             }
 
             $('#selectBehavior').empty();
@@ -479,7 +494,14 @@ function updateTrial(trial) {
     updateSpeedText();
     updatePlayPauseButton();
     updateToggle2DButton();
+    updateToggle3DButton();
 
+    var container3d = document.getElementById("modelContainer");
+    if (!display3d) {
+        container3d.classList.add("hidden");
+    } else {
+        container3d.classList.remove("hidden");
+    }
 
 
     var url;
@@ -504,9 +526,26 @@ function updateTrial(trial) {
             drawFrame(true);
         });
 
-    state.videos = vidlist.querySelectorAll("video");
-    state.canvases = vidlist.querySelectorAll("canvas");
-    state.containers = vidlist.querySelectorAll(".container");
+    var videoContainer = document.getElementById("videoContainer");
+
+    // we sort like this so we can preserve the location of videos as arranged by user
+    state.videos = videoContainer.querySelectorAll("video");
+    state.videos = state.videos.values().toArray();
+    state.videos.sort(function(a, b) {
+        if(a.src < b.src) {
+            return -1;
+        } else if(a.src > b.src) {
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+
+    state.containers = state.videos.map(function(x) { return x.parentElement; });
+    state.canvases = state.containers.map(function(x) { return x.querySelector("canvas"); });
+
+    // state.canvases = videoContainer.querySelectorAll("canvas");
+    // state.containers = videoContainer.querySelectorAll(".container");
     state.videoLoaded = false;
     state.behaviorLoaded = false;
 
@@ -655,7 +694,8 @@ var slowdown = 1;
 // var rate_estimate = state.vid_fps/state.fps*slowdown;
 var framenum = 0;
 var playing = false;
-var display2d = true;
+var display2d = false;
+var display3d = false;
 var prev_num = 0;
 
 function drawFrame(force) {
@@ -1824,6 +1864,28 @@ function updateToggle2DButton() {
         button.innerHTML = "hide 2d";
     } else {
         button.innerHTML = "display 2d";
+    }
+}
+
+
+function toggle3D() {
+    var container = document.getElementById("modelContainer");
+    if (!display3d) {
+        display3d = true;
+        container.classList.remove("hidden");
+    } else {
+        display3d = false;
+        container.classList.add("hidden");
+    }
+    updateToggle3DButton();
+}
+
+function updateToggle3DButton() {
+    var button = document.getElementById("toggle3d");
+    if(display3d) {
+        button.innerHTML = "hide 3d";
+    } else {
+        button.innerHTML = "display 3d";
     }
 }
 

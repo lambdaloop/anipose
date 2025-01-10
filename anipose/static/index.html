@@ -232,7 +232,8 @@
         </div>
         <div id="toolbox">
             <div id="speedButtons">
-                <button id="toggle2d"></button></button>
+                <button id="toggle2d" onclick="toggle2D()"></button>
+                <button id="toggle3d" onclick="toggle3D()"></button>
                 <button id="slowdown" onclick="slowdownVideo()">slow down</button>
                 <button id="speedup" onclick="speedupVideo()">speed up</button>
                 <span id="speed" class="white">slowed 10x</span>
@@ -263,6 +264,7 @@
         <div id = 'viz'>
             <div id = "videoContainer" class = "ncontainer">
                 <div id="vidlist" class = "ncontainer"></div>
+                <div id="vidlistUnfocused" class = "ncontainer"></div>
             </div>
             <div id = "modelContainer" class = "ncontainer">
                 <canvas id="renderCanvas"></canvas>

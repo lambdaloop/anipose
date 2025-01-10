@@ -108,6 +108,10 @@ button#keyboardShortcutsButton {
     outline: none;
 }
 
+.hidden {
+    display: none !important;
+}
+
 /* keyboard shortcut box */
 .modal {
     display: none; 
@@ -383,7 +387,7 @@ button#clearUnusedBehavior {
     padding: 0px;
 }
 video {
-    height: 200px;
+    height: 300px;
     top: 0;
     left: 0;
     display: inline;
@@ -398,6 +402,20 @@ video {
     width: 100%;
     text-align: center;
 }
+
+#vidlistUnfocused {
+    display: block;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15px;
+    width: 100%;
+    text-align: center;
+    zoom: 0.7;
+    -moz-transform: scale(0.7);
+}
+
 .buttons {
     display: block;
     margin-left: auto;
@@ -427,6 +445,7 @@ video {
     padding: 0;
     margin: 0;
     flex: 1 1 auto;
+    padding-left: 10px;
 }
 .behaviorContainer {
     max-height: 30px
