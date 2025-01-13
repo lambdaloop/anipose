@@ -13,6 +13,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/lambdaloop/anipose",
     packages=setuptools.find_packages(),
+    include_package_data=True,
+    package_data={
+        'anipose': ['static/*'],
+    },
+
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD License",
@@ -39,6 +44,5 @@ setuptools.setup(
     extras_require={
         'viz':  ["mayavi"],
         'dlc': ['deeplabcut>=2.0.4.1']
-    }
-
+    },
 )
