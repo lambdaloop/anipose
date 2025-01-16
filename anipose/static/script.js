@@ -163,6 +163,18 @@ window.addEventListener('DOMContentLoaded', function(){
         "mousedown", function(e) { setPlayPosition(e.pageX); },
         false);
 
+    var miniActogram = document.getElementById("miniActogram");
+    updateCanvas(miniActogram, miniActogram.getContext("2d"));
+    miniActogram.addEventListener(
+        "mousedown", function(e) { setPlayPosition(e.pageX); },
+        false);
+
+    var miniProgress = document.getElementById("miniProgress");
+    updateCanvas(miniProgress, miniProgress.getContext("2d"));
+    miniProgress.addEventListener(
+        "mousedown", function(e) { setPlayPositionMini(e.pageX); },
+        false);
+
     $(document).keyup(function(e) {
         if (e.keyCode==187) { // +
             speedupVideo();
@@ -183,13 +195,13 @@ window.addEventListener('DOMContentLoaded', function(){
         }
     });
 
-    $(document).mouseup(function(e) {
-        if (state.selectedBout) { 
-            state.selectedBout = undefined;
-            state.selectedBehavior = undefined;
-            drawActogram();
-        }
-    });
+    // $(document).mouseup(function(e) {
+    //     if (state.selectedBout) {
+    //         state.selectedBout = undefined;
+    //         state.selectedBehavior = undefined;
+    //         drawActogram();
+    //     }
+    // });
 
     window.addEventListener('keydown', function(e) {
         if(e.keyCode == 32 && e.target == document.body) {
@@ -655,7 +667,7 @@ function updateTrial(trial) {
         });
 
 
-    setInterval(updateActogram, 500);
+    setInterval(updateActogram, 100);
 
 }
 
@@ -884,6 +896,32 @@ function zoomOutActogram() {
     drawActogram();
 }
 
+function updateMiniActogram() {
+    var canvas = document.getElementById("miniActogram");
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+
+    var offset = 0;
+    Object.keys(state.behaviorIds).forEach(function(behaviorId) {
+        if(!state.bouts[behaviorId]) {
+            return;
+        }
+        Object.keys(state.bouts[behaviorId]).forEach(function(key) {
+            var bout = state.bouts[behaviorId][key];
+            var ctx2, color = getBoutColor(ctx, bout, behaviorId);
+
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.lineWidth = 0;
+            ctx.rect(bout.x, offset, bout.width, 42);
+            ctx.fill();
+            // drawBout(ctx, bout, behaviorId, bout.selected);
+        });
+        offset += 50;
+    });
+}
 
 function updateActogram() {
     console.log("updateActogram");
@@ -965,6 +1003,7 @@ function drawActogram() {
         var ctx = state.behaviorCanvases[behaviorId].getContext("2d");
 
         state.behaviorCanvases[behaviorId].addEventListener('click', (e) => {
+            console.log("click " + e.clientY);
             var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
             var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
             Object.keys(state.bouts[behaviorId]).forEach(function(key) {
@@ -1031,6 +1070,8 @@ function drawActogram() {
             changeBehaviorName(container);
         });
     }
+
+    updateMiniActogram();
 }
 
 
@@ -1436,8 +1477,9 @@ function addBout(e, behaviorId) {
     var nFrames = state.videos[0].duration * state.fps;
     var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
     var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
-    var newX = mapPointValue(point.x, behaviorId);
-    var length = Math.floor(nFrames / 30);
+    var newX = mapPointValue(point.x, behaviorId)
+    var bounds = getActogramZoomBounds(state.behaviorCanvases[behaviorId]);
+    var length = Math.floor(nFrames / 30) / state.actogramZoom;
     var start = Math.floor((newX / (rect.width - 2)) * nFrames);
     var end = Math.min(start + length, nFrames);
 
@@ -1537,16 +1579,17 @@ function mapRange(value, x1, y1, x2, y2) {
 
 function getActogramZoomBounds(behaviorCanvas) {
     var video = state.videos[0];
-    var mid = (video.currentTime / video.duration) * behaviorCanvas.width;
-    var length = behaviorCanvas.width / state.actogramZoom;
+    var width = behaviorCanvas.width;
+    var mid = (video.currentTime / video.duration) * width;
+    var length = width / state.actogramZoom;
 
     var left;
     if(state.actogramZoom == 1) {
         left = 0;
     } else if(mid < length/2) {
         left = 0;
-    } else if(mid >= behaviorCanvas.width - length/2) {
-        left = behaviorCanvas.width - length;
+    } else if(mid >= width - length/2) {
+        left = width - length;
     } else {
         left = mid - length/2;
     }
@@ -1622,7 +1665,7 @@ function selectBout(ctx) {
 function mapPointValue(px, behaviorId) {
     var behaviorCanvas = state.behaviorCanvases[behaviorId];
     var bounds = getActogramZoomBounds(behaviorCanvas);
-    console.log(bounds.left + " " + bounds.right);
+    // console.log(bounds.left + " " + bounds.right);
 
     var newX = mapRange(px, 0, behaviorCanvas.width,
                         bounds.left, bounds.right);
@@ -1736,7 +1779,8 @@ function createBehavior(behaviorId, color) {
         }
     });
     state.bouts[behaviorId] = bouts;
-    drawBehavior(behaviorId, ctx); 
+    drawBehavior(behaviorId, ctx);
+    updateMiniActogram();
 }
 
 function updateCanvas(behaviorCanvas, ctx) {
@@ -1799,9 +1843,34 @@ function updateProgressBar() {
     ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.lineWidth = 0;
-    ctx.rect(value * width, 5, 2, height-5);
+    ctx.rect(value * width, 100, 2, height-200);
     ctx.fill();
 
+
+    var miniProgress = document.getElementById('miniProgress');
+    var ctx = miniProgress.getContext("2d");
+    var height = miniProgress.height;
+    var width = miniProgress.width;
+
+    var newValue = mapRange(value * width,
+                            bounds.left, bounds.right,
+                            0, width);
+
+    ctx.clearRect(0, 0, width, height);
+
+    // time line
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 0;
+    ctx.rect(0, height / 2, width, 50);
+    ctx.fill();
+
+    // time marker
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 0;
+    ctx.rect(newValue, 0, 3, height);
+    ctx.fill();
 }
 
 function updateFrameNumber() {
@@ -1820,8 +1889,38 @@ function setPlayPosition(x) {
     for(var i=0; i<state.videos.length; i++) {
         state.videos[i].currentTime = timeToSet;
     }
+
+    if (state.selectedBout) {
+        state.selectedBout = undefined;
+        state.selectedBehavior = undefined;
+    }
+
     updateProgressBar();
-    updateActogram();
+    drawActogram();
+    drawFrame(true);
+}
+
+function setPlayPositionMini(x) {
+    var progressBar = document.getElementById("miniProgress");
+    var value = (x - findPos(progressBar));
+    var bounds = getActogramZoomBounds(progressBar);
+    var newValue = mapRange(value, 0, progressBar.offsetWidth, bounds.left, bounds.right);
+
+    var percent = newValue / progressBar.width;
+
+    var timeToSet = percent * state.videos[0].duration;
+
+    for(var i=0; i<state.videos.length; i++) {
+        state.videos[i].currentTime = timeToSet;
+    }
+
+    if (state.selectedBout) {
+        state.selectedBout = undefined;
+        state.selectedBehavior = undefined;
+    }
+
+    updateProgressBar();
+    drawActogram();
     drawFrame(true);
 }
 

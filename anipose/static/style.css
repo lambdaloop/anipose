@@ -497,6 +497,73 @@ button:hover {
     cursor: default;
     box-sizing: border-box;
     padding: 0px;
+    /* margin-bottom: 5px; */
+}
+
+#miniActogram {
+    float: left;
+    display: block;
+    width: 83%;
+    height:25px;
+    position: relative;
+    background-color: #181A1B;
+    margin-right: auto;
+    margin-left: auto;
+    /* margin-top:5px; */
+    /* border-radius:2px; */
+    cursor: default;
+    box-sizing: border-box;
+    padding: 0px;
     margin-bottom: 5px;
 }
 
+button.zoomButton {
+    display: block;
+    width: 7%;
+    float:left;
+    height: 22px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    border: 1px solid white;
+    padding: 0px;
+}
+
+#miniProgress {
+    float: left;
+    display: block;
+    width: 83%;
+    height: 10px;
+    position: relative;
+    background-color: #181A1B;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top:5px;
+    /* border-radius:2px; */
+    cursor: default;
+    box-sizing: border-box;
+    padding: 0px;
+    /* margin-bottom: 5px; */
+}
+
+#miniProgressSpacer {
+    float: left;
+    display: block;
+    width: 15%;
+    height:10px;
+    position: relative;
+    /* background-color: black; */
+    /* text-align: center; */
+    /* font-size: 16px; */
+    /* font-family: "Times New Roman", Times, Serif; */
+    /* color: white; */
+    margin-right: 5px;
+    margin-left: 5px;
+    /* margin: auto; */
+    margin-top:0px;
+    /* margin-bottom:auto; */
+    /* border-radius:2px; */
+    padding:0px;
+    /* overflow: scroll; */
+    box-sizing: border-box;
+}
