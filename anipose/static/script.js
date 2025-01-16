@@ -158,6 +158,7 @@ window.addEventListener('DOMContentLoaded', function(){
     });
 
     var progressBar = document.getElementById("progressBar");
+    updateCanvas(progressBar, progressBar.getContext("2d"));
     progressBar.addEventListener(
         "mousedown", function(e) { setPlayPosition(e.pageX); },
         false);
@@ -608,6 +609,7 @@ function updateTrial(trial) {
         });
 
     // state.videos[0].addEventListener('timeupdate', updateProgressBar, false);
+
     setInterval(function () {
         // console.log(state.videos[0].currentTime);
         updateProgressBar();
@@ -1533,16 +1535,7 @@ function mapRange(value, x1, y1, x2, y2) {
     return (value - x1) * (y2 - x2) / (y1 - x1) + x2;
 }
 
-
-function drawBout(ctx, bout, behaviorId, selected) {
-    if(selected) {
-        color = "white";
-    } else {
-        ctx, color = getBoutColor(ctx, bout, behaviorId);
-    }
-
-    // let's get the x for the zoom
-    var behaviorCanvas = state.behaviorCanvases[behaviorId];
+function getActogramZoomBounds(behaviorCanvas) {
     var video = state.videos[0];
     var mid = (video.currentTime / video.duration) * behaviorCanvas.width;
     var length = behaviorCanvas.width / state.actogramZoom;
@@ -1559,7 +1552,20 @@ function drawBout(ctx, bout, behaviorId, selected) {
     }
     // var left = Math.max(mid - length/2, 0);
     var right = left + length;
-    var newX = mapRange(bout.x, left, right, 0, behaviorCanvas.width)
+    return {left, right};
+}
+
+function drawBout(ctx, bout, behaviorId, selected) {
+    if(selected) {
+        color = "white";
+    } else {
+        ctx, color = getBoutColor(ctx, bout, behaviorId);
+    }
+
+    // let's get the x for the zoom
+    var behaviorCanvas = state.behaviorCanvases[behaviorId];
+    var bounds = getActogramZoomBounds(behaviorCanvas);
+    var newX = mapRange(bout.x, bounds.left, bounds.right, 0, behaviorCanvas.width)
     var newWidth = bout.width * state.actogramZoom;
 
     if((newX > behaviorCanvas.width + 50) || (newX < 0 - newWidth)) {
@@ -1615,13 +1621,11 @@ function selectBout(ctx) {
 
 function mapPointValue(px, behaviorId) {
     var behaviorCanvas = state.behaviorCanvases[behaviorId];
-    var video = state.videos[0];
-    var mid = (video.currentTime / video.duration) * behaviorCanvas.width;
-    var length = behaviorCanvas.width / state.actogramZoom;
-    var left = Math.max(mid - length/2, 0);
-    var right = left + length;
+    var bounds = getActogramZoomBounds(behaviorCanvas);
+    console.log(bounds.left + " " + bounds.right);
 
-    var newX = mapRange(px, 0, behaviorCanvas.width, left, right);
+    var newX = mapRange(px, 0, behaviorCanvas.width,
+                        bounds.left, bounds.right);
     return newX;
 }
 
@@ -1761,16 +1765,43 @@ function generateId(length) {
 function updateProgressBar() {
     var video = state.videos[0];
     var progressBar = document.getElementById('progressBar');
+    var value = 0;
     if(video && video.duration && video.currentTime) {
-        // var percentage = Math.floor((100 / video.duration) * video.currentTime);
-        var value = (100 / video.duration) * video.currentTime;
-        var percentage = Math.round((value + Number.EPSILON) * 1000) / 1000;
-        progressBar.value = percentage;
-        progressBar.innerHTML = percentage + '% played';
-    } else {
-        progressBar.value = 0;
-        progressBar.innerHTML = "";
+        value = video.currentTime / video.duration;
     }
+
+    var height = progressBar.height;
+    var width = progressBar.width;
+
+    var bounds = getActogramZoomBounds(progressBar);
+
+    var ctx = progressBar.getContext("2d");
+
+    ctx.clearRect(0, 0, width, height);
+
+    // time line
+    ctx.beginPath();
+    ctx.fillStyle = "#555555";
+    ctx.lineWidth = 0;
+    ctx.rect(0, height / 2, width, 50);
+    ctx.fill();
+
+    // time line zoomed
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 0;
+    ctx.rect(bounds.left, height / 2,
+             bounds.right - bounds.left, 50);
+    ctx.fill();
+
+
+    // time marker
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 0;
+    ctx.rect(value * width, 5, 2, height-5);
+    ctx.fill();
+
 }
 
 function updateFrameNumber() {
@@ -1789,8 +1820,9 @@ function setPlayPosition(x) {
     for(var i=0; i<state.videos.length; i++) {
         state.videos[i].currentTime = timeToSet;
     }
+    updateProgressBar();
+    updateActogram();
     drawFrame(true);
-    drawActogram();
 }
 
 // Find the real position of obj
