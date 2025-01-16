@@ -1837,7 +1837,7 @@ function updateProgressBar() {
     ctx.beginPath();
     ctx.fillStyle = "#555555";
     ctx.lineWidth = 0;
-    ctx.rect(0, height / 2, width, 50);
+    ctx.rect(0, height / 2, width, 80);
     ctx.fill();
 
     // time line zoomed
@@ -1845,7 +1845,7 @@ function updateProgressBar() {
     ctx.fillStyle = "white";
     ctx.lineWidth = 0;
     ctx.rect(bounds.left, height / 2,
-             bounds.right - bounds.left, 50);
+             bounds.right - bounds.left, 80);
     ctx.fill();
 
 
@@ -1872,7 +1872,7 @@ function updateProgressBar() {
     ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.lineWidth = 0;
-    ctx.rect(0, height / 2, width, 50);
+    ctx.rect(0, height / 2, width, 120);
     ctx.fill();
 
     // time marker
