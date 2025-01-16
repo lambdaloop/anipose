@@ -613,6 +613,9 @@ function updateTrial(trial) {
         updateProgressBar();
     }, 10);
 
+    // setInterval(drawActogram, 1000);
+
+
     setInterval(function () {
 
         if (!state.metadata) {
@@ -650,6 +653,7 @@ function updateTrial(trial) {
         });
 
 
+    setInterval(updateActogram, 500);
 
 }
 
@@ -861,7 +865,40 @@ function applyBehaviorChanges() {
 
 }
 
+state.actogramZoom = 1;
+
+function zoomInActogram() {
+    console.log("zoom in actogram");
+    state.actogramZoom *= 1.5;
+    drawActogram();
+}
+
+function zoomOutActogram() {
+    console.log("zoom out actogram");
+    state.actogramZoom /= 1.5
+    if(state.actogramZoom < 1) {
+        state.actogramZoom = 1;
+    }
+    drawActogram();
+}
+
+
+function updateActogram() {
+    console.log("updateActogram");
+    // clearActogramCanvases();
+    if(!state.behaviorIds) {
+        return;
+    }
+    Object.keys(state.behaviorIds).forEach(function(behaviorId) {
+        var canvas = state.behaviorCanvases[behaviorId];
+        var ctx = state.behaviorCanvases[behaviorId].getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBehavior(behaviorId, ctx);
+    });
+}
+
 function drawActogram() {
+    console.log("drawActogram")
 
     actogram.innerHTML = '';
     console.log(state.behaviors);
@@ -871,7 +908,7 @@ function drawActogram() {
     state.bouts = {};
     state.selectedBehavior = undefined;
     state.selectedBout = undefined;
-    state.selectedFrameOffset = undefined;
+    state.selectedFrameOffset = 0;
     state.expectResize = -1;
     state.isResizeDrag = false;
     state.isDrag = false;
@@ -941,7 +978,7 @@ function drawActogram() {
                     }
                     state.selectedBehavior = behaviorId;
                     state.selectedBout = key;
-                    state.selectedFrameOffset = Math.floor((point.x / (rect.width - 2)) * nFrames) - state.bouts[behaviorId][key].start;
+                    // state.selectedFrameOffset = Math.floor((bout.left / (rect.width - 2)) * nFrames) - state.bouts[behaviorId][key].start;
                     selectBout(ctx);
                 } else {                    
                     state.bouts[behaviorId][key].selected = false;
@@ -953,20 +990,7 @@ function drawActogram() {
                         state.selectedBehavior = undefined;
                         state.selectedBout = undefined;
                     }
-                    ctx, color = getBoutColor(ctx, bout, behaviorId);
-                    ctx.beginPath();
-                    ctx.fillStyle = color;
-                    if (state.unlocked) {
-                        if (state.behaviors[bout.bout_id].manual) {
-                            ctx.strokeStyle = 'white';
-                        } else {
-                            ctx.strokeStyle = '#444444';
-                        }
-                    }
-                    ctx.lineWidth = 3;
-                    ctx.rect(bout.x, bout.y, bout.width, bout.height);
-                    ctx.fill();
-                    ctx.stroke();
+                    drawBout(ctx, bout, behaviorId)
                     state.behaviorCanvases[behaviorId].style.cursor = 'auto';
                 }
             });
@@ -1067,14 +1091,15 @@ function editBout(e, behaviorId) {
         var bout = state.bouts[behaviorId][key];
         var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
         var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
+        var newX = mapPointValue(point.x, behaviorId);
         var err = 5;
         state.bouts[behaviorId][key].right = (rect.width-2) * (bout.end/nFrames);
         state.bouts[behaviorId][key].left = (rect.width-2) * (bout.start/nFrames);
         if (bout.selected) {
-            if (point.x >= (bout.left - err) && point.x <= (bout.left + err)) {
+            if (newX >= (bout.left - err) && newX <= (bout.left + err)) {
                 state.behaviorCanvases[behaviorId].style.cursor = 'w-resize';
                 state.expectResize = 0;
-            } else if (point.x >= (bout.right - err) && point.x <= (bout.right + err)) {
+            } else if (newX >= (bout.right - err) && newX <= (bout.right + err)) {
                 state.behaviorCanvases[behaviorId].style.cursor = 'e-resize';
                 state.expectResize = 1;
             } else {
@@ -1089,13 +1114,13 @@ function editBout(e, behaviorId) {
             var minFrames = 10;
             if (state.expectResize === 0) {
                 state.modified = true;
-                start = Math.floor((point.x / (rect.width - 2)) * nFrames);
+                start = Math.floor((newX / (rect.width - 2)) * nFrames);
                 if (start >= end) {
                     start = Math.max(0, end - minFrames); 
                 }
             } else if (state.expectResize === 1) {
                 state.modified = true;
-                end = Math.floor((point.x / (rect.width - 2)) * nFrames);
+                end = Math.floor((newX / (rect.width - 2)) * nFrames);
                 if (end <= start){
                     end = Math.min(start + minFrames, nFrames);
                 }
@@ -1113,7 +1138,8 @@ function editBout(e, behaviorId) {
         if (state.isDrag && bout.selected) {
             state.modified = true;
             var oldStart = state.behaviors[bout.bout_id].start;
-            var start = Math.floor((point.x / (rect.width - 2)) * nFrames) - state.selectedFrameOffset;
+            // var start = Math.floor((newX / (rect.width - 2)) * nFrames) - state.selectedFrameOffset;
+            var start = Math.floor((newX / (rect.width - 2)) * nFrames) - (bout.end - bout.start) / 2;
             if (start < 0) {
                 start = 0;
             }
@@ -1342,7 +1368,7 @@ function toggleAutoManual(e, behaviorId) {
             state.redo = [];
             var ctx = state.behaviorCanvases[behaviorId].getContext("2d");
             drawBehavior(behaviorId, ctx); 
-            drawActogram();
+            // drawActogram();
         }
     });
 
@@ -1408,8 +1434,9 @@ function addBout(e, behaviorId) {
     var nFrames = state.videos[0].duration * state.fps;
     var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
     var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
+    var newX = mapPointValue(point.x, behaviorId);
     var length = Math.floor(nFrames / 30);
-    var start = Math.floor((point.x / (rect.width - 2)) * nFrames);
+    var start = Math.floor((newX / (rect.width - 2)) * nFrames);
     var end = Math.min(start + length, nFrames);
 
     add(behaviorId, start, end);
@@ -1502,6 +1529,64 @@ function whenMouseUp() {
     state.isDrag = false;
 }
 
+function mapRange(value, x1, y1, x2, y2) {
+    return (value - x1) * (y2 - x2) / (y1 - x1) + x2;
+}
+
+
+function drawBout(ctx, bout, behaviorId, selected) {
+    if(selected) {
+        color = "white";
+    } else {
+        ctx, color = getBoutColor(ctx, bout, behaviorId);
+    }
+
+    // let's get the x for the zoom
+    var behaviorCanvas = state.behaviorCanvases[behaviorId];
+    var video = state.videos[0];
+    var mid = (video.currentTime / video.duration) * behaviorCanvas.width;
+    var length = behaviorCanvas.width / state.actogramZoom;
+
+    var left;
+    if(state.actogramZoom == 1) {
+        left = 0;
+    } else if(mid < length/2) {
+        left = 0;
+    } else if(mid >= behaviorCanvas.width - length/2) {
+        left = behaviorCanvas.width - length;
+    } else {
+        left = mid - length/2;
+    }
+    // var left = Math.max(mid - length/2, 0);
+    var right = left + length;
+    var newX = mapRange(bout.x, left, right, 0, behaviorCanvas.width)
+    var newWidth = bout.width * state.actogramZoom;
+
+    if((newX > behaviorCanvas.width + 50) || (newX < 0 - newWidth)) {
+        return; // no need to draw anything at all
+    }
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    if (state.unlocked) {
+        if (state.behaviors[bout.bout_id].manual) {
+            ctx.strokeStyle = 'white';
+        } else {
+            ctx.strokeStyle = '#444444';
+        }
+    }
+
+    ctx.lineWidth = 2;
+    ctx.rect(newX, bout.y, newWidth, bout.height);
+    ctx.fill();
+    if(selected && state.unlocked) {
+        ctx.strokeStyle = bout.color;
+        ctx.stroke();
+    } else if(!selected) {
+        ctx.stroke()
+    }
+}
+
 function selectBout(ctx) {
 
     var bout = state.bouts[state.selectedBehavior][state.selectedBout];
@@ -1515,19 +1600,38 @@ function selectBout(ctx) {
     drawFrame(true);
 
     state.bouts[state.selectedBehavior][state.selectedBout].selected = true;
-    ctx.beginPath();
-    ctx.fillStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.rect(bout.x, bout.y, bout.width, bout.height);
-    ctx.fill();
-    if (state.unlocked) {
-        ctx.strokeStyle = bout.color;
-        ctx.stroke();
-    }
+
+    drawBout(ctx, bout, state.selectedBehavior, true);
+    // ctx.beginPath();
+    // ctx.fillStyle = 'white';
+    // ctx.lineWidth = 2;
+    // ctx.rect(bout.x, bout.y, bout.width, bout.height);
+    // ctx.fill();
+    // if (state.unlocked) {
+    //     ctx.strokeStyle = bout.color;
+    //     ctx.stroke();
+    // }
+}
+
+function mapPointValue(px, behaviorId) {
+    var behaviorCanvas = state.behaviorCanvases[behaviorId];
+    var video = state.videos[0];
+    var mid = (video.currentTime / video.duration) * behaviorCanvas.width;
+    var length = behaviorCanvas.width / state.actogramZoom;
+    var left = Math.max(mid - length/2, 0);
+    var right = left + length;
+
+    var newX = mapRange(px, 0, behaviorCanvas.width, left, right);
+    return newX;
 }
 
 function isSelected(point, bout) {
-    return (point.x > bout.left && point.x < bout.right);
+    // map the point to new range
+    var newX = mapPointValue(point.x, bout.behaviorId);
+
+    console.log(newX + "  " + bout.left + "  " + bout.right);
+
+    return (newX > bout.left && newX < bout.right);
 }
 
 function updateBehaviorState(behaviorId, color, rect) {
@@ -1549,7 +1653,8 @@ function updateBehaviorState(behaviorId, color, rect) {
             left: (rect.width-2) * (state.behaviors[id]['start']/nFrames),
             color: color, 
             selected: true,
-            manual: state.behaviors[id].manual
+            manual: state.behaviors[id].manual,
+            behaviorId: behaviorId,
         };
 
     }; 
@@ -1567,7 +1672,7 @@ function getBoutColor(ctx, bout, behaviorId) {
         color = 'white';
     } else if (state.behaviors[bout.bout_id].manual) {
         color = state.behaviorCanvases[behaviorId].style.borderColor;
-    } else {
+    } else { // strides for automatic label
         // color = 'gray'
         var pc = document.createElement('canvas');
         // pc.width = state.behaviorCanvases[behaviorId].width/30;
@@ -1594,24 +1699,13 @@ function drawBehavior(behaviorId, ctx) {
 
     Object.keys(state.bouts[behaviorId]).forEach(function(key) {
         var bout = state.bouts[behaviorId][key];
-        ctx, color = getBoutColor(ctx, bout, behaviorId);
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        if (state.unlocked) {
-            if(state.behaviors[bout.bout_id].manual) {
-                ctx.strokeStyle = 'white';
-            } else {
-                ctx.strokeStyle = '#444444';
-            }
-        }
-        ctx.lineWidth = 3;
-        ctx.rect(bout.x, bout.y, bout.width, bout.height);
-        ctx.fill();
-        ctx.stroke();
+        drawBout(ctx, bout, behaviorId, bout.selected);
     });
 }
 
 function createBehavior(behaviorId, color) {
+
+    console.log("createBehavior " + behaviorId + "  " + color);
 
     var behavior = state.behaviorIds[behaviorId];
     var nFrames = state.videos[0].duration * state.fps;
@@ -1631,7 +1725,8 @@ function createBehavior(behaviorId, color) {
                 width: state.behaviorCanvases[behaviorId].width*((state.behaviors[id]['end']-state.behaviors[id]['start'])/nFrames),
                 height: state.behaviorCanvases[behaviorId].height,
                 color: color, 
-                selected: false
+                selected: false,
+                behaviorId: behaviorId
             };
             bouts[bout.bout_id] = bout;
         }
@@ -1641,7 +1736,7 @@ function createBehavior(behaviorId, color) {
 }
 
 function updateCanvas(behaviorCanvas, ctx) {
-
+    // console.log("updateCanvas")
     ctx.translate(0.5, 0.5);
     var sizeWidth = 80 * window.innerWidth / 100;
     var sizeHeight = 100 * window.innerHeight / 100 || 766; 
@@ -1695,6 +1790,7 @@ function setPlayPosition(x) {
         state.videos[i].currentTime = timeToSet;
     }
     drawFrame(true);
+    drawActogram();
 }
 
 // Find the real position of obj
@@ -2068,7 +2164,9 @@ function drawPoint(ctx, x, y, color) {
 }
 
 function draw2D(framenum) {
-    if(!state.data2d) return;
+    if((!state.data2d) || Object.keys(state.data2d).length == 0) {
+        return;
+    }
 
     for(var vidnum=0; vidnum<state.videos.length; vidnum++) {
         var vid = state.videos[vidnum];

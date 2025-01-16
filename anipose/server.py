@@ -221,6 +221,10 @@ def get_3d(session, folders, filename):
     path = safe_join(prefix, session, *folders)
     path = safe_join(path, 'pose-3d', filename + '.csv')
     path = os.path.normpath(path)
+
+    if not os.path.exists(path):
+        return jsonify([])
+
     data = pd.read_csv(path)
 
     cols = [x for x in data.columns if '_error' in x]
@@ -258,8 +262,11 @@ def get_2d_proj(session, folders, filename):
     path = os.path.normpath(safe_join(prefix, session))
     fname = safe_join(path, *folders, 'pose-3d', filename + '.csv')
 
-    projs = load_2d_projections(session, folders, fname)
-    return jsonify(projs)
+    try:
+        projs = load_2d_projections(session, folders, fname)
+        return jsonify(projs)
+    except FileNotFoundError:
+        return jsonify(dict())
 
 @app.route('/pose2dproj/<session>/<filename>')
 def get_2d_proj_simple(session, filename):
@@ -498,7 +505,7 @@ def run_server():
     global cdir, prefix, single_project
     cdir = os.getcwd()
     prefix, single_project = get_structure(cdir)
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
     # app.run(debug=False, threaded=False, processes=5, host="0.0.0.0", port=5000)
 
 # run the application
