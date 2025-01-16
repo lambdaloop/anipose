@@ -553,14 +553,14 @@ button.zoomButton {
     height:10px;
     position: relative;
     /* background-color: black; */
-    /* text-align: center; */
+    text-align: right;
     /* font-size: 16px; */
     /* font-family: "Times New Roman", Times, Serif; */
-    /* color: white; */
+    color: white;
     margin-right: 5px;
     margin-left: 5px;
     /* margin: auto; */
-    margin-top:0px;
+    margin-top:0tpx;
     /* margin-bottom:auto; */
     /* border-radius:2px; */
     padding:0px;

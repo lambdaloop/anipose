@@ -881,9 +881,20 @@ function applyBehaviorChanges() {
 
 state.actogramZoom = 1;
 
+function updateZoomTimeDisplay() {
+    var spacer = document.getElementById("miniProgressSpacer");
+    if(state.actogramZoom == 1) {
+        spacer.innerHTML = "";
+    } else {
+        var totalmseconds = state.videos[0].duration * 1000 / state.actogramZoom;
+        spacer.innerHTML = "zoom: " + formatTime(totalmseconds);
+    }
+}
+
 function zoomInActogram() {
     console.log("zoom in actogram");
     state.actogramZoom *= 1.5;
+    updateZoomTimeDisplay();
     drawActogram();
 }
 
@@ -893,6 +904,7 @@ function zoomOutActogram() {
     if(state.actogramZoom < 1) {
         state.actogramZoom = 1;
     }
+    updateZoomTimeDisplay();
     drawActogram();
 }
 
@@ -900,8 +912,6 @@ function updateMiniActogram() {
     var canvas = document.getElementById("miniActogram");
     var ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-
 
     var offset = 0;
     Object.keys(state.behaviorIds).forEach(function(behaviorId) {
@@ -915,11 +925,11 @@ function updateMiniActogram() {
             ctx.beginPath();
             ctx.fillStyle = color;
             ctx.lineWidth = 0;
-            ctx.rect(bout.x, offset, bout.width, 42);
+            ctx.rect(bout.x, offset, bout.width, 50);
             ctx.fill();
             // drawBout(ctx, bout, behaviorId, bout.selected);
         });
-        offset += 50;
+        offset += 60;
     });
 }
 
