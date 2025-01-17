@@ -934,7 +934,7 @@ function updateMiniActogram() {
 }
 
 function updateActogram() {
-    console.log("updateActogram");
+    // console.log("updateActogram");
     // clearActogramCanvases();
     if(!state.behaviorIds) {
         return;
@@ -994,6 +994,12 @@ function drawActogram() {
         }
         behaviorContainer.appendChild(behaviorName);
 
+        // var test = document.createElement('input');
+        // test.type = "checkbox";
+        // test.className = 'behaviorCheckbox';
+        // behaviorContainer.appendChild(test);
+
+
         var behaviorCanvas = document.createElement('canvas');
         behaviorCanvas.id = behaviorId;
         behaviorCanvas.className = 'behaviorCanvas';
@@ -1013,7 +1019,6 @@ function drawActogram() {
         var ctx = state.behaviorCanvases[behaviorId].getContext("2d");
 
         state.behaviorCanvases[behaviorId].addEventListener('click', (e) => {
-            console.log("click " + e.clientY);
             var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
             var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
             Object.keys(state.bouts[behaviorId]).forEach(function(key) {
@@ -1146,8 +1151,10 @@ function editBout(e, behaviorId) {
         var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
         var newX = mapPointValue(point.x, behaviorId);
         var err = 5;
-        state.bouts[behaviorId][key].right = (rect.width-2) * (bout.end/nFrames);
-        state.bouts[behaviorId][key].left = (rect.width-2) * (bout.start/nFrames);
+        // state.bouts[behaviorId][key].right = (rect.width-2) * (bout.end/nFrames);
+        // state.bouts[behaviorId][key].left = (rect.width-2) * (bout.start/nFrames);
+        state.bouts[behaviorId][key].left = bout.x;
+        state.bouts[behaviorId][key].right = bout.x + bout.width;
         if (bout.selected) {
             if (newX >= (bout.left - err) && newX <= (bout.left + err)) {
                 state.behaviorCanvases[behaviorId].style.cursor = 'w-resize';
@@ -1621,7 +1628,7 @@ function drawBout(ctx, bout, behaviorId, selected) {
     var newX = mapRange(bout.x, bounds.left, bounds.right, 0, behaviorCanvas.width)
     var newWidth = bout.width * state.actogramZoom;
 
-    if((newX > behaviorCanvas.width + 50) || (newX < 0 - newWidth)) {
+    if((newX > behaviorCanvas.width + 50) || (newX < 0 - newWidth - 50)) {
         return; // no need to draw anything at all
     }
 
@@ -1675,9 +1682,10 @@ function selectBout(ctx) {
 function mapPointValue(px, behaviorId) {
     var behaviorCanvas = state.behaviorCanvases[behaviorId];
     var bounds = getActogramZoomBounds(behaviorCanvas);
-    // console.log(bounds.left + " " + bounds.right);
+    console.log("bounds: " + bounds.left + " " + bounds.right);
 
-    var newX = mapRange(px, 0, behaviorCanvas.width,
+
+    var newX = mapRange(px, 0, behaviorCanvas.offsetWidth,
                         bounds.left, bounds.right);
     return newX;
 }
@@ -1686,9 +1694,9 @@ function isSelected(point, bout) {
     // map the point to new range
     var newX = mapPointValue(point.x, bout.behaviorId);
 
-    console.log(newX + "  " + bout.left + "  " + bout.right);
+    console.log(newX + "  " + bout.x + "  " + bout.x + bout.width);
 
-    return (newX > bout.left && newX < bout.right);
+    return (newX > bout.x && newX < bout.x + bout.width);
 }
 
 function updateBehaviorState(behaviorId, color, rect) {

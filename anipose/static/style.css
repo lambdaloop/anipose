@@ -403,6 +403,15 @@ video {
     text-align: center;
 }
 
+.behaviorCheckbox {
+    float: left;
+    display: block;
+    width: 3%;
+    height:23px;
+    position: relative;
+    margin-right: 5px;
+}
+
 #vidlistUnfocused {
     display: block;
     padding-left: 0;
