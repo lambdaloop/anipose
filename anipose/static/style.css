@@ -517,7 +517,7 @@ button:hover {
     position: relative;
     background-color: #181A1B;
     margin-right: auto;
-    margin-left: auto;
+    margin-left: 5px;
     /* margin-top:5px; */
     /* border-radius:2px; */
     cursor: default;
