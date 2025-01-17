@@ -195,13 +195,13 @@ window.addEventListener('DOMContentLoaded', function(){
         }
     });
 
-    // $(document).mouseup(function(e) {
-    //     if (state.selectedBout) {
-    //         state.selectedBout = undefined;
-    //         state.selectedBehavior = undefined;
-    //         drawActogram();
-    //     }
-    // });
+    $("#actogram").mouseup(function(e) {
+        if (state.selectedBout) {
+            state.selectedBout = undefined;
+            state.selectedBehavior = undefined;
+            drawActogram();
+        }
+    });
 
     window.addEventListener('keydown', function(e) {
         if(e.keyCode == 32 && e.target == document.body) {
@@ -1147,10 +1147,11 @@ function editBout(e, behaviorId) {
     var nFrames = state.videos[0].duration * state.fps;
     Object.keys(state.bouts[behaviorId]).forEach(function(key) {
         var bout = state.bouts[behaviorId][key];
+        var totalWidth = state.behaviorCanvases[behaviorId].width;
         var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
         var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
         var newX = mapPointValue(point.x, behaviorId);
-        var err = 5;
+        var err = 5 / state.actogramZoom;
         // state.bouts[behaviorId][key].right = (rect.width-2) * (bout.end/nFrames);
         // state.bouts[behaviorId][key].left = (rect.width-2) * (bout.start/nFrames);
         state.bouts[behaviorId][key].left = bout.x;
@@ -1174,13 +1175,13 @@ function editBout(e, behaviorId) {
             var minFrames = 10;
             if (state.expectResize === 0) {
                 state.modified = true;
-                start = Math.floor((newX / (rect.width - 2)) * nFrames);
+                start = Math.floor((newX / totalWidth) * nFrames);
                 if (start >= end) {
                     start = Math.max(0, end - minFrames); 
                 }
             } else if (state.expectResize === 1) {
                 state.modified = true;
-                end = Math.floor((newX / (rect.width - 2)) * nFrames);
+                end = Math.floor((newX / totalWidth) * nFrames);
                 if (end <= start){
                     end = Math.min(start + minFrames, nFrames);
                 }
@@ -1199,7 +1200,7 @@ function editBout(e, behaviorId) {
             state.modified = true;
             var oldStart = state.behaviors[bout.bout_id].start;
             // var start = Math.floor((newX / (rect.width - 2)) * nFrames) - state.selectedFrameOffset;
-            var start = Math.floor((newX / (rect.width - 2)) * nFrames) - (bout.end - bout.start) / 2;
+            var start = Math.floor((newX / totalWidth) * nFrames) - (bout.end - bout.start) / 2;
             if (start < 0) {
                 start = 0;
             }
@@ -1493,11 +1494,12 @@ function addBout(e, behaviorId) {
 
     var nFrames = state.videos[0].duration * state.fps;
     var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
+    var width = state.behaviorCanvases[behaviorId].width;
     var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
     var newX = mapPointValue(point.x, behaviorId)
     var bounds = getActogramZoomBounds(state.behaviorCanvases[behaviorId]);
     var length = Math.floor(nFrames / 30) / state.actogramZoom;
-    var start = Math.floor((newX / (rect.width - 2)) * nFrames);
+    var start = Math.floor((newX / width) * nFrames);
     var end = Math.min(start + length, nFrames);
 
     add(behaviorId, start, end);
@@ -1684,7 +1686,7 @@ function mapPointValue(px, behaviorId) {
     var bounds = getActogramZoomBounds(behaviorCanvas);
     console.log("bounds: " + bounds.left + " " + bounds.right);
 
-
+    // note that points show up in offsetwidth
     var newX = mapRange(px, 0, behaviorCanvas.offsetWidth,
                         bounds.left, bounds.right);
     return newX;
@@ -1714,8 +1716,8 @@ function updateBehaviorState(behaviorId, color, rect) {
             y: 0,
             width: state.behaviorCanvases[behaviorId].width*((state.behaviors[id]['end']-state.behaviors[id]['start'])/nFrames),
             height: state.behaviorCanvases[behaviorId].height,
-            right: (rect.width-2) * (state.behaviors[id]['end']/nFrames),
-            left: (rect.width-2) * (state.behaviors[id]['start']/nFrames),
+            // right: (rect.width-2) * (state.behaviors[id]['end']/nFrames),
+            // left: (rect.width-2) * (state.behaviors[id]['start']/nFrames),
             color: color, 
             selected: true,
             manual: state.behaviors[id].manual,
