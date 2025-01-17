@@ -517,7 +517,7 @@ button:hover {
     position: relative;
     background-color: #181A1B;
     margin-right: auto;
-    margin-left: 5px;
+    margin-left: 0px;
     /* margin-top:5px; */
     /* border-radius:2px; */
     cursor: default;
@@ -528,11 +528,11 @@ button:hover {
 
 button.zoomButton {
     display: block;
-    width: 7%;
+    width: 7.5%;
     float:left;
     height: 22px;
     margin-left: 5px;
-    margin-right: 5px;
+    /* margin-right: 5px; */
     margin-top: 5px;
     border: 1px solid white;
     padding: 0px;
