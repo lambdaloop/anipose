@@ -913,6 +913,15 @@ function updateMiniActogram() {
     var ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    if(!state.behaviorIds) {
+        return;
+    }
+    var nids = Object.keys(state.behaviorIds).length;
+    if(nids == 0) {
+        return; // nothing to draw
+    }
+    var boutHeight = canvas.height / nids - 5;
+
     var offset = 0;
     Object.keys(state.behaviorIds).forEach(function(behaviorId) {
         if(!state.bouts[behaviorId]) {
@@ -925,11 +934,11 @@ function updateMiniActogram() {
             ctx.beginPath();
             ctx.fillStyle = color;
             ctx.lineWidth = 0;
-            ctx.rect(bout.x, offset, bout.width, 50);
+            ctx.rect(bout.x, offset, bout.width, boutHeight);
             ctx.fill();
             // drawBout(ctx, bout, behaviorId, bout.selected);
         });
-        offset += 60;
+        offset += boutHeight + 5;
     });
 }
 
