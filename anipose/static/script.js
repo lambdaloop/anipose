@@ -1058,7 +1058,7 @@ function drawActogram() {
             }, false);
 
             state.behaviorCanvases[behaviorId].tabIndex = '1';
-            state.behaviorCanvases[behaviorId].addEventListener('keyup', (e) => {
+            state.behaviorCanvases[behaviorId].addEventListener('keydown', (e) => {
                 removeBout(e, behaviorId);
                 expandContractBout(e, behaviorId);
                 translateBout(e, behaviorId)
