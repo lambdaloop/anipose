@@ -1003,10 +1003,27 @@ function drawActogram() {
         }
         behaviorContainer.appendChild(behaviorName);
 
-        // var test = document.createElement('input');
-        // test.type = "checkbox";
-        // test.className = 'behaviorCheckbox';
-        // behaviorContainer.appendChild(test);
+        var checkbox = document.createElement('input');
+        checkbox.type = "checkbox";
+        checkbox.className = 'behaviorCheckbox';
+        checkbox.addEventListener('click', function(e) {
+            // console.log(e);
+            // console.log("clicked checkbox!!");
+            console.log(behaviorId + " checked: " + e.target.checked);
+
+            // get the current time
+            var currentTime = state.videos[0].currentTime;
+
+            // check if there is a bout in behaviorId at the current time
+            var includedBout = undefined;
+            Object.keys(state.bouts[behaviorId]).forEach(function(bout) {
+                if((currentTime >= bout.start) && (currentTime <= bout.end)) {
+                    includedBout = bout;
+                }
+            });
+            // if no bout at current time, create it
+        })
+        behaviorContainer.appendChild(checkbox);
 
 
         var behaviorCanvas = document.createElement('canvas');

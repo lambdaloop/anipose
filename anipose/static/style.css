@@ -354,7 +354,7 @@ button#clearUnusedBehavior {
 .behaviorName {
     float: left;
     display: block;
-    width: 15%;
+    width: 13%;
     height:22px;
     position: relative; 
     background-color: black;
@@ -362,7 +362,7 @@ button#clearUnusedBehavior {
     font-size: 16px;
     font-family: "Times New Roman", Times, Serif;
     color: white;
-    margin-right: 5px;
+    /* margin-right: 5px; */
     margin-left: 5px;
     margin-top:5px;
     margin-bottom:auto;
@@ -406,10 +406,13 @@ video {
 .behaviorCheckbox {
     float: left;
     display: block;
-    width: 3%;
-    height:23px;
+    width: 2%;
+    height: 18px;
     position: relative;
-    margin-right: 5px;
+    margin-right: 2px;
+    margin-left: 3px;
+    margin-top: 7px;
+    margin-bottom: 0px;
 }
 
 #vidlistUnfocused {
