@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="anipose",
-    version="1.1.22",
+    version="1.1.23",
     author="Lili Karashchuk",
     author_email="krchtchk@gmail.com",
     description="Framework for scalable DeepLabCut based analysis including 3D tracking",
@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     package_data={
-        'anipose': ['static/*'],
+        'anipose': ['static/*', 'static/lib/*'],
     },
 
     classifiers=[
