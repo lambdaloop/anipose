@@ -195,13 +195,13 @@ window.addEventListener('DOMContentLoaded', function(){
         }
     });
 
-    $("#actogram").mouseup(function(e) {
-        if (state.selectedBout) {
-            state.selectedBout = undefined;
-            state.selectedBehavior = undefined;
-            drawActogram();
-        }
-    });
+    // $(".behaviorCanvas").mouseup(function(e) {
+    //     if (state.selectedBout) {
+    //         state.selectedBout = undefined;
+    //         state.selectedBehavior = undefined;
+    //         drawActogram();
+    //     }
+    // });
 
     window.addEventListener('keydown', function(e) {
         if(e.keyCode == 32 && e.target == document.body) {
@@ -358,9 +358,9 @@ function previousVideo() {
 }
 
 function clickVideo(e) {
-    console.log(e);
+    // console.log(e);
     var container = e.target.parentElement;
-    console.log(container);
+    // console.log(container);
     var parent = container.parentElement;
     var vidlist = document.getElementById("vidlist");
     var vidlistUnfocused = document.getElementById("vidlistUnfocused");
@@ -753,6 +753,21 @@ function drawFrame(force) {
             draw2D(fix);
         }, 0);
     }
+
+    if(state.checkedBouts) {
+        Object.keys(state.checkedBouts).forEach(function(bid) {
+            var nid = state.checkedBouts[bid];
+            if(nid && state.bouts[bid]) {
+                var bout = state.bouts[bid][nid];
+                if(bout.end < ft) {
+                    bout.end = ft;
+                    bout.width = state.behaviorCanvases[bout.behaviorId].width * (bout.end - bout.start) / nFrames;
+                    state.behaviors[bout.bout_id].end = ft;
+                }
+            }
+        });
+    }
+
     if(playing) {
         setTimeout(drawFrame, 1000.0/state.fps);
     }
@@ -956,6 +971,21 @@ function updateActogram() {
     });
 }
 
+state.checkedBouts = {};
+
+function resetCheckboxes() {
+    Object.keys(state.checkedBouts).forEach(function(bid) {
+        var nid = state.checkedBouts[bid];
+        if(nid && state.bouts[bid]) {
+            state.bouts[bid][nid].selected = false;
+        }
+    });
+    state.checkedBouts = {};
+    document.querySelectorAll('.behaviorCheckbox').forEach(function(checkbox) {
+        checkbox.checked = false;
+    });
+}
+
 function drawActogram() {
     console.log("drawActogram")
 
@@ -1011,17 +1041,52 @@ function drawActogram() {
             // console.log("clicked checkbox!!");
             console.log(behaviorId + " checked: " + e.target.checked);
 
-            // get the current time
-            var currentTime = state.videos[0].currentTime;
+            if(state.selectedBehavior) {
+                // clear the selected behavior, since it's different from this mechanism
+                state.bouts[state.selectedBehavior][state.selectedBout].selected = false;
+                state.selectedBehavior = undefined;
+                state.selectedBout = undefined;
+            }
 
-            // check if there is a bout in behaviorId at the current time
-            var includedBout = undefined;
-            Object.keys(state.bouts[behaviorId]).forEach(function(bout) {
-                if((currentTime >= bout.start) && (currentTime <= bout.end)) {
-                    includedBout = bout;
+            if(!e.target.checked) {
+                // clear the checked bout for this behavior
+                if(state.checkedBouts[behaviorId]) {
+                    var nid = state.checkedBouts[behaviorId];
+                    state.bouts[behaviorId][nid].selected = false;
                 }
-            });
-            // if no bout at current time, create it
+                state.checkedBouts[behaviorId] = undefined;
+            } else {
+                // get the current time
+                var currentTime = state.videos[0].currentTime;
+                var currentFrames = currentTime * state.fps;
+                // check if there is a bout in behaviorId at the current time
+                var includedBout = undefined;
+                Object.keys(state.bouts[behaviorId]).forEach(function(bout_id) {
+                    var bout = state.bouts[behaviorId][bout_id];
+                    // console.log(bout);
+                    if((currentFrames >= bout.start) && (currentFrames <= bout.end)) {
+                        includedBout = bout_id;
+                    }
+                });
+                console.log(includedBout);
+                if(!includedBout) {
+                    // if no bout at current time, create it
+                    // get video length
+                    var nFrames = state.videos[0].duration * state.fps;
+                    var length = Math.floor(nFrames / 60) / state.actogramZoom;
+                    var new_id = add(behaviorId, currentFrames, currentFrames + length);
+                    includedBout = new_id;
+                    state.selectedBehavior = undefined;
+                    state.selectedBout = undefined;
+                }
+                state.checkedBouts[behaviorId] = includedBout;
+                Object.keys(state.checkedBouts).forEach(function(bid) {
+                    var nid = state.checkedBouts[bid];
+                    if(nid && state.bouts[bid]) {
+                        state.bouts[bid][nid].selected = true;
+                    }
+                })
+            }
         })
         behaviorContainer.appendChild(checkbox);
 
@@ -1047,6 +1112,12 @@ function drawActogram() {
         state.behaviorCanvases[behaviorId].addEventListener('click', (e) => {
             var rect = state.behaviorCanvases[behaviorId].getBoundingClientRect();
             var point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
+            resetCheckboxes();
+            if((state.selectedBehavior) && (behaviorId != state.selectedBehavior)) {
+                state.bouts[state.selectedBehavior][state.selectedBout].selected = false;
+                state.selectedBehavior = undefined;
+                state.selectedBout = undefined;
+            }
             Object.keys(state.bouts[behaviorId]).forEach(function(key) {
                 var bout = state.bouts[behaviorId][key];
                 state.bouts[behaviorId][key].right = (rect.width-2) * (bout.end/nFrames);
@@ -1582,7 +1653,7 @@ function whenMouseDown() {
         state.isDrag = true;
     }
 
-    if (state.isResizeDrag || state.isDrag) {
+    if (state.selectedBout && (state.isResizeDrag || state.isDrag)) {
         var currentBout = state.behaviors[state.selectedBout];
         state.changes.id = currentBout.bout_id;
         state.changes.session = state.session;
@@ -1710,7 +1781,7 @@ function selectBout(ctx) {
 function mapPointValue(px, behaviorId) {
     var behaviorCanvas = state.behaviorCanvases[behaviorId];
     var bounds = getActogramZoomBounds(behaviorCanvas);
-    console.log("bounds: " + bounds.left + " " + bounds.right);
+    // console.log("bounds: " + bounds.left + " " + bounds.right);
 
     // note that points show up in offsetwidth
     var newX = mapRange(px, 0, behaviorCanvas.offsetWidth,
@@ -1722,7 +1793,7 @@ function isSelected(point, bout) {
     // map the point to new range
     var newX = mapPointValue(point.x, bout.behaviorId);
 
-    console.log(newX + "  " + bout.x + "  " + bout.x + bout.width);
+    // console.log(newX + "  " + bout.x + "  " + bout.x + bout.width);
 
     return (newX > bout.x && newX < bout.x + bout.width);
 }
@@ -1798,7 +1869,7 @@ function drawBehavior(behaviorId, ctx) {
 
 function createBehavior(behaviorId, color) {
 
-    console.log("createBehavior " + behaviorId + "  " + color);
+    // console.log("createBehavior " + behaviorId + "  " + color);
 
     var behavior = state.behaviorIds[behaviorId];
     var nFrames = state.videos[0].duration * state.fps;
@@ -1845,7 +1916,7 @@ function updateCanvas(behaviorCanvas, ctx) {
 
 function generateId(length) {
     var id = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (var i = 0; i < length; i++ ) {
         id += characters.charAt(Math.floor(Math.random() * characters.length));
     }
