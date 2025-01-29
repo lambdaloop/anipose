@@ -506,7 +506,7 @@ def run_server():
     cdir = os.getcwd()
     prefix, single_project = get_structure(cdir)
     app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
-    # app.run(debug=False, threaded=False, processes=5, host="0.0.0.0", port=5000)
+    # app.run(debug=False, threaded=False, processes=10, host="0.0.0.0", port=5000)
 
 # run the application
 if __name__ == "__main__":
