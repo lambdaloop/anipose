@@ -1064,7 +1064,7 @@ function drawActogram() {
                 Object.keys(state.bouts[behaviorId]).forEach(function(bout_id) {
                     var bout = state.bouts[behaviorId][bout_id];
                     // console.log(bout);
-                    if((currentFrames >= bout.start) && (currentFrames <= bout.end)) {
+                    if((currentFrames >= bout.start-8) && (currentFrames <= bout.end+8)) {
                         includedBout = bout_id;
                     }
                 });
