@@ -258,9 +258,15 @@ def label_2d_filter(config):
     label_videos_filtered_all(config)
 
 @cli.command()
+@click.option('--start', default=None, type=str, 
+              help='Start time: timestamp (00:00:05) or fraction (0.1)')
+@click.option('--end', default=None, type=str, 
+              help='End time: timestamp (00:01:30) or fraction (0.9)')
 @pass_config
-def label_3d(config):
+def label_3d(config, start, end):
     from .label_videos_3d import label_videos_3d_all
+    from .common import parse_range
+    config['export_range'] = parse_range(start, end)
     click.echo('Labeling videos in 3D...')
     label_videos_3d_all(config)
 
@@ -272,9 +278,15 @@ def label_3d_filter(config):
     label_videos_3d_filtered_all(config)
 
 @cli.command()
+@click.option('--start', default=None, type=str, 
+              help='Start time: timestamp (00:00:05) or fraction (0.1)')
+@click.option('--end', default=None, type=str, 
+              help='End time: timestamp (00:01:30) or fraction (0.9)')
 @pass_config
-def label_combined(config):
+def label_combined(config, start, end):
     from .label_combined import label_combined_all
+    from .common import parse_range
+    config['export_range'] = parse_range(start, end)
     click.echo('Labeling combined videos...')
     label_combined_all(config)
 

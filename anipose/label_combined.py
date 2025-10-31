@@ -13,10 +13,12 @@ import threading
 
 from aniposelib.cameras import CameraGroup
 
-from .common import make_process_fun, get_nframes, \
-    get_video_name, get_cam_name, \
-    get_video_params, get_video_params_cap, \
-    get_data_length, natural_keys, true_basename, find_calibration_folder
+from .common import (make_process_fun, get_nframes,
+    get_video_name, get_cam_name,
+    get_video_params, get_video_params_cap,
+    get_data_length, natural_keys, true_basename, find_calibration_folder,
+    get_frame_range,
+)
 
 from .triangulate import load_offsets_dict
 
@@ -368,6 +370,7 @@ def visualize_combined(config, pose_fname, cgroup, offsets_dict,
 
     pp = get_plotting_params(caps_2d, cap_3d, ang_names)
     nframes = pp['nframes']
+    nframes_raw = int(caps_2d[0].get(cv2.CAP_PROP_FRAME_COUNT))
     fps = pp['fps']
     start_img = get_start_image(pp, ang_names)
 
@@ -389,7 +392,17 @@ def visualize_combined(config, pose_fname, cgroup, offsets_dict,
                               args=(writer, q))
     thread.start()
 
-    for framenum in trange(nframes, ncols=70):
+    start_frame_num, end_frame_num = get_frame_range(config, nframes_raw, fps)
+    # set frame seeking for 2d vids
+    for cap in caps_2d:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame_num)
+    # keep 3d vid at frame 0; it should already be trimmed in label-3d
+    pp['nframes'] = min(end_frame_num - start_frame_num, pp['nframes'])
+
+    if (end_frame_num - start_frame_num) != nframes:
+        print(f'Exporting with frame range {start_frame_num} to {end_frame_num} out of {nframes_raw}')
+    
+    for framenum in trange(start_frame_num, end_frame_num, ncols=70):
         ret, frames_2d, frame_3d = read_frames(caps_2d, cap_3d)
         if not ret:
             break

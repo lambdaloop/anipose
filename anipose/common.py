@@ -226,3 +226,67 @@ def get_calibration_board_image(config):
     size = numx*200, numy*200
     img = board.draw(size)
     return img
+
+# range parsing utils for start-end param in video labeling
+def parse_range(start: str | None, end: str | None) -> dict | None:
+    """parse timestamp (HH:MM:SS) or fraction (0.0-1.0)"""
+    if start is None and end is None:
+        return None
+    
+    def parse_value(val: str | None) -> float | str | None:
+        if val is None:
+            return None
+        # check if is fraction
+        try:
+            f = float(val)
+            if 0 <= f <= 1:
+                return f  
+        except ValueError:
+            pass
+        # assume timestamp format (unsafe)
+        return val  # absolute, convert later with fps
+    
+    return {
+        'start': parse_value(start),
+        'end': parse_value(end),
+        'mode': 'relative' if isinstance(parse_value(start or end), float) else 'absolute'
+    }
+
+def get_frame_range(config: dict, total_frames: int, fps: float) -> tuple[int, int]:
+    """convert export_range (absolute or relative) to (start_frame, end_frame)"""
+    range_cfg = config.get('export_range')
+    if range_cfg is None:
+        return 0, total_frames
+    
+    start = range_cfg.get('start')
+    end = range_cfg.get('end')
+    
+    # relative -> absolute
+    if isinstance(start, float):
+        start_frame = int(start * total_frames)
+    elif isinstance(start, str): 
+        start_frame = timestamp_to_frame(start, fps)
+    else:
+        start_frame = 0
+    
+    if isinstance(end, float):
+        end_frame = int(end * total_frames)
+    elif isinstance(end, str):
+        end_frame = timestamp_to_frame(end, fps)
+    else:
+        end_frame = total_frames
+    
+    return start_frame, end_frame
+
+def timestamp_to_frame(timestamp: str, fps: float) -> int:
+    """convert HH:MM:SS or MM:SS to frame#"""
+    parts = list(map(float, timestamp.split(':')))
+    if len(parts) == 3:
+        h, m, s = parts
+        total_sec = h * 3600 + m * 60 + s
+    elif len(parts) == 2:
+        m, s = parts
+        total_sec = m * 60 + s
+    else:
+        total_sec = parts[0]
+    return int(total_sec * fps)
