@@ -15,8 +15,10 @@ import sys
 from collections import defaultdict
 from matplotlib.pyplot import get_cmap
 
-from .common import make_process_fun, get_nframes, get_video_name, get_video_params, get_data_length, natural_keys
-
+from .common import (
+    make_process_fun, get_nframes, get_video_name, get_video_params, 
+    get_data_length, natural_keys, get_frame_range,
+)
 
 def connect(points, bps, bp_dict, color):
     ixs = [bp_dict[bp] for bp in bps]
@@ -129,7 +131,12 @@ def visualize_labels(config, labels_fname, outname, fps=300):
 
     mlab.view(focalpoint='auto', distance='auto')
 
-    for framenum in trange(data.shape[0], ncols=70):
+    nframes = data.shape[0]
+    start_frame_num, end_frame_num = get_frame_range(config, nframes, fps)
+    if (end_frame_num - start_frame_num) != nframes:
+        print(f'Exporting with frame range {start_frame_num} to {end_frame_num} out of {nframes}')
+    
+    for framenum in trange(start_frame_num, end_frame_num, ncols=70):
         fig.scene.disable_render = True
 
         if framenum in framedict:
