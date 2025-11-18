@@ -19,9 +19,9 @@ from .common import make_process_fun, get_nframes, \
     get_data_length, natural_keys, true_basename, find_calibration_folder
 
 from .triangulate import load_offsets_dict
-from .filter_pose import write_pose_2d
+from .common import write_pose_2d_dlc
 from .project_2d import get_projected_points
-from .label_videos import visualize_labels
+from .label_videos import visualize_labels_points
 
 ## REFACTOR: this code is very similar to project_2d
 def process_session(config, session_path):
@@ -98,11 +98,11 @@ def process_session(config, session_path):
         bodyparts, points_2d_proj, all_scores = get_projected_points(
             config, fname_3d_current, cgroup_subset, offsets_dict)
 
-        metadata = {
-            'scorer': 'scorer',
-            'bodyparts': bodyparts,
-            'index': np.arange(points_2d_proj.shape[2])
-        }
+        # metadata = {
+        #     'scorer': 'scorer',
+        #     'bodyparts': bodyparts,
+        #     'index': np.arange(points_2d_proj.shape[2])
+        # }
 
         n_cams, n_joints, n_frames, _ = points_2d_proj.shape
         
@@ -111,12 +111,15 @@ def process_session(config, session_path):
         for cix, (cname, vidname, outname) in enumerate(zip(cam_names, fnames_2d_current, out_fnames)):
             pts[:, :, :2] = points_2d_proj[cix].swapaxes(0, 1)
             pts[:, :, 2] = all_scores.T
-            dlabs = write_pose_2d(pts, metadata, outname)
+            # dlabs = write_pose_2d_dlc(pts, metadata, outname)
 
+            points = np.copy(points_2d_proj[cix].swapaxes(0, 1))
+            scores = all_scores.T
+            
             if os.path.exists(outname) and \
                abs(get_nframes(outname) - get_nframes(vidname)) < 50:
                 continue
             print(outname)
-            visualize_labels(config, dlabs, vidname, outname)
+            visualize_labels_points(config, points, scores, bodyparts, vidname, outname)
 
 label_proj_all = make_process_fun(process_session)

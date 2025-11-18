@@ -16,7 +16,7 @@ from multiprocessing import cpu_count
 from multiprocessing import Pool, get_context
 import pickle
 
-from .common import make_process_fun, natural_keys
+from .common import make_process_fun, natural_keys, load_pose_2d, write_pose_2d
 
 
 def nan_helper(y):
@@ -125,27 +125,7 @@ def viterbi_path_wrapper(args):
     return jix, pts_new, scs_new
 
 
-def load_pose_2d(fname):
-    data_orig = pd.read_hdf(fname)
-    scorer = data_orig.columns.levels[0][0]
-    data = data_orig.loc[:, scorer]
 
-    bp_index = data.columns.names.index('bodyparts')
-    coord_index = data.columns.names.index('coords')
-    bodyparts = list(data.columns.get_level_values(bp_index).unique())
-    n_possible = len(data.columns.levels[coord_index])//3
-
-    n_frames = len(data)
-    n_joints = len(bodyparts)
-    test = np.array(data).reshape(n_frames, n_joints, n_possible, 3)
-
-    metadata = {
-        'bodyparts': bodyparts,
-        'scorer': scorer,
-        'index': data.index
-    }
-
-    return test, metadata
 
 def filter_pose_viterbi(config, all_points, bodyparts):
     n_frames, n_joints, n_possible, _ = all_points.shape
@@ -184,31 +164,6 @@ def filter_pose_viterbi(config, all_points, bodyparts):
 
     return points, scores
 
-
-def write_pose_2d(all_points, metadata, outname=None):
-    points = all_points[:, :, :2]
-    scores = all_points[:, :, 2]
-
-    scorer = metadata['scorer']
-    bodyparts = metadata['bodyparts']
-    index = metadata['index']
-
-    columns = pd.MultiIndex.from_product(
-        [[scorer], bodyparts, ['x', 'y', 'likelihood']],
-        names=['scorer', 'bodyparts', 'coords'])
-
-    dout = pd.DataFrame(columns=columns, index=index)
-
-    dout.loc[:, (scorer, bodyparts, 'x')] = points[:, :, 0]
-    dout.loc[:, (scorer, bodyparts, 'y')] = points[:, :, 1]
-    dout.loc[:, (scorer, bodyparts, 'likelihood')] = scores
-
-    dout = dout.infer_objects()  # need this to have floats not objects in newer pandas
-
-    if outname is not None:
-        dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
-
-    return dout
 
 
 def filter_pose_medfilt(config, all_points, bodyparts):
@@ -357,6 +312,8 @@ def process_session(config, session_path):
     pipeline_pose = config['pipeline']['pose_2d']
     pipeline_pose_filter = config['pipeline']['pose_2d_filter']
     filter_types = config['filter']['type']
+    model_type = config['model_type']
+    
     if not isinstance(filter_types, list):
         filter_types = [filter_types]
 
@@ -367,7 +324,11 @@ def process_session(config, session_path):
     pose_folder = os.path.join(session_path, pipeline_pose)
     output_folder = os.path.join(session_path, pipeline_pose_filter)
 
-    pose_files = glob(os.path.join(pose_folder, '*.h5'))
+    if model_type == 'deeplabcut':
+        pose_files = glob(os.path.join(pose_folder, '*.h5'))
+    elif model_type == 'sleap':
+        pose_files = glob(os.path.join(pose_folder, '*.predictions.slp'))
+        
     pose_files = sorted(pose_files, key=natural_keys)
 
     if len(pose_files) > 0:
@@ -383,14 +344,14 @@ def process_session(config, session_path):
             continue
 
         print(outpath)
-        all_points, metadata = load_pose_2d(fname)
+        all_points, metadata = load_pose_2d(model_type, fname)
 
         for filter_type in filter_types:
             filter_fun = FILTER_MAPPING[filter_type]
             points, scores = filter_fun(config, all_points, metadata['bodyparts'])
             all_points = wrap_points(points, scores)
 
-        write_pose_2d(all_points[:, :, 0], metadata, outpath)
-
+        write_pose_2d(model_type, all_points[:, :, 0], metadata, outpath)
+            
 
 filter_pose_all = make_process_fun(process_session)

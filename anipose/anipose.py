@@ -10,6 +10,7 @@ pass_config = click.make_pass_decorator(dict)
 DEFAULT_CONFIG = {
     'video_extension': 'avi',
     'converted_video_speed': 1,
+    'model_type': 'deeplabcut',
     'calibration': {
         'animal_calibration': False,
         'calibration_init': None,

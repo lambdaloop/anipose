@@ -6,6 +6,7 @@ import os
 from collections import deque
 from subprocess import check_output
 import numpy as np
+import pandas as pd
 
 from aniposelib.boards import CharucoBoard, Checkerboard
 
@@ -20,7 +21,7 @@ def natural_keys(text):
     alist.sort(key=natural_keys) sorts in human order
     http://nedbatchelder.com/blog/200712/human_sorting.html
     '''
-    return [ atoi(c) for c in re.split('(\d+)', text) ]
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
 def wc(filename):
     out = check_output(["wc", "-l", filename])
@@ -57,6 +58,7 @@ def get_folders(path):
 def true_basename(fname):
     basename = os.path.basename(fname)
     basename = os.path.splitext(basename)[0]
+    basename = basename.replace('.predictions', '') # handle slp files, probably a better way to do this?    
     return basename
 
 
@@ -74,7 +76,6 @@ def get_cam_name(config, fname):
 
 def get_video_name(config, fname):
     basename = true_basename(fname)
-
     cam_regex = config['triangulation']['cam_regex']
     vidname = re.sub(cam_regex, '', basename)
     return vidname.strip()
@@ -226,3 +227,126 @@ def get_calibration_board_image(config):
     size = numx*200, numy*200
     img = board.draw(size)
     return img
+
+
+
+def load_pose_2d(model_type, fname):
+    if model_type == 'deeplabcut':
+        return load_pose_2d_dlc(fname)
+    elif model_type == 'sleap':
+        return load_pose_2d_sleap(fname)
+    else:
+        raise ValueError("invalid model type: {}\nshould be deeplabcut or sleap".format(model_type))
+
+def load_pose_2d_dlc(fname):
+    data_orig = pd.read_hdf(fname)
+    scorer = data_orig.columns.levels[0][0]
+    data = data_orig.loc[:, scorer]
+
+    bp_index = data.columns.names.index('bodyparts')
+    coord_index = data.columns.names.index('coords')
+    bodyparts = list(data.columns.get_level_values(bp_index).unique())
+    n_possible = len(data.columns.levels[coord_index])//3
+
+    n_frames = len(data)
+    n_joints = len(bodyparts)
+    test = np.array(data).reshape(n_frames, n_joints, n_possible, 3)
+
+    metadata = {
+        'bodyparts': bodyparts,
+        'scorer': scorer,
+        'index': data.index
+    }
+
+    return test, metadata
+
+
+def load_pose_2d_sleap(fname):
+    import sleap_io as sio
+    labels = sio.load_slp(fname)
+
+    bodyparts = [node.name for node in labels.skeleton.nodes]
+
+    n_possible = max([len(lf.instances) for lf in labels.labeled_frames])
+    n_frames = labels.videos[0].shape[0]
+    n_joints = len(bodyparts)
+
+    pts_scores = np.full((n_frames, n_joints, n_possible, 3), np.nan, dtype='float32')
+
+    for lf in labels.labeled_frames:
+        for pix, inst in enumerate(lf.instances):
+            pts_scores[lf.frame_idx, :, pix, :2] = inst.points['xy']
+            pts_scores[lf.frame_idx, :, pix, 2] = inst.points['score']
+
+    metadata = {
+        'bodyparts': bodyparts,
+        'skeleton': labels.skeleton,
+        'video': labels.videos[0]
+    }
+            
+    return pts_scores, metadata
+
+
+def write_pose_2d(model_type, all_points, metadata, outname=None):
+    if model_type == 'deeplabcut':
+        return write_pose_2d_dlc(all_points, metadata, outname)
+    elif model_type == 'sleap':
+        return write_pose_2d_sleap(all_points, metadata, outname)
+    else:
+        raise ValueError("invalid model type: {}\nshould be deeplabcut or sleap".format(model_type))
+
+def write_pose_2d_dlc(all_points, metadata, outname=None):
+    points = all_points[:, :, :2]
+    scores = all_points[:, :, 2]
+
+    scorer = metadata['scorer']
+    bodyparts = metadata['bodyparts']
+    index = metadata['index']
+
+    columns = pd.MultiIndex.from_product(
+        [[scorer], bodyparts, ['x', 'y', 'likelihood']],
+        names=['scorer', 'bodyparts', 'coords'])
+
+    dout = pd.DataFrame(columns=columns, index=index)
+
+    dout.loc[:, (scorer, bodyparts, 'x')] = points[:, :, 0]
+    dout.loc[:, (scorer, bodyparts, 'y')] = points[:, :, 1]
+    dout.loc[:, (scorer, bodyparts, 'likelihood')] = scores
+
+    dout = dout.infer_objects()  # need this to have floats not objects in newer pandas
+
+    if outname is not None:
+        dout.to_hdf(outname, 'df_with_missing', format='table', mode='w')
+
+    return dout
+
+
+def write_pose_2d_sleap(all_points, metadata, outname=None):
+    # all_points shape: (n_frames, n_joints, 3)
+    import sleap_io as sio
+
+    video = metadata['video']
+    skeleton = metadata['skeleton']
+    
+    n_frames = all_points.shape[0]
+
+    labeled_frames = []
+    for fix in range(n_frames):
+        inst = sio.PredictedInstance.from_numpy(
+            points_data=all_points[fix],
+            skeleton=skeleton
+        )
+
+        lf = sio.LabeledFrame(video=video,
+                              frame_idx=fix,
+                              instances=[inst])
+        labeled_frames.append(lf)
+
+    labels = sio.Labels(labeled_frames=labeled_frames,
+                        videos=[video],
+                        skeletons=[skeleton])
+
+    if outname is not None:
+        labels.save(outname)
+    
+    return labels
