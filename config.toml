@@ -70,10 +70,10 @@ L3_TiTa = ["L3C", "L3D", "L3E"]
 
 
 [cameras.A]
-offset = [224, 120, 832, 704]
+offset = [224, 120]
 
 [cameras.B]
-offset = [224, 230, 800, 700]
+offset = [224, 230]
 
 [cameras.C]
-offset = [160, 250, 864, 700]
+offset = [160, 250]
