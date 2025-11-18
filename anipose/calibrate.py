@@ -21,7 +21,11 @@ def get_pose2d_fnames(config, session_path):
         pipeline_pose = config['pipeline']['pose_2d_filter']
     else:
         pipeline_pose = config['pipeline']['pose_2d']
-    fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
+    if config['model_type'] == 'deeplabcut':
+        fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
+    elif config['model_type'] == 'sleap':
+        fnames = glob(os.path.join(session_path, pipeline_pose, '*.predictions.slp'))
+        
     return session_path, fnames
 
 
@@ -63,7 +67,7 @@ def load_2d_data(config, calibration_path):
         fname_dict = dict(zip(cam_names, fnames))
         video_folder = os.path.join(session_path, config['pipeline']['videos_raw'])
         offsets_dict = load_offsets_dict(config, cam_names, video_folder)
-        out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names)
+        out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names, config['model_type'])
         points_raw_dict = dict(zip(cam_names, out['points']))
         scores_dict = dict(zip(cam_names, out['scores']))
 

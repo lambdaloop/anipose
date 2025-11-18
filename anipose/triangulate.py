@@ -13,7 +13,7 @@ from scipy import optimize
 import cv2
 
 from .common import make_process_fun, find_calibration_folder, \
-    get_video_name, get_cam_name, natural_keys
+    get_video_name, get_cam_name, natural_keys, load_pose_2d
 
 from aniposelib.cameras import CameraGroup
 
@@ -100,7 +100,7 @@ def correct_coordinate_frame(config, all_points_3d, bodyparts):
     return all_points_3d_adj, M, center_new
 
 
-def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
+def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None, model_type='deeplabcut'):
     if cam_names is None:
         cam_names = sorted(fname_dict.keys())
     pose_names = [fname_dict[cname] for cname in cam_names]
@@ -111,21 +111,16 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
     datas = []
     for ix_cam, (cam_name, pose_name) in \
             enumerate(zip(cam_names, pose_names)):
-        dlabs = pd.read_hdf(pose_name)
-        if len(dlabs.columns.levels) > 2:
-            scorer = dlabs.columns.levels[0][0]
-            dlabs = dlabs.loc[:, scorer]
+        pts_scores, metadata = load_pose_2d(model_type, pose_name)
+        
+        joint_names = metadata['bodyparts']
 
-        bp_index = dlabs.columns.names.index('bodyparts')
-        joint_names = list(dlabs.columns.get_level_values(bp_index).unique())
         dx = offsets_dict[cam_name][0]
         dy = offsets_dict[cam_name][1]
 
-        for joint in joint_names:
-            dlabs.loc[:, (joint, 'x')] += dx
-            dlabs.loc[:, (joint, 'y')] += dy
-
-        datas.append(dlabs)
+        pts_scores[:, :, :, 0] += dx
+        pts_scores[:, :, :, 1] += dy
+        datas.append(pts_scores)
 
     n_cams = len(cam_names)
     n_joints = len(joint_names)
@@ -133,16 +128,14 @@ def load_pose2d_fnames(fname_dict, offsets_dict=None, cam_names=None):
 
     # frame, camera, bodypart, xy
     points = np.full((n_cams, n_frames, n_joints, 2), np.nan, 'float')
-    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')#initialise as zeros, instead of NaN, makes more sense? 
+    scores = np.full((n_cams, n_frames, n_joints), np.zeros(1), 'float')
 
     for cam_ix, dlabs in enumerate(datas):
-        for joint_ix, joint_name in enumerate(joint_names):
-            try:
-                points[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('x', 'y'))])[:n_frames] 
-                scores[cam_ix, :, joint_ix] = np.array(dlabs.loc[:, (joint_name, ('likelihood'))])[:n_frames].ravel()
-            except KeyError:
-                pass
-
+        # get first possible 2d point here
+        # this may be updated later for multi-animal
+        points[cam_ix] = dlabs[:n_frames, :, 0, :2]
+        scores[cam_ix] = dlabs[:n_frames, :, 0, 2]
+        
     return {
         'cam_names': cam_names,
         'points': points,
@@ -200,7 +193,7 @@ def triangulate(config,
 
     offsets_dict = load_offsets_dict(config, cam_names, video_folder)
 
-    out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names)
+    out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names, model_type=config['model_type'])
     all_points_raw = out['points']
     all_scores = out['scores']
     bodyparts = out['bodyparts']
@@ -365,7 +358,10 @@ def process_session(config, session_path):
     video_folder = os.path.join(session_path, pipeline_videos_raw)
     output_folder = os.path.join(session_path, pipeline_3d)
 
-    pose_files = glob(os.path.join(pose_folder, '*.h5'))
+    if config['model_type'] == 'deeplabcut':
+        pose_files = glob(os.path.join(pose_folder, '*.h5'))
+    elif config['model_type'] == 'sleap':
+        pose_files = glob(os.path.join(pose_folder, '*.predictions.slp'))
 
     cam_videos = defaultdict(list)
 
