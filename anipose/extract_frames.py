@@ -94,7 +94,10 @@ def get_projected_points(bodyparts, pose_fname, cgroup, offsets_dict=None):
     return points_2d_proj.swapaxes(1, 2)
 
 def get_pose2d_fnames(config, session_path):
-    pipeline_pose = config['pipeline']['pose_2d']
+    if config['filter']['enabled']:
+        pipeline_pose = config['pipeline']['pose_2d_filter']
+    else:
+        pipeline_pose = config['pipeline']['pose_2d']
     fnames = glob(os.path.join(session_path, pipeline_pose, '*.h5'))
     return session_path, fnames
 
@@ -161,7 +164,7 @@ def load_2d_data(config):
                       for f in fnames]
 
         points_proj = get_projected_points(
-            bodyparts, pose_fname, cgroup, offsets_dict)
+            bodyparts, pose_fname, cgroup.subset_cameras_names(cam_names), offsets_dict)
 
         all_points.append(points_raw)
         all_scores.append(scores)
@@ -213,6 +216,7 @@ def get_all_videos_fnames(config):
         # pose_fname = os.path.join(session_path, config['pipeline']['pose_3d'],
         #                           vidname+'.csv')
 
+        ## TODO: add parameter for not needing calibration to extract some frames
         if cgroup is None: # or not os.path.exists(pose_fname):
             continue
 
@@ -565,7 +569,7 @@ def extract_frames_picked(config, mode='bad', num_frames_pick=250, scorer=None, 
 
         metas[cnum].to_csv(os.path.join(folder, 'anipose_metadata.csv'), index=False)
 
-        key = true_basename(folder) + '.avi'
+        # key = true_basename(folder) + '.avi'
         # dlc_config['video_sets'][key] = {
         #     'crop': '0, {}, 0, {}'.format(max_height[cnum], max_width[cnum])
         # }
