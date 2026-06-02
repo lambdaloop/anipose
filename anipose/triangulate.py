@@ -191,6 +191,11 @@ def triangulate(config,
     calib_fname = os.path.join(calib_folder, 'calibration.toml')
     cgroup = CameraGroup.load(calib_fname)
 
+    pytorch_version = False
+    if hasattr(cgroup, 'parameters'):
+        cgroup.eval()
+        pytorch_version = True
+
     offsets_dict = load_offsets_dict(config, cam_names, video_folder)
 
     out = load_pose2d_fnames(fname_dict, offsets_dict, cam_names, model_type=config['model_type'])
@@ -199,6 +204,12 @@ def triangulate(config,
     bodyparts = out['bodyparts']
 
     cgroup = cgroup.subset_cameras_names(cam_names)
+
+    # subset_cameras_names rebuilds the group via Camera.copy(), which allocates
+    # fresh CPU params and load_state_dict()s into them (device is NOT preserved).
+    # So we must move to cuda AFTER subsetting, or optim_points runs entirely on CPU.
+    if pytorch_version:
+        cgroup = cgroup.to('cuda')
 
     n_cams, n_frames, n_joints, _ = all_points_raw.shape
 
@@ -217,6 +228,10 @@ def triangulate(config,
             points_3d_init, _, _, _ = cgroup.triangulate_ransac(points_shaped, progress=True)
         else:
             points_3d_init = cgroup.triangulate(points_shaped, progress=True)
+
+        if pytorch_version:
+            points_3d_init = points_3d_init.detach().cpu().numpy()
+            
         points_3d_init = points_3d_init.reshape((n_frames, n_joints, 3))
 
         c = np.isfinite(points_3d_init[:, :, 0])
@@ -266,11 +281,18 @@ def triangulate(config,
                 fixed = points_3d[-15:]
             points_3d = points_3d_out
 
+        if pytorch_version:
+            points_3d = points_3d.detach().cpu().numpy()
+                    
         points_2d_flat = points_2d.reshape(n_cams, -1, 2)
         points_3d_flat = points_3d.reshape(-1, 3)
 
         errors = cgroup.reprojection_error(
             points_3d_flat, points_2d_flat, mean=True)
+
+        if pytorch_version:
+            errors = errors.detach().cpu().numpy()
+        
         good_points = ~np.isnan(all_points_raw[:, :, :, 0])
         num_cams = np.sum(good_points, axis=0).astype('float')
 

@@ -68,6 +68,10 @@ def get_projected_points(config, pose_fname, cgroup, offsets_dict):
         points_2d_proj[cix, :, :, 0] -= dx
         points_2d_proj[cix, :, :, 1] -= dy
 
+    if hasattr(points_2d_proj, 'detach'):
+        points_2d_proj = points_2d_proj.detach().cpu().numpy()
+
+        
     return bodyparts, points_2d_proj, all_scores
 
 
